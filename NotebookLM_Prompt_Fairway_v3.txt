@@ -1,0 +1,248 @@
+FAIRWAY GOLF CLUB — Investor Explainer Video
+Upload this document + ALL 19 images listed below into NotebookLM.
+
+IMPORTANT INSTRUCTION FOR VIDEO GENERATION:
+Use the uploaded PHOTOGRAPHS as the primary visual content throughout the entire video. These are professional concept renders of the actual facility. Do NOT use illustrations, stock graphics, or generated artwork — show the uploaded photos at the moments indicated below. The photos ARE the video. Every section should be anchored to specific uploaded images.
+
+===
+
+IMAGE REFERENCE GUIDE (upload ALL of these):
+
+1. Gemini_Generated_Image_rmj42wrmj42wrmj4.png — EXTERIOR WIDE: Couple arriving at the red brick building at dusk. Gold "Fairway Golf Club" signage above the entrance. Warm light through glass doors.
+SHOW THIS IMAGE DURING: Opening shot, arrival description, location introduction, and closing.
+
+2. Gemini_Generated_Image_4t1eyc4t1eyc4t1e.png — ENTRANCE CLOSE-UP: Black-framed glass doors with the gold wordmark above. Reception desk visible through glass.
+SHOW THIS IMAGE DURING: "First impression" / "this is different from what's out there."
+
+3. Gemini_Generated_Image_2jpr7c2jpr7c2jpr.png — RECEPTION/LOBBY: Walnut desk, pendant lights, warm tones. Premium interior.
+SHOW THIS IMAGE DURING: Interior reveal, premium atmosphere, "not a warehouse."
+
+4. frontdeskcheckin.png — IPAD CHECK-IN: Guest checking in on iPad kiosk at front desk. Personalized welcome screen.
+SHOW THIS IMAGE DURING: Technology explanation, check-in experience, "the system knows you."
+
+5. baycheckin.png — BAY AI COACH SCREEN: Monitor displaying personalized AI coach greeting with today's session plan.
+SHOW THIS IMAGE DURING: AI coaching explanation, "Hey Russ — here's what we're working on today."
+
+6. Gemini_Generated_Image_7kc75w7kc75w7kc7.png — BAY ACTIVE SESSION: Golfer mid-swing in a premium simulator bay. Amber lighting, quality turf, launch monitor visible.
+SHOW THIS IMAGE DURING: Core product — "every shot captured, every session smarter."
+
+7. Gemini_Generated_Image_ub52drub52drub52.png — BAY EMPTY: Clean, ready bay showing quality of the space. Turf, screen, lighting.
+SHOW THIS IMAGE DURING: Equipment showcase, investment breakdown, "2 premium bays."
+
+8. Gemini_Generated_Image_tn05kytn05kytn05.png — DUAL BAY HALLWAY: Both bays active with different groups. Energy, community.
+SHOW THIS IMAGE DURING: "Two bays, two groups, one energy" / Phase 1 capacity.
+
+9. Gemini_Generated_Image_v6e6akv6e6akv6e6.png — COACHING SESSION: Instructor with student, swing data on screen, launch monitor beside them.
+SHOW THIS IMAGE DURING: Lesson revenue stream, "human expertise meets AI analysis."
+
+10. Gemini_Generated_Image_d0r528d0r528d0r5.png — AUTO TEE CLOSE-UP: Illuminated automatic ball return/tee system.
+SHOW THIS IMAGE DURING: Premium details, competitor comparison, "automatic ball return."
+
+11. Gemini_Generated_Image_tf5qgptf5qgptf5q.png — LOUNGE WITH BAY VIEW: Chesterfield leather chairs, glass view into simulator bays, scorecards, warm lighting.
+SHOW THIS IMAGE DURING: "Drop your bag, grab a beer" / community / "people come early, stay late."
+
+12. Gemini_Generated_Image_3rmxqr3rmxqr3rmx.png — BAR WIDE VIEW: Live-edge bar top, craft beer taps, chalkboard menu, warm pendant lighting.
+SHOW THIS IMAGE DURING: Bar/beer revenue, Bunny Man partnership, "craft beer from next door."
+
+13. Gemini_Generated_Image_5g5dpf5g5dpf5g5d.png — BAR DETAIL: Golf-themed custom tap handles, branded coasters on live-edge bar.
+SHOW THIS IMAGE DURING: Brand details, "every touchpoint reinforces the brand."
+
+14. Gemini_Generated_Image_1jd1bw1jd1bw1jd1.png — LOUNGE DETAIL: Brick walls, leather, walnut shelves, golf books, St. Andrews print.
+SHOW THIS IMAGE DURING: "This is a club, not a rental" / membership feel / Founding Investor perks.
+
+15. Gemini_Generated_Image_fzjsxfzjsxfzjsxf.png — BEER FLIGHT POST-SESSION: Guest relaxing with beer flight, pendant lights, scorecard on table.
+SHOW THIS IMAGE DURING: Retention story, "you came to hit balls, you stayed for the experience."
+
+16. Gemini_Generated_Image_jv5v5ajv5v5ajv5v.png — MERCHANDISE DISPLAY: Branded headcovers, hats, gloves on walnut display wall.
+SHOW THIS IMAGE DURING: Merch revenue, "you grab a headcover because you're a member now."
+
+17. SUVShot.png — BRANDED SUV: Modern black SUV with gold "Fairway Golf Club" lettering on side panel.
+SHOW THIS IMAGE DURING: Fairway Mobile introduction, "a portable golf club."
+
+18. Trunk Shot.png — SUV CARGO: Open rear hatch showing portable simulator equipment packed neatly.
+SHOW THIS IMAGE DURING: Mobile unit cost/logistics, "under $5K, fits in one vehicle."
+
+19. Mobile Setup Shot.png — MOBILE SIMULATOR DEPLOYED: Portable setup at outdoor event, person swinging, crowd watching.
+SHOW THIS IMAGE DURING: Mobile events, "gets paid $500-1,500 to collect leads."
+
+===
+
+VIDEO NARRATIVE — FOLLOW THIS STRUCTURE:
+
+---
+
+OPENING (use images 1, 2, 3)
+
+Show the exterior wide shot. Then the entrance. Then the lobby.
+
+"Imagine pulling up to a place like this. Red brick. Gold lettering. Warm light through glass. You walk through the door and immediately know — this is not the dark simulator spot you tried last year. This is Fairway Golf Club. And it's about to open in Lorton, Virginia."
+
+---
+
+THE MARKET — WHY HERE, WHY NOW (use images 1, 11)
+
+Show the exterior again and the dual bay shot to establish place.
+
+"Here's what most people don't know about this area. Within a 15-minute drive of this location, there are over 580,000 residents. The median household income in the surrounding communities — Fairfax Station, Burke, Clifton, Springfield — is over $130,000 a year. Fairfax Station alone is $180K+. These are professionals, aged 30 to 55, with disposable income and a love of golf.
+
+How do we know they love golf? There are FIVE busy golf courses within 10-15 minutes. Laurel Hill Golf Club is literally next door — over a thousand Google reviews, consistently booked. Pohick Bay, Burke Lake, Lake Ridge, Old Hickory — all packed. This area is full of active golfers spending money on the sport every week.
+
+But here's the gap: when it's too hot, too cold, too rainy, or too dark — where do these golfers go? Right now? Nowhere. The closest indoor simulator options are 20 to 40 minutes away in Springfield, Annandale, Arlington, or DC. And the ones that do exist? Dark rooms, no technology, no community, no reason to come back. We visited them. Trust me.
+
+There is ZERO premium indoor golf within 15 minutes of this massive, wealthy, golf-obsessed market. Fairway Golf Club fills that gap."
+
+---
+
+THE EXPERIENCE — A VISIT (use images 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
+
+Walk through each image as you describe the visit. This should be the visual heart of the video — show every photo.
+
+"Let me walk you through what a visit looks like.
+
+[Show image 3 — iPad check-in] You check in on an iPad. The screen says 'Welcome back, Russ — Bay 2 is ready.' No waiting. No paperwork. The system already knows you.
+
+[Show image 4 — Bay AI screen] You walk to your bay. The monitor greets you: 'Driver accuracy up 12% last time. Today we're working on your 7-iron — you're 8 yards short of target.' Every session starts where the last one left off. This is your AI coach, powered by Salesforce Agentforce.
+
+[Show image 6 — Active bay] You swing. Every shot — launch angle, ball speed, spin rate, carry distance — is captured into your Golfer360 profile. The AI adjusts your plan in real time. This isn't a batting cage. You're actually getting better.
+
+[Show image 10 — Auto tee] The automatic ball return feeds balls to you. No bending down, no rhythm break. The small details matter.
+
+[Show image 9 — Coaching session] Want a lesson? Your instructor has your entire history. Swing replay with overlays. Launch data right beside it. This lesson builds on every session you've ever had here.
+
+[Show image 11 — Lounge with bay view] Between sessions, you settle into the lounge. Leather chairs. View through glass into the bays. Scorecards from last night's league on the board. People come early. People stay late. That's by design.
+
+[Show image 12 — Bar wide] You grab a beer. Not just any beer — Bunny Man Brewing, brewed literally 50 feet away on the same campus. Their taps, our bar. Craft beer flights while you watch the leaderboard.
+
+[Show image 13 — Tap handles] Every detail is branded. Custom tap handles. Fairway coasters. Chalkboard specials. This is how you build something people put on a hat.
+
+[Show image 14 — Lounge detail] Brick. Leather. Walnut. Golf books on shelves. This isn't a rental. It's a club. YOUR club.
+
+[Show image 15 — Beer flight] After your session: beer flight, scorecard, pendant lights. Your app pings: '7-iron carry improved 4 yards this month.' You'll be back Thursday.
+
+[Show image 16 — Merchandise] On your way out, you grab a headcover. Because you're a member now. And every item that leaves is a billboard."
+
+---
+
+THE TECHNOLOGY MOAT (use images 4, 5, 6)
+
+Show the tech screens and the bay in action.
+
+"The founder — Russell Evans — is a Salesforce professional. This technology stack is literally his day job. Salesforce CRM manages members. Data Cloud builds unified golfer profiles. Agentforce AI delivers the personalized coaching. Tableau powers the dashboards. Experience Cloud runs the booking portal. And automation handles lights, HVAC, scheduling — so you need 2 part-time staff, not 10.
+
+This creates a flywheel: you play, we capture data, the AI analyzes it, coaches you, you improve, you come back. The more you play, the smarter it gets. Competitors can't replicate a data advantage that compounds with every visit."
+
+---
+
+REVENUE — SEVEN STREAMS (use images 6, 8, 9, 12, 16, 17, 18, 19)
+
+Show relevant images as each stream is mentioned.
+
+"This business doesn't rely on one thing. Seven revenue streams from day one:
+
+[Show image 6] Bay rentals — $55 to $70 per hour.
+Memberships — $99 to $299 per month, recurring. Bronze, Silver, Gold.
+AI coaching subscriptions — $49 per month. Pure software margin.
+[Show image 9] Private lessons and corporate events — $500 to $2,000 per booking.
+Leagues — $200 to $500 per season. Community AND retention.
+[Show image 12] Craft beer — Bunny Man on tap, $6-9 a pour. High margin.
+
+And then there's the seventh stream — Fairway Mobile.
+
+[Show image 17 — SUV] That's a branded Fairway Golf Club SUV. Inside?
+
+[Show image 18 — Trunk] A complete portable golf simulator. Inflatable screen, hitting mat, projector, iPad, launch monitor. Under $5,000 total. Fits in one vehicle. One person sets it up in 20 minutes.
+
+[Show image 19 — Mobile deployed] We bring it to corporate events, weddings, fundraisers, community days. Guests swing, get a Golfer360 profile on the spot, and leave with a reason to visit the club.
+
+Here's what makes it genius: we get PAID $500 to $1,500 per event — and we collect 50 to 100 warm leads every time. It's a revenue stream AND a marketing channel. We're literally being paid to acquire customers."
+
+---
+
+THE FINANCIAL PROJECTIONS (show images 7, 8, 11)
+
+Show the bays and bar during this section to keep it visual while talking numbers.
+
+"Let's talk money. Total investment: $150,000. That's $75K from founding investors, plus a $75K equipment loan secured by the simulators themselves.
+
+Year 1: 2 bays launch. Revenue hits $382,000. After operating costs, net income is $57,000. And here's the key number — break-even happens in MONTH 3. The business is cash-flow positive within 90 days.
+
+Year 2: The mobile unit is filling the pipeline every month. Net income climbs to $177,000. The original $75K investment is fully recovered by mid-Year 2. You've been paid back — and the business is still growing.
+
+Year 3: Demand is proven. We expand to 4 bays. Net income hits $313,000. At a 3-5x earnings multiple, the business is now worth $1.4 to $2.3 million.
+
+Year 4: The founder goes full-time as CEO. Net income: $567,000.
+
+Year 5: Net income exceeds $700,000. Business value: $2.5 to $5 million. What started as $75K from a few friends is now a multi-million dollar asset.
+
+These projections are conservative. They assume 55-65% bay utilization when the industry average for premium facilities is 60-75%. They assume modest pricing when competitors in DC charge $65-90 per hour. They assume the founder keeps his day job for three full years before transitioning."
+
+---
+
+WHAT YOU GET AS AN INVESTOR (use images 14, 11, 6)
+
+Show the lounge, the bays, the club atmosphere — make them picture themselves there.
+
+"Here's the part that matters to you.
+
+This is NOT equity. I'm not selling ownership. I keep 100% of the business. What I'm offering is a promissory note — a loan — with an 8% annual return paid to you monthly. That's $100 to $167 per month hitting your account from day one, depending on your investment amount.
+
+For comparison: high-yield savings pays 4-5%. CDs pay 4-5%. The stock market averages 7-10% with volatility. You're getting 8% with no volatility — AND perks that no bank or brokerage will ever give you.
+
+[Show image 14 — lounge detail] Founding Investor Perks:
+
+LIFETIME Founding Membership. Unlimited bay access during off-peak hours. Forever. Even after your note is repaid. You never pay to golf here again.
+
+Your name on the Founders Wall. Permanent. Displayed in the club. You were here from day one.
+
+Priority booking — reserve peak hours 48 hours before the public.
+
+20% off everything — events, lessons, merchandise, beer. Always. For life.
+
+First right to invest in Phase 2 — when we expand to 4 bays, you get the call before anyone else.
+
+Let's do the math on just the membership perk. A bay session is $55-70. If you play just twice a month — conservative for someone with free access — that's $110-140 per month in value. Over 5 years, that's $6,600 to $8,400 in free golf. ON TOP of your 8% return. And after year 5? It's free. Forever.
+
+The investment is $15,000 to $25,000. We're raising $75K total from 3 to 5 founding investors."
+
+---
+
+RISK AND WORST CASE (use image 7 — empty bay, clean and resalable)
+
+"What about risk? Six layers of protection:
+
+The founder keeps his full-time career. Nobody quits anything. This is purely additive income.
+Cash-flow positive in 3 months. The business feeds itself almost immediately.
+The loan is secured by equipment. Simulators are resalable — worth about $40K even in liquidation.
+Automated operations. 2 part-time staff, not 10.
+The founder lives 1 mile away. Personal oversight, zero absentee risk.
+
+Worst case — if everything fails: sell the equipment, exit the lease. Net loss across all investors: roughly $35K split 3-5 ways. That's $7-12K per person. Painful, not life-altering. And it requires EVERYTHING to fail while the founder — who lives a mile away with zero competition — somehow can't fill 2 bays in the wealthiest golf corridor in Northern Virginia."
+
+---
+
+CLOSING / THE ASK (use image 1 — exterior wide)
+
+End on the exterior shot. Full circle.
+
+"I'm raising $75,000 from 3 to 5 people I trust. $15,000 to $25,000 each. You get 8% annual return paid monthly. Your money back within 5 years. And a lifetime membership to a premium golf club you helped create.
+
+I'm not pitching strangers. I'm asking the people in my life who I think would enjoy being part of this — and who'd love having a place to golf for free for the rest of their lives.
+
+If this sounds interesting, let's talk. There's no commitment yet. Just let me know, and I'll walk you through everything. Check out fairwaygolfclub.co for more.
+
+No pressure. But I wanted you to hear about it first."
+
+===
+
+TONE AND STYLE GUIDANCE:
+
+- Sound like a confident friend who has done his homework — not a corporate pitch, not a hype video
+- Conversational. The kind of thing where someone says "damn, that's actually a really smart idea"
+- Lead with the MARKET DATA — the affluent communities, the golf courses, the gap. This is what makes it credible, not just cool.
+- Be specific with numbers. Don't say "good return" — say "$100-167 per month in your account"
+- The photos are the star. Linger on them. Let people see what this place looks like.
+- Acknowledge risk honestly, briefly, then move on. Friends respect transparency.
+- The perks section is emotional — lean into "your name on the wall" and "free golf for life"
+- End warmly. Not pushy. "I wanted you to hear about it first."
+- DO NOT lean heavily into military/Fort Belvoir. One brief mention max. The market is the affluent civilian communities and the proven golf demand from surrounding courses.
+- DO NOT use illustrations or stock graphics when a relevant uploaded photo exists. The uploaded photos should be shown constantly throughout the video.

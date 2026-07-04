@@ -1,0 +1,143 @@
+FAIRWAY GOLF CLUB — Explainer Video Source Document
+Upload this document + the images listed below into NotebookLM.
+
+===
+
+IMAGE REFERENCE GUIDE:
+These are the images to upload alongside this document. Use them at the points indicated in the narrative.
+
+1. Gemini_Generated_Image_rmj42wrmj42wrmj4.png — EXTERIOR WIDE: Couple arriving at the red brick building at dusk. Gold "Fairway Golf Club" signage above the entrance. Warm light through glass doors. Use during: Arrival / first impression / "this isn't a warehouse."
+
+2. Gemini_Generated_Image_4t1eyc4t1eyc4t1e.png — ENTRANCE CLOSE-UP: Black-framed glass doors with the gold wordmark above. You can see the reception desk and warm pendants through the glass. Use during: "First impression: this is different."
+
+3. frontdeskcheckin.png — IPAD CHECK-IN AT RECEPTION: Guest checking in on an iPad kiosk at the front desk. Screen shows welcome message. Use during: Check-in experience / "the system knows you're here."
+
+4. baycheckin.png — BAY AI COACH GREETING: Bay monitor screen showing personalized AI coach greeting with session plan. Use during: "Hey Russ — here's what we're working on today."
+
+5. Gemini_Generated_Image_2jpr7c2jpr7c2jpr.png — RECEPTION/LOBBY: Walnut desk, pendant lights, warm tones. Premium feel, not a warehouse. Use during: Interior first look / premium atmosphere.
+
+6. Gemini_Generated_Image_tf5qgptf5qgptf5q.png — LOUNGE WITH BAY VIEW: Chesterfield leather chairs, view through glass into the simulator bays. Scorecards, warm lighting. Use during: "Drop your bag. Grab a beer. Settle in."
+
+7. Gemini_Generated_Image_3rmxqr3rmxqr3rmx.png — BAR WIDE VIEW: Live-edge bar top, craft beer taps, chalkboard menu, warm pendant lighting. Use during: "Craft beer from next door. Literally." / Bunny Man Brewing partnership.
+
+8. Gemini_Generated_Image_5g5dpf5g5dpf5g5d.png — BAR DETAIL (TAP HANDLES): Close-up of golf-themed custom tap handles, branded coasters on the bar. Use during: Brand details / "every touchpoint reinforces the brand."
+
+9. Gemini_Generated_Image_7kc75w7kc75w7kc7.png — BAY ACTIVE SESSION: Golfer mid-swing in a premium simulator bay. Amber lighting, quality turf, launch monitor visible. Use during: "Every shot captured. Every session smarter."
+
+10. Gemini_Generated_Image_ub52drub52drub52.png — BAY EMPTY: Clean, ready bay — shows the quality of the space without a person in it. Turf, screen, lighting. Use during: Equipment/space showcase.
+
+11. Gemini_Generated_Image_tn05kytn05kytn05.png — DUAL BAY HALLWAY: View down the hall showing both bays active. Multiple groups, energy, community. Use during: "Two bays. Two groups. One energy."
+
+12. Gemini_Generated_Image_v6e6akv6e6akv6e6.png — COACHING SESSION: Instructor with a student, swing data on screen, launch monitor beside them. Use during: "Human expertise meets AI analysis."
+
+13. Gemini_Generated_Image_d0r528d0r528d0r5.png — AUTO TEE CLOSE-UP: Illuminated automatic ball return/tee system. Use during: "Automatic ball return. Zero interruptions." / premium details.
+
+14. Gemini_Generated_Image_1jd1bw1jd1bw1jd1.png — LOUNGE DETAIL: Brick walls, leather, walnut shelves with golf books, St. Andrews print. Use during: "Brick. Leather. Walnut. Warm light." / membership feel.
+
+15. Gemini_Generated_Image_fzjsxfzjsxfzjsxf.png — LOUNGE LIFESTYLE (BEER FLIGHT): Guest relaxing post-session with a beer flight, pendant lights, scorecard on the table. Use during: "You came to hit balls. You stayed for the experience."
+
+16. Gemini_Generated_Image_jv5v5ajv5v5ajv5v.png — MERCHANDISE DISPLAY: Branded headcovers, hats, gloves on a walnut display wall. Use during: "You grab a headcover. Because you're a member now."
+
+17. SUVShot.png — BRANDED SUV EXTERIOR: Modern black SUV with gold "Fairway Golf Club" lettering on the side panel. Use during: Fairway Mobile introduction / "A portable golf club."
+
+18. Trunk Shot.png — SUV CARGO WITH GEAR: Open rear hatch showing all the portable simulator equipment neatly packed — inflatable, mat, projector, iPad. Use during: "Everything fits in one vehicle. Under $5K."
+
+19. Mobile Setup Shot.png — MOBILE SIMULATOR DEPLOYED: Portable simulator set up at an outdoor event, person swinging, crowd watching. Use during: "Corporate events. Fundraisers. Weddings." / getting paid to collect leads.
+
+===
+
+WHAT THIS IS:
+Fairway Golf Club is the first AI-powered indoor golf improvement club. It's not another dark simulator rental. It's a premium members' club where technology remembers every shot, coaches you between visits, and builds a community of golfers who actually get better.
+
+LOCATION:
+Workhouse Arts Center, Lorton, Virginia. Historic red brick campus. Brewery next door (Bunny Man Brewing). Affluent area. Zero indoor golf competition within 15 minutes.
+
+THE PROBLEM WE SOLVE:
+Indoor golf simulators exist — but they're dark rooms where you rent a bay, hit balls for an hour, and leave with nothing. No data. No coaching. No community. No reason to come back other than bad weather. It's the golf equivalent of a batting cage.
+
+THE SOLUTION:
+Fairway Golf Club creates a "Golfer360" digital profile for every member. Every shot you hit — launch angle, ball speed, spin rate, carry distance — is captured automatically. Our AI coach (built on Salesforce Agentforce) analyzes your data and creates personalized improvement plans. When you come back next week, it remembers. "Hey Russ — driver accuracy was up 12% last time. Today we're working on your 7-iron. You're 8 yards short of target."
+
+Every visit makes you a better golfer. That's not a slogan — it's the technology.
+
+THE EXPERIENCE (walk through a visit):
+1. You pull up to a beautiful red brick building. Gold lettering. Warm light through glass. This isn't a warehouse.
+2. You check in on an iPad kiosk. "Welcome back — Bay 2 is ready." No waiting.
+3. The bay monitor greets you with today's plan based on your last session.
+4. You hit balls. Every shot is tracked. The AI adjusts in real time.
+5. Between sessions, you grab a craft beer from the bar (Bunny Man Brewing on tap, literally brewed 50 feet away).
+6. The lounge has leather chairs, golf books, a leaderboard on the TV. People come early. People stay late.
+7. On your way out, you grab a branded headcover. Because you're a member now.
+
+THE TECHNOLOGY (the unfair advantage):
+The founder is a Salesforce professional — this is literally his day job. The technology stack:
+- Salesforce CRM for member management
+- Data Cloud for unified golfer profiles
+- Agentforce AI for personalized coaching
+- Tableau for performance dashboards
+- Experience Cloud for member portal and booking
+- Automation handles lights, HVAC, booking — minimal staff needed
+
+This isn't aspirational tech. This is deployed expertise.
+
+REVENUE MODEL (seven streams from day one):
+1. Bay Rentals: $55-70/hour
+2. Memberships: $99-299/month (Bronze/Silver/Gold tiers)
+3. AI Coaching Subscription: $49/month
+4. Corporate Events: $500-2,000 per event
+5. Leagues: $200-500 per season
+6. Craft Beer: Bunny Man on tap, $6-9/pour
+7. Fairway Mobile: Portable simulator for events, $500-1,500 per event
+
+FAIRWAY MOBILE (the marketing machine):
+A complete portable golf simulator that fits in one SUV. Under $5,000 total setup cost. One person sets it up in 20 minutes. We bring it to corporate events, weddings, fundraisers, and community days. Guests swing, get a Golfer360 profile on the spot, and leave with a reason to visit the club. We get PAID $500-1,500 to collect 50-100 warm leads per event. It's a revenue stream AND a marketing channel at the same time.
+
+FINANCIAL HIGHLIGHTS:
+- Total investment: $150,000 ($75K equity from investors + $75K loan)
+- Break-even: Month 3
+- Year 1 net income: $57K (club + mobile combined)
+- Year 2 net income: $177K
+- Year 3 net income: $313K (after expanding to 4 bays)
+- Phase 1 starts with 2 premium bays, expands to 4 once demand is proven
+
+WHY THIS IS LOW RISK:
+- Founder keeps his full-time Salesforce career through Phase 1
+- Cash-flow positive in 3 months
+- Equipment is resalable (~$40K recovery in worst case)
+- 1 mile from home — no absentee ownership
+- Automated operations — 2 part-time staff, not 10
+- Worst case scenario: sell sims, exit lease, net loss ~$35K
+
+THE INVESTMENT OPPORTUNITY:
+We're raising $75K from 3-5 founding investors. $15,000-$25,000 each. This is NOT equity — you keep zero ownership. This is a promissory note with an 8% annual return, paid monthly. Better than a CD, better than bonds, and you get something no bank gives you:
+
+FOUNDING INVESTOR PERKS:
+- 8% annual return paid monthly
+- LIFETIME Founding Membership (unlimited bay access during off-peak hours, forever)
+- Name on the Founders Wall (permanent — you were here first)
+- Priority booking (48 hours before the public)
+- 20% off everything (events, lessons, merch, beer)
+- First right to invest in Phase 2 expansion
+
+You get paid a great return. You get a place to golf for life. And you get to say you were there from the beginning.
+
+THE FOUNDER:
+Russell Evans. Salesforce professional in Northern Virginia. Lives 1 mile from the location. Golfer who got frustrated with the dark, dead-end simulator experiences in the area. The technology platform IS his day job — no learning curve, no expensive consultants. Built what he wants to use.
+
+WHY NOW:
+- Zero premium indoor golf competition within 15 miles of Lorton
+- 580,000+ residents within the trade area, median household income $130K+
+- Fort Belvoir military base nearby (active golf demographic)
+- Indoor golf industry growing 15-20% annually
+- AI/personalization is the expectation, not the exception
+- Workhouse Arts Center has available space and wants active community tenants
+
+THE ASK:
+$15,000-$25,000 investment. 8% return. Lifetime membership. Your name on the wall. A friend building something real, in your neighborhood, that you get to be part of.
+
+If this sounds interesting, let's talk. No pressure. I just thought of you.
+
+===
+
+TONE GUIDANCE FOR NOTEBOOKLM:
+This should sound like an excited friend explaining a business he's building — not a corporate pitch. Conversational, confident, specific. The kind of thing where you'd say "damn, that's actually a really good idea" after hearing it. Hit the emotional beats: the premium feel, the technology moat, the community, and then the practical numbers. End with the soft ask that makes it easy to say "tell me more."

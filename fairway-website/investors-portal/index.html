@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fairway Golf Club — Founding Investor Portal</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #D4A853;
+  --navy: #1B2A4A;
+  --dark: #0F1A2E;
+  --cream: #FAF8F5;
+  --gray: #64748B;
+  --green: #22C55E;
+  --card-bg: rgba(255,255,255,0.04);
+  --border: rgba(212,168,83,0.2);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--dark);
+  color: white;
+  line-height: 1.6;
+}
+
+/* Header */
+header {
+  text-align: center;
+  padding: 4rem 2rem 3rem;
+  border-bottom: 1px solid var(--border);
+}
+.logo-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  color: var(--gold);
+  letter-spacing: 5px;
+}
+.badge {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.4rem 1.2rem;
+  background: rgba(212,168,83,0.1);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* Sections */
+section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+section + section {
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: white;
+  margin-bottom: 1rem;
+}
+h3 {
+  font-size: 1rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+p {
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+/* Video */
+.video-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  background: var(--navy);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.video-container iframe,
+.video-container video {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border: none;
+}
+.video-placeholder {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray);
+  font-size: 0.85rem;
+}
+.video-placeholder .play-icon {
+  font-size: 3rem;
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+/* Stats */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--gray);
+  margin-top: 0.3rem;
+}
+.stat-detail {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  margin-top: 0.3rem;
+}
+
+/* Perks list */
+.perks-list {
+  list-style: none;
+  margin: 1.5rem 0;
+}
+.perks-list li {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.perks-list li:last-child { border-bottom: none; }
+.perk-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(212,168,83,0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.perk-content strong {
+  display: block;
+  color: white;
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+.perk-content span {
+  color: var(--gray);
+  font-size: 0.85rem;
+}
+
+/* Timeline */
+.timeline {
+  margin: 1.5rem 0;
+  position: relative;
+  padding-left: 2rem;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--gold), rgba(212,168,83,0.2));
+}
+.timeline-item {
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -1.65rem;
+  top: 0.5rem;
+  width: 10px;
+  height: 10px;
+  background: var(--gold);
+  border-radius: 50%;
+}
+.timeline-item .year {
+  font-size: 0.75rem;
+  color: var(--gold);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.timeline-item .event {
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.timeline-item .detail {
+  color: var(--gray);
+  font-size: 0.85rem;
+}
+
+/* Form */
+.interest-form {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.5rem;
+}
+.form-row {
+  margin-bottom: 1.2rem;
+}
+.form-row label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+.form-row input,
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus {
+  border-color: var(--gold);
+}
+.form-row select { cursor: pointer; }
+.form-row select option { background: var(--dark); color: white; }
+.form-row textarea { resize: vertical; min-height: 80px; }
+.form-row input::placeholder,
+.form-row textarea::placeholder { color: rgba(255,255,255,0.3); }
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.submit-btn {
+  width: 100%;
+  padding: 1rem;
+  background: var(--gold);
+  color: var(--dark);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+.submit-btn:hover { background: #E5B963; }
+.form-note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--gray);
+  margin-top: 1rem;
+}
+.success-message {
+  display: none;
+  text-align: center;
+  padding: 2rem;
+}
+.success-message h3 {
+  color: var(--green);
+  font-size: 1.2rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.success-message p {
+  color: rgba(255,255,255,0.7);
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.2);
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+@media (max-width: 600px) {
+  .logo-text { font-size: 1.8rem; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  section { padding: 2rem 1.2rem; }
+  .interest-form { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 class="logo-text">FAIRWAY GOLF CLUB</h1>
+  <div class="badge">Founding Investor Portal</div>
+</header>
+
+<!-- VIDEO SECTION -->
+<section>
+  <h3>The Vision</h3>
+  <div class="video-container">
+    <!-- REPLACE: Swap the placeholder below with your actual video embed -->
+    <!-- For Loom: <iframe src="https://www.loom.com/embed/YOUR_VIDEO_ID" allowfullscreen></iframe> -->
+    <!-- For YouTube: <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" allowfullscreen></iframe> -->
+    <div class="video-placeholder">
+      <div class="play-icon">&#9654;</div>
+      <p>Video coming soon</p>
+      <p style="font-size: 0.75rem; margin-top: 0.5rem;">The full Fairway Golf Club explainer</p>
+    </div>
+  </div>
+  <p style="font-size: 0.85rem; color: var(--gray); text-align: center;">3 min overview — what we're building, how it works, and why now.</p>
+</section>
+
+<!-- OPPORTUNITY OVERVIEW -->
+<section>
+  <h3>The Opportunity</h3>
+  <h2>The first AI-powered golf improvement club.</h2>
+  <p>Not another dark simulator rental. A premium members' club where technology remembers every shot, coaches you between visits, and builds a community of golfers who actually get better.</p>
+  <p>We're launching at Workhouse Arts Center in Lorton, Virginia — zero indoor golf competition within 15 miles, 580,000+ residents in the trade area, median household income over $130K.</p>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-number">$382K</div>
+      <div class="stat-label">Year 1 Revenue</div>
+      <div class="stat-detail">Club + Mobile combined</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">Month 3</div>
+      <div class="stat-label">Break-Even</div>
+      <div class="stat-detail">Cash-flow positive</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">$313K</div>
+      <div class="stat-label">Year 3 Net</div>
+      <div class="stat-detail">After 4-bay expansion</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">0</div>
+      <div class="stat-label">Competitors</div>
+      <div class="stat-detail">Within 15 min of location</div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTMENT TERMS -->
+<section>
+  <h3>The Investment</h3>
+  <h2>What you put in. What you get back.</h2>
+  <p>We're raising $75K from 3–5 founding investors. This is <strong style="color: white;">not equity</strong> — I retain 100% ownership. Your investment is structured as a promissory note: you get your money back with interest, plus lifetime perks that make you an insider.</p>
+
+  <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stat-card">
+      <div class="stat-number">$15–25K</div>
+      <div class="stat-label">Your Investment</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">8%</div>
+      <div class="stat-label">Annual Return</div>
+      <div class="stat-detail">Paid monthly</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">5 Years</div>
+      <div class="stat-label">Full Repayment</div>
+      <div class="stat-detail">Secured by equipment</div>
+    </div>
+  </div>
+</section>
+
+<!-- PERKS -->
+<section>
+  <h3>Founding Investor Perks</h3>
+  <h2>More than a return. A membership.</h2>
+
+  <ul class="perks-list">
+    <li>
+      <div class="perk-icon">&#9733;</div>
+      <div class="perk-content">
+        <strong>8% Annual Return, Paid Monthly</strong>
+        <span>Better than CDs, savings, or most bonds — without the volatility of the market.</span>
+      </div>
+    </li>
+    <li>
+      <div class="perk-icon">&#9971;</div>
+      <div class="perk-content">
+        <strong>Lifetime Founding Membership</strong>
+        <span>Unlimited bay access during off-peak hours. Forever. Even after you're repaid.</span>
+      </div>
+    </li>
+    <li>
+      <div class="perk-icon">&#127942;</div>
+      <div class="perk-content">
+        <strong>Name on the Founders Wall</strong>
+        <span>Permanent recognition in the club. You were here first.</span>
+      </div>
+    </li>
+    <li>
+      <div class="perk-icon">&#128197;</div>
+      <div class="perk-content">
+        <strong>Priority Booking</strong>
+        <span>Reserve peak-hour bays 48 hours before the public.</span>
+      </div>
+    </li>
+    <li>
+      <div class="perk-icon">&#127866;</div>
+      <div class="perk-content">
+        <strong>20% Off Everything</strong>
+        <span>Events, lessons, merchandise, beer. Always.</span>
+      </div>
+    </li>
+    <li>
+      <div class="perk-icon">&#128200;</div>
+      <div class="perk-content">
+        <strong>First Right to Phase 2</strong>
+        <span>When we expand to 4 bays, you get the call before anyone else.</span>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<!-- TIMELINE -->
+<section>
+  <h3>The Roadmap</h3>
+  <h2>Conservative, phased, low-risk.</h2>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="year">Now</div>
+      <div class="event">Securing space at Workhouse Arts Center</div>
+      <div class="detail">Lease negotiations, build-out planning</div>
+    </div>
+    <div class="timeline-item">
+      <div class="year">Month 1–3</div>
+      <div class="event">Build-out + launch (2 bays)</div>
+      <div class="detail">Founder keeps full-time career. Zero risk to investors' day-to-day.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="year">Month 3</div>
+      <div class="event">Cash-flow positive</div>
+      <div class="detail">Revenue covers all operating costs + loan payments.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="year">Year 2</div>
+      <div class="event">Investment fully recovered</div>
+      <div class="detail">Principal repaid. You keep the perks forever.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="year">Year 3</div>
+      <div class="event">Expand to 4 bays</div>
+      <div class="detail">Proven demand. Phase 2 investors get first call.</div>
+    </div>
+  </div>
+</section>
+
+<!-- RISK -->
+<section>
+  <h3>Risk Mitigation</h3>
+  <h2>Six layers of protection.</h2>
+  <p><strong style="color: var(--green);">Founder keeps his career</strong> — nobody quits anything. Purely additive income.</p>
+  <p><strong style="color: var(--green);">Cash-flow positive in 3 months</strong> — business feeds itself immediately.</p>
+  <p><strong style="color: var(--green);">Equipment-secured debt</strong> — simulators are resalable assets (~$40K recovery).</p>
+  <p><strong style="color: var(--green);">Automated operations</strong> — 2 part-time staff, not 10. Technology replaces headcount.</p>
+  <p><strong style="color: var(--green);">1 mile from home</strong> — personal management, no absentee risk.</p>
+  <p><strong style="color: var(--green);">Worst case</strong> — sell equipment, exit lease. Net loss ~$35K split across investors. Painful, not devastating.</p>
+</section>
+
+<!-- INTEREST FORM -->
+<section>
+  <h3>I'm Interested</h3>
+  <h2>Let's talk.</h2>
+  <p>No commitment yet. Just let me know you're interested and I'll reach out to discuss details, answer questions, and walk you through everything in person.</p>
+
+  <form class="interest-form" id="interestForm">
+    <div class="two-col">
+      <div class="form-row">
+        <label>First Name</label>
+        <input type="text" name="first_name" required placeholder="Russell">
+      </div>
+      <div class="form-row">
+        <label>Last Name</label>
+        <input type="text" name="last_name" required placeholder="Evans">
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Email</label>
+      <input type="email" name="email" required placeholder="you@email.com">
+    </div>
+    <div class="form-row">
+      <label>Phone (optional)</label>
+      <input type="tel" name="phone" placeholder="(555) 123-4567">
+    </div>
+    <div class="form-row">
+      <label>Investment Range</label>
+      <select name="amount" required>
+        <option value="" disabled selected>Select an amount</option>
+        <option value="15000">$15,000</option>
+        <option value="20000">$20,000</option>
+        <option value="25000">$25,000</option>
+        <option value="other">Other amount</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Questions or Comments (optional)</label>
+      <textarea name="message" placeholder="Anything you'd like to ask..."></textarea>
+    </div>
+    <button type="submit" class="submit-btn">I'm Interested — Let's Talk</button>
+    <p class="form-note">This is not a commitment. Just an expression of interest. We'll set up a time to chat.</p>
+  </form>
+
+  <div class="success-message" id="successMsg">
+    <h3>Got it. I'll be in touch soon.</h3>
+    <p style="margin-top: 1rem;">Thanks for your interest. I'll reach out within 24 hours to set up a conversation.</p>
+  </div>
+</section>
+
+<footer>
+  <p>&copy; 2026 Fairway Golf Club LLC &nbsp;|&nbsp; Lorton, Virginia</p>
+  <p style="margin-top: 0.5rem;">This page is confidential and intended for invited investors only.</p>
+</footer>
+
+<script>
+document.getElementById('interestForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  // Collect form data
+  const data = new FormData(this);
+  const entries = Object.fromEntries(data.entries());
+  console.log('Investor interest:', entries);
+
+  // TODO: Replace with Formspree, Netlify Forms, or your preferred handler
+  // Example Formspree: change form action to https://formspree.io/f/YOUR_FORM_ID
+  // Example: fetch('https://formspree.io/f/YOUR_ID', { method: 'POST', body: data });
+
+  // Show success
+  this.style.display = 'none';
+  document.getElementById('successMsg').style.display = 'block';
+});
+</script>
+</body>
+</html>
