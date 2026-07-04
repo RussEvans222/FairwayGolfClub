@@ -4,105 +4,125 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fairway Golf Club — Coming Soon</title>
-<meta name="description" content="The First AI-Powered Golf Improvement Club. Coming to Lorton, Virginia.">
+<meta name="description" content="The First AI-Powered Golf Improvement Club. Coming to Northern Virginia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --gold: #D4A853;
-  --navy: #1B2A4A;
-  --cream: #FAF8F5;
-  --dark: #0F1A2E;
-  --gray: #64748B;
+  --gold: #C9A84C;
+  --gold-light: #E2C06A;
+  --dark: #0C1422;
+  --gray: #6B7A99;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
   font-family: 'Inter', -apple-system, sans-serif;
   background: var(--dark);
   color: white;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
   text-align: center;
+  padding: 2rem;
+  overflow: hidden;
 }
-.container {
-  max-width: 600px;
-  width: 100%;
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('images/lounge-simulator.png');
+  background-size: cover;
+  background-position: center 30%;
+  filter: brightness(0.35);
+  z-index: 0;
+}
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+}
+.coming-soon {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  color: var(--gold);
+  margin-bottom: 2rem;
+  opacity: 0.85;
 }
 .logo-text {
   font-family: 'Playfair Display', serif;
-  font-size: 3.5rem;
-  color: var(--gold);
+  font-size: clamp(2.8rem, 8vw, 5rem);
+  color: white;
   letter-spacing: 6px;
-  line-height: 1.1;
-  margin-bottom: 0.5rem;
+  line-height: 1.05;
+  margin-bottom: 0.75rem;
 }
 .divider {
-  width: 80px;
-  height: 3px;
+  width: 60px;
+  height: 2px;
   background: var(--gold);
   margin: 1.5rem auto;
+  opacity: 0.7;
 }
 .tagline {
-  font-size: 1.1rem;
-  color: var(--gold);
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  color: rgba(255,255,255,0.85);
   font-style: italic;
+  font-family: 'Playfair Display', serif;
   margin-bottom: 0.5rem;
 }
 .location {
-  font-size: 0.85rem;
-  color: var(--gray);
-  letter-spacing: 2px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 3px;
   text-transform: uppercase;
   margin-bottom: 3rem;
-}
-.coming-soon {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 4px;
-  color: var(--gray);
-  margin-bottom: 1.5rem;
 }
 .signup-form {
   display: flex;
   gap: 0.5rem;
   max-width: 420px;
-  margin: 0 auto 1rem;
+  margin: 0 auto 0.75rem;
 }
 .signup-form input {
   flex: 1;
-  padding: 0.85rem 1.2rem;
-  border: 1px solid rgba(212,168,83,0.3);
+  padding: 0.9rem 1.2rem;
+  border: 1px solid rgba(201,168,76,0.35);
   border-radius: 6px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.08);
   color: white;
   font-size: 0.9rem;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s;
+  backdrop-filter: blur(8px);
 }
-.signup-form input::placeholder { color: var(--gray); }
-.signup-form input:focus { border-color: var(--gold); }
+.signup-form input::placeholder { color: rgba(255,255,255,0.35); }
+.signup-form input:focus { border-color: var(--gold); background: rgba(255,255,255,0.12); }
 .signup-form button {
-  padding: 0.85rem 1.5rem;
+  padding: 0.9rem 1.5rem;
   background: var(--gold);
   color: var(--dark);
   border: none;
   border-radius: 6px;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
   white-space: nowrap;
 }
-.signup-form button:hover { background: #E5B963; }
+.signup-form button:hover { background: var(--gold-light); transform: translateY(-1px); }
 .note {
-  font-size: 0.75rem;
-  color: var(--gray);
-  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.3);
 }
 .success-msg {
   display: none;
@@ -110,47 +130,362 @@ body {
   font-size: 0.95rem;
   padding: 1rem;
 }
-footer {
-  position: fixed;
+.scroll-hint {
+  position: absolute;
   bottom: 2rem;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.2);
-  letter-spacing: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
-@media (max-width: 500px) {
-  .logo-text { font-size: 2.5rem; letter-spacing: 4px; }
+.scroll-hint::after {
+  content: '';
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, rgba(201,168,76,0.5), transparent);
+  animation: scrollLine 1.8s ease-in-out infinite;
+}
+@keyframes scrollLine {
+  0% { transform: scaleY(0); transform-origin: top; }
+  50% { transform: scaleY(1); transform-origin: top; }
+  51% { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+
+/* ── PHOTO STRIP ── */
+.photo-strip {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  height: 320px;
+}
+.photo-strip .photo {
+  overflow: hidden;
+  position: relative;
+}
+.photo-strip .photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.photo-strip .photo:hover img { transform: scale(1.04); }
+
+/* ── FEATURES ── */
+.features {
+  padding: 6rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+.section-eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 0.75rem;
+}
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+.section-sub {
+  color: rgba(255,255,255,0.55);
+  font-size: 1rem;
+  max-width: 560px;
+  margin: 0 auto 4rem;
+  line-height: 1.7;
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  text-align: left;
+}
+.feature-card {
+  padding: 2rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.feature-card:hover {
+  border-color: rgba(201,168,76,0.25);
+  transform: translateY(-3px);
+}
+.feature-icon {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+.feature-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+.feature-card p {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+}
+
+/* ── IMAGE SHOWCASE ── */
+.showcase {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 500px;
+}
+.showcase-img {
+  overflow: hidden;
+  position: relative;
+}
+.showcase-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.showcase-img:hover img { transform: scale(1.04); }
+.showcase-text {
+  background: #111C2E;
+  display: flex;
+  align-items: center;
+  padding: 4rem;
+}
+.showcase-text .inner { max-width: 420px; }
+.showcase-text .eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 1rem;
+}
+.showcase-text h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.25;
+  margin-bottom: 1rem;
+}
+.showcase-text p {
+  color: rgba(255,255,255,0.55);
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+.showcase-text .gold-line {
+  width: 40px; height: 2px;
+  background: var(--gold);
+  margin: 1.5rem 0;
+  opacity: 0.6;
+}
+
+/* ── MOBILE SECTION ── */
+.mobile-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 480px;
+}
+.mobile-section .showcase-text { background: #0C1422; }
+.mobile-img { overflow: hidden; }
+.mobile-img img { width: 100%; height: 100%; object-fit: cover; object-position: center top; transition: transform 0.6s; }
+.mobile-img:hover img { transform: scale(1.04); }
+
+/* ── BOTTOM GALLERY ── */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: 260px;
+}
+.gallery-item { overflow: hidden; }
+.gallery-item img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: brightness(0.8);
+  transition: filter 0.3s, transform 0.5s;
+}
+.gallery-item:hover img { filter: brightness(1); transform: scale(1.05); }
+
+/* ── FOOTER ── */
+footer {
+  background: #080F1A;
+  padding: 2.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.footer-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.9rem;
+  color: var(--gold);
+  letter-spacing: 4px;
+}
+.footer-copy {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.18);
+}
+.footer-link a {
+  font-size: 0.68rem;
+  color: rgba(201,168,76,0.35);
+  text-decoration: none;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.footer-link a:hover { color: rgba(201,168,76,0.75); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .photo-strip { grid-template-columns: 1fr; height: auto; }
+  .photo-strip .photo { height: 220px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .showcase, .mobile-section { grid-template-columns: 1fr; }
+  .showcase-img, .mobile-img { height: 280px; }
+  .showcase-text { padding: 2.5rem 1.5rem; }
+  .showcase-text .inner { max-width: 100%; }
+  .gallery { grid-template-columns: repeat(2, 1fr); height: auto; }
+  .gallery-item { height: 180px; }
+  .footer { flex-direction: column; gap: 1rem; text-align: center; }
   .signup-form { flex-direction: column; }
 }
 </style>
 </head>
 <body>
-<div class="container">
-  <p class="coming-soon">Coming 2027</p>
-  <h1 class="logo-text">FAIRWAY<br>GOLF CLUB</h1>
-  <div class="divider"></div>
-  <p class="tagline">The First AI-Powered Golf Improvement Club</p>
-  <p class="location">Lorton, Virginia</p>
 
-  <form class="signup-form" id="signupForm" action="https://formspree.io/f/russ@fairwaygolfclub.co" method="POST">
-    <input type="email" name="email" placeholder="Enter your email for updates" required id="emailInput">
-    <button type="submit">Notify Me</button>
-  </form>
-  <p class="note">Be the first to know when we open. No spam.</p>
-  <p class="success-msg" id="successMsg">You're on the list. We'll be in touch.</p>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <p class="coming-soon">Coming 2027</p>
+    <h1 class="logo-text">FAIRWAY<br>GOLF CLUB</h1>
+    <div class="divider"></div>
+    <p class="tagline">The First AI-Powered Golf Improvement Club</p>
+    <p class="location">Northern Virginia</p>
 
-  <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(212,168,83,0.15);">
-    <a href="investors-portal/" style="font-size: 0.72rem; color: rgba(212,168,83,0.5); text-decoration: none; letter-spacing: 2px; text-transform: uppercase; transition: color 0.2s;" onmouseover="this.style.color='rgba(212,168,83,0.9)'" onmouseout="this.style.color='rgba(212,168,83,0.5)'">Founding Investor Portal →</a>
+    <form class="signup-form" id="signupForm" action="https://formspree.io/f/russ@fairwaygolfclub.co" method="POST">
+      <input type="email" name="email" placeholder="Your email — be first to know" required id="emailInput">
+      <button type="submit">Notify Me</button>
+    </form>
+    <p class="note">No spam. Just the opening date when it's set.</p>
+    <p class="success-msg" id="successMsg">You're on the list. We'll be in touch.</p>
+  </div>
+  <div class="scroll-hint">Scroll</div>
+</section>
+
+<!-- PHOTO STRIP -->
+<div class="photo-strip">
+  <div class="photo"><img src="images/reception.png" alt="Fairway Golf Club reception"></div>
+  <div class="photo"><img src="images/simulator-bay.png" alt="Simulator bay"></div>
+  <div class="photo"><img src="images/bar-lounge.png" alt="Bar and lounge"></div>
+</div>
+
+<!-- FEATURES -->
+<section class="features">
+  <p class="section-eyebrow">What We're Building</p>
+  <h2 class="section-title">Golf that actually makes you better.</h2>
+  <p class="section-sub">Every visit builds on the last. Your AI coach tracks your swing data, sets your goals, and has your session ready when you walk in the door.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <h3>AI Coaching Between Visits</h3>
+      <p>Your swing data follows you. The system remembers your tendencies, flags regressions, and queues your next focus area automatically.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⛳</div>
+      <h3>Premium Simulator Bays</h3>
+      <p>World-class simulators with real course data. Play Pebble Beach or dial in your 7-iron — in a space that feels like a club, not a warehouse.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🍺</div>
+      <h3>A Real Lounge</h3>
+      <p>Cold draft, leather chairs, a scorecard on the table. Bring your group. Stay after. This is the 19th hole you actually want.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <h3>Mobile Pop-Ups</h3>
+      <p>Fairway comes to you. Corporate events, golf outings, charity tournaments — we bring the simulator experience anywhere in Northern Virginia.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏆</div>
+      <h3>Member Competitions</h3>
+      <p>Weekly challenges, seasonal tournaments, and a live leaderboard. Bragging rights are included in every membership tier.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📈</div>
+      <h3>Track Your Progress</h3>
+      <p>Shot-by-shot history, handicap trends, and performance insights — all saved automatically so you can see how far you've come.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWCASE: AI CHECK-IN -->
+<div class="showcase">
+  <div class="showcase-img"><img src="images/ai-checkin.png" alt="AI-powered check-in experience"></div>
+  <div class="showcase-text">
+    <div class="inner">
+      <div class="eyebrow">The Experience</div>
+      <h2>It knows you when you walk in.</h2>
+      <div class="gold-line"></div>
+      <p>Tap in, and your bay is already set to your preferences. Your last session's notes are on screen. Your coach's recommendation for today is waiting. No setup. No friction. Just golf.</p>
+    </div>
   </div>
 </div>
 
-<footer>&copy; 2026 Fairway Golf Club LLC</footer>
+<!-- SHOWCASE: SOCIAL BAYS (reversed) -->
+<div class="showcase" style="direction: rtl;">
+  <div class="showcase-img" style="direction: ltr;"><img src="images/bays-social.png" alt="Social simulator bays"></div>
+  <div class="showcase-text" style="direction: ltr; background: #0F1828;">
+    <div class="inner">
+      <div class="eyebrow">For Groups</div>
+      <h2>The best way to spend a Friday night.</h2>
+      <div class="gold-line"></div>
+      <p>Book a bay for four, order a round, and compete on courses you'll never play in real life. Fairway is built for the moments that turn into stories.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE SECTION -->
+<div class="mobile-section">
+  <div class="showcase-text">
+    <div class="inner">
+      <div class="eyebrow">Mobile Experience</div>
+      <h2>We come to you.</h2>
+      <div class="gold-line"></div>
+      <p>Our branded mobile simulator unit brings Fairway to corporate outings, private events, and tournaments across Northern Virginia. Full simulator. Full experience. Anywhere.</p>
+    </div>
+  </div>
+  <div class="mobile-img"><img src="images/mobile.png" alt="Fairway mobile simulator"></div>
+</div>
+
+<!-- BOTTOM GALLERY -->
+<div class="gallery">
+  <div class="gallery-item"><img src="images/lounge-detail.png" alt="Club lounge"></div>
+  <div class="gallery-item"><img src="images/coaching.png" alt="Coaching session"></div>
+  <div class="gallery-item"><img src="images/bar.png" alt="The bar"></div>
+  <div class="gallery-item"><img src="images/exterior.png" alt="Club exterior"></div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">FAIRWAY GOLF CLUB</div>
+  <div class="footer-copy">&copy; 2026 Fairway Golf Club LLC &nbsp;·&nbsp; Northern Virginia</div>
+  <div class="footer-link"><a href="investors-portal/">Founding Investor Portal →</a></div>
+</footer>
 
 <script>
 document.getElementById('signupForm').addEventListener('submit', function(e) {
   e.preventDefault();
   const data = new FormData(this);
   fetch(this.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } })
-    .then(r => {
+    .then(() => {
       this.style.display = 'none';
       document.querySelector('.note').style.display = 'none';
       document.getElementById('successMsg').style.display = 'block';
