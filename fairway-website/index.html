@@ -131,12 +131,16 @@ footer {
   <p class="tagline">The First AI-Powered Golf Improvement Club</p>
   <p class="location">Lorton, Virginia</p>
 
-  <form class="signup-form" id="signupForm">
-    <input type="email" placeholder="Enter your email for updates" required id="emailInput">
+  <form class="signup-form" id="signupForm" action="https://formspree.io/f/russ@fairwaygolfclub.co" method="POST">
+    <input type="email" name="email" placeholder="Enter your email for updates" required id="emailInput">
     <button type="submit">Notify Me</button>
   </form>
   <p class="note">Be the first to know when we open. No spam.</p>
   <p class="success-msg" id="successMsg">You're on the list. We'll be in touch.</p>
+
+  <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(212,168,83,0.15);">
+    <a href="investors-portal/" style="font-size: 0.72rem; color: rgba(212,168,83,0.5); text-decoration: none; letter-spacing: 2px; text-transform: uppercase; transition: color 0.2s;" onmouseover="this.style.color='rgba(212,168,83,0.9)'" onmouseout="this.style.color='rgba(212,168,83,0.5)'">Founding Investor Portal →</a>
+  </div>
 </div>
 
 <footer>&copy; 2026 Fairway Golf Club LLC</footer>
@@ -144,12 +148,18 @@ footer {
 <script>
 document.getElementById('signupForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  const email = document.getElementById('emailInput').value;
-  // Store locally for now — replace with Formspree/Mailchimp later
-  console.log('Signup:', email);
-  this.style.display = 'none';
-  document.querySelector('.note').style.display = 'none';
-  document.getElementById('successMsg').style.display = 'block';
+  const data = new FormData(this);
+  fetch(this.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } })
+    .then(r => {
+      this.style.display = 'none';
+      document.querySelector('.note').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    })
+    .catch(() => {
+      this.style.display = 'none';
+      document.querySelector('.note').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    });
 });
 </script>
 </body>

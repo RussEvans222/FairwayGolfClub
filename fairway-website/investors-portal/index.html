@@ -6,289 +6,446 @@
 <title>Fairway Golf Club — Founding Investor Portal</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --gold: #D4A853;
-  --navy: #1B2A4A;
-  --dark: #0F1A2E;
-  --cream: #FAF8F5;
-  --gray: #64748B;
-  --green: #22C55E;
-  --card-bg: rgba(255,255,255,0.04);
-  --border: rgba(212,168,83,0.2);
+  --gold: #C9A84C;
+  --gold-light: #E2C06A;
+  --gold-dim: rgba(201,168,76,0.15);
+  --navy: #162035;
+  --dark: #0C1422;
+  --darker: #080F1A;
+  --cream: #FAF8F3;
+  --gray: #6B7A99;
+  --gray-light: rgba(255,255,255,0.55);
+  --green: #3DD68C;
+  --border: rgba(201,168,76,0.18);
+  --border-subtle: rgba(255,255,255,0.06);
+  --card: rgba(255,255,255,0.03);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
   font-family: 'Inter', -apple-system, sans-serif;
-  background: var(--dark);
+  background: var(--darker);
   color: white;
-  line-height: 1.6;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Header */
-header {
-  text-align: center;
-  padding: 4rem 2rem 3rem;
-  border-bottom: 1px solid var(--border);
+/* ─── NAV ─────────────────────────────────── */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(8,15,26,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
 }
-.logo-text {
+.nav-brand {
   font-family: 'Playfair Display', serif;
-  font-size: 2.5rem;
+  font-size: 1rem;
   color: var(--gold);
-  letter-spacing: 5px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
 }
-.badge {
-  display: inline-block;
-  margin-top: 1rem;
-  padding: 0.4rem 1.2rem;
-  background: rgba(212,168,83,0.1);
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 0.75rem;
+  color: var(--gray);
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--gold); }
+@media (max-width: 600px) { .nav-links { display: none; } }
+
+/* ─── HERO ────────────────────────────────── */
+.hero {
+  text-align: center;
+  padding: 5rem 2rem 4rem;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.35rem 1rem;
+  background: var(--gold-dim);
   border: 1px solid var(--border);
   border-radius: 50px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--gold);
 }
-
-/* Sections */
-section {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 3rem 2rem;
+.hero-eyebrow::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
 }
-section + section {
-  border-top: 1px solid rgba(255,255,255,0.05);
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+  letter-spacing: 2px;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--gold);
+}
+.hero-sub {
+  max-width: 520px;
+  margin: 0 auto 2.5rem;
+  font-size: 1rem;
+  color: var(--gray-light);
+  line-height: 1.7;
+}
+.hero-cta {
+  display: inline-block;
+  padding: 0.9rem 2.2rem;
+  background: var(--gold);
+  color: var(--darker);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background 0.2s, transform 0.15s;
+}
+.hero-cta:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+/* ─── SECTIONS ────────────────────────────── */
+.section {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+.section + .section {
+  border-top: 1px solid var(--border-subtle);
+}
+.eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 0.75rem;
 }
 h2 {
   font-family: 'Playfair Display', serif;
-  font-size: 1.8rem;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  line-height: 1.25;
+  margin-bottom: 1rem;
   color: white;
-  margin-bottom: 1rem;
 }
-h3 {
+.lead {
   font-size: 1rem;
-  color: var(--gold);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 1.5rem;
-  font-weight: 600;
-}
-p {
-  color: rgba(255,255,255,0.7);
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
+  color: var(--gray-light);
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+  max-width: 660px;
 }
 
-/* Video */
-.video-container {
+/* ─── VIDEO ───────────────────────────────── */
+.video-wrap {
   position: relative;
   width: 100%;
   padding-bottom: 56.25%;
   background: var(--navy);
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--border);
-  margin-bottom: 1rem;
+  margin: 2rem 0 0.75rem;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,168,76,0.08);
 }
-.video-container iframe,
-.video-container video {
+.video-wrap video {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  border: none;
+  object-fit: cover;
 }
-.video-placeholder {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.video-caption {
+  text-align: center;
+  font-size: 0.8rem;
   color: var(--gray);
-  font-size: 0.85rem;
-}
-.video-placeholder .play-icon {
-  font-size: 3rem;
-  color: var(--gold);
-  margin-bottom: 1rem;
+  letter-spacing: 0.5px;
 }
 
-/* Stats */
+/* ─── STAT GRID ───────────────────────────── */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
-  margin: 1.5rem 0;
+  margin: 2rem 0;
 }
 .stat-card {
-  background: var(--card-bg);
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 14px;
+  padding: 1.6rem 1.25rem;
   text-align: center;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.stat-card:hover {
+  border-color: rgba(201,168,76,0.4);
+  transform: translateY(-2px);
 }
 .stat-number {
-  font-size: 1.8rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--gold);
+  line-height: 1;
 }
 .stat-label {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--gray);
-  margin-top: 0.3rem;
+  margin-top: 0.4rem;
 }
 .stat-detail {
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.5);
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
   margin-top: 0.3rem;
 }
 
-/* Perks list */
-.perks-list {
-  list-style: none;
-  margin: 1.5rem 0;
-}
-.perks-list li {
-  padding: 1rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  display: flex;
-  align-items: flex-start;
+/* ─── TERMS BANNER ────────────────────────── */
+.terms-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  margin: 2rem 0;
 }
-.perks-list li:last-child { border-bottom: none; }
-.perk-icon {
-  width: 36px;
-  height: 36px;
-  background: rgba(212,168,83,0.1);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  flex-shrink: 0;
+.term-card {
+  background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.03));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.6rem 1.25rem;
+  text-align: center;
 }
-.perk-content strong {
-  display: block;
-  color: white;
-  font-size: 0.95rem;
-  margin-bottom: 0.2rem;
+.term-number {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: var(--gold);
 }
-.perk-content span {
+.term-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   color: var(--gray);
-  font-size: 0.85rem;
+  margin-top: 0.4rem;
+}
+.term-detail {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  margin-top: 0.3rem;
 }
 
-/* Timeline */
+/* ─── PERKS ───────────────────────────────── */
+.perks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+.perk-card {
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 1.4rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  transition: border-color 0.2s;
+}
+.perk-card:hover { border-color: var(--border); }
+.perk-icon {
+  width: 40px; height: 40px;
+  background: var(--gold-dim);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.perk-card strong {
+  display: block;
+  color: white;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+.perk-card span {
+  color: var(--gray);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* ─── TIMELINE ────────────────────────────── */
 .timeline {
-  margin: 1.5rem 0;
+  margin: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.tl-item {
+  display: grid;
+  grid-template-columns: 90px 1px 1fr;
+  gap: 0 1.5rem;
+  padding-bottom: 2rem;
   position: relative;
-  padding-left: 2rem;
 }
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 0.5rem;
-  top: 0.5rem;
-  bottom: 0.5rem;
-  width: 2px;
-  background: linear-gradient(to bottom, var(--gold), rgba(212,168,83,0.2));
+.tl-item:last-child { padding-bottom: 0; }
+.tl-date {
+  text-align: right;
+  padding-top: 0.1rem;
 }
-.timeline-item {
-  position: relative;
-  padding-bottom: 1.5rem;
-}
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: -1.65rem;
-  top: 0.5rem;
-  width: 10px;
-  height: 10px;
-  background: var(--gold);
-  border-radius: 50%;
-}
-.timeline-item .year {
-  font-size: 0.75rem;
-  color: var(--gold);
+.tl-date .when {
+  font-size: 0.7rem;
   font-weight: 700;
+  color: var(--gold);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-.timeline-item .event {
+.tl-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.tl-dot {
+  width: 12px; height: 12px;
+  background: var(--gold);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.2);
+}
+.tl-connector {
+  flex: 1;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--gold), rgba(201,168,76,0.1));
+  margin-top: 4px;
+}
+.tl-item:last-child .tl-connector { display: none; }
+.tl-body .event {
   color: white;
   font-weight: 600;
   font-size: 0.95rem;
+  margin-bottom: 0.2rem;
 }
-.timeline-item .detail {
+.tl-body .detail {
   color: var(--gray);
-  font-size: 0.85rem;
+  font-size: 0.83rem;
 }
 
-/* Form */
-.interest-form {
-  background: var(--card-bg);
+/* ─── RISK ────────────────────────────────── */
+.risk-list {
+  list-style: none;
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.risk-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: var(--gray-light);
+}
+.risk-list li::before {
+  content: '✓';
+  color: var(--green);
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+.risk-list strong { color: white; }
+
+/* ─── FORM ────────────────────────────────── */
+.form-wrap {
+  background: linear-gradient(135deg, rgba(201,168,76,0.06), rgba(201,168,76,0.02));
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 2.5rem;
+  border-radius: 20px;
+  padding: 3rem;
+  margin-top: 1.5rem;
 }
-.form-row {
-  margin-bottom: 1.2rem;
-}
+.form-row { margin-bottom: 1.25rem; }
 .form-row label {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: var(--gray);
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
+  margin-bottom: 0.45rem;
+  font-weight: 600;
 }
 .form-row input,
 .form-row select,
 .form-row textarea {
   width: 100%;
-  padding: 0.85rem 1rem;
-  background: rgba(255,255,255,0.03);
+  padding: 0.9rem 1rem;
+  background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px;
   color: white;
   font-size: 0.9rem;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
 .form-row input:focus,
 .form-row select:focus,
 .form-row textarea:focus {
   border-color: var(--gold);
+  background: rgba(201,168,76,0.05);
 }
 .form-row select { cursor: pointer; }
 .form-row select option { background: var(--dark); color: white; }
-.form-row textarea { resize: vertical; min-height: 80px; }
+.form-row textarea { resize: vertical; min-height: 90px; }
 .form-row input::placeholder,
-.form-row textarea::placeholder { color: rgba(255,255,255,0.3); }
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
+.form-row textarea::placeholder { color: rgba(255,255,255,0.25); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .submit-btn {
   width: 100%;
-  padding: 1rem;
+  padding: 1.1rem;
   background: var(--gold);
-  color: var(--dark);
+  color: var(--darker);
   border: none;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  letter-spacing: 0.5px;
+  transition: background 0.2s, transform 0.15s;
   margin-top: 0.5rem;
 }
-.submit-btn:hover { background: #E5B963; }
+.submit-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
 .form-note {
   text-align: center;
   font-size: 0.75rem;
@@ -298,65 +455,96 @@ p {
 .success-message {
   display: none;
   text-align: center;
-  padding: 2rem;
+  padding: 3rem 2rem;
+}
+.success-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
 }
 .success-message h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
   color: var(--green);
-  font-size: 1.2rem;
-  letter-spacing: 0;
-  text-transform: none;
+  margin-bottom: 0.75rem;
 }
-.success-message p {
-  color: rgba(255,255,255,0.7);
+.success-message p { color: var(--gray-light); }
+
+/* ─── DIVIDER ─────────────────────────────── */
+.gold-divider {
+  width: 48px;
+  height: 2px;
+  background: var(--gold);
+  margin: 1.25rem 0;
+  opacity: 0.6;
 }
 
-/* Footer */
+/* ─── FOOTER ──────────────────────────────── */
 footer {
   text-align: center;
-  padding: 2rem;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.2);
-  border-top: 1px solid rgba(255,255,255,0.05);
+  padding: 2.5rem 2rem;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.18);
+  border-top: 1px solid var(--border-subtle);
+  line-height: 1.9;
 }
 
-@media (max-width: 600px) {
-  .logo-text { font-size: 1.8rem; }
+/* ─── RESPONSIVE ──────────────────────────── */
+@media (max-width: 640px) {
+  .hero { padding: 3.5rem 1.5rem 3rem; }
+  .section { padding: 3rem 1.5rem; }
   .stat-grid { grid-template-columns: 1fr 1fr; }
+  .terms-grid { grid-template-columns: 1fr; }
+  .perks-grid { grid-template-columns: 1fr; }
   .two-col { grid-template-columns: 1fr; }
-  section { padding: 2rem 1.2rem; }
-  .interest-form { padding: 1.5rem; }
+  .form-wrap { padding: 1.75rem; }
+  .tl-item { grid-template-columns: 70px 1px 1fr; gap: 0 1rem; }
 }
 </style>
 </head>
 <body>
 
-<header>
-  <h1 class="logo-text">FAIRWAY GOLF CLUB</h1>
-  <div class="badge">Founding Investor Portal</div>
-</header>
+<nav>
+  <div class="nav-brand">Fairway Golf Club</div>
+  <ul class="nav-links">
+    <li><a href="#vision">Vision</a></li>
+    <li><a href="#opportunity">Opportunity</a></li>
+    <li><a href="#investment">Investment</a></li>
+    <li><a href="#perks">Perks</a></li>
+    <li><a href="#contact">Talk to Us</a></li>
+  </ul>
+</nav>
 
-<!-- VIDEO SECTION -->
-<section>
-  <h3>The Vision</h3>
-  <div class="video-container">
-    <!-- REPLACE: Swap the placeholder below with your actual video embed -->
-    <!-- For Loom: <iframe src="https://www.loom.com/embed/YOUR_VIDEO_ID" allowfullscreen></iframe> -->
-    <!-- For YouTube: <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" allowfullscreen></iframe> -->
-    <div class="video-placeholder">
-      <div class="play-icon">&#9654;</div>
-      <p>Video coming soon</p>
-      <p style="font-size: 0.75rem; margin-top: 0.5rem;">The full Fairway Golf Club explainer</p>
-    </div>
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Founding Investor Portal</div>
+  <h1>Golf, <em>reimagined.</em><br>A chance to be first.</h1>
+  <p class="hero-sub">We're building Northern Virginia's premier AI-powered indoor golf club — and we're inviting a small group of founding investors to make it happen.</p>
+  <a href="#contact" class="hero-cta">Express Interest</a>
+</div>
+
+<!-- VIDEO -->
+<div class="section" id="vision">
+  <div class="eyebrow">The Vision</div>
+  <h2>Watch the full story.</h2>
+  <div class="gold-divider"></div>
+  <p class="lead">Three minutes. Everything you need to know about what we're building, why here, why now — and why the numbers work.</p>
+
+  <div class="video-wrap">
+    <video controls preload="metadata" poster="">
+      <source src="fairway-tour.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
   </div>
-  <p style="font-size: 0.85rem; color: var(--gray); text-align: center;">3 min overview — what we're building, how it works, and why now.</p>
-</section>
+  <p class="video-caption">Fairway Golf Club — The Member-to-Investor Tour &nbsp;·&nbsp; ~3 min</p>
+</div>
 
-<!-- OPPORTUNITY OVERVIEW -->
-<section>
-  <h3>The Opportunity</h3>
-  <h2>The first AI-powered golf improvement club.</h2>
-  <p>Not another dark simulator rental. A premium members' club where technology remembers every shot, coaches you between visits, and builds a community of golfers who actually get better.</p>
-  <p>We're launching at Workhouse Arts Center in Lorton, Virginia — zero indoor golf competition within 15 miles, 580,000+ residents in the trade area, median household income over $130K.</p>
+<!-- OPPORTUNITY -->
+<div class="section" id="opportunity">
+  <div class="eyebrow">The Opportunity</div>
+  <h2>The first AI-powered golf improvement club in Northern Virginia.</h2>
+  <div class="gold-divider"></div>
+  <p class="lead">Not another dark simulator rental. A premium members' club where technology remembers every shot, coaches you between visits, and builds a community of golfers who actually get better.</p>
+  <p class="lead">We're launching at Workhouse Arts Center in Lorton — <strong style="color:white;">zero indoor golf competition within 15 miles</strong>, 580,000+ residents in the trade area, median household income over $130K.</p>
 
   <div class="stat-grid">
     <div class="stat-card">
@@ -380,199 +568,223 @@ footer {
       <div class="stat-detail">Within 15 min of location</div>
     </div>
   </div>
-</section>
+</div>
 
 <!-- INVESTMENT TERMS -->
-<section>
-  <h3>The Investment</h3>
+<div class="section" id="investment">
+  <div class="eyebrow">The Investment</div>
   <h2>What you put in. What you get back.</h2>
-  <p>We're raising $75K from 3–5 founding investors. This is <strong style="color: white;">not equity</strong> — I retain 100% ownership. Your investment is structured as a promissory note: you get your money back with interest, plus lifetime perks that make you an insider.</p>
+  <div class="gold-divider"></div>
+  <p class="lead">We're raising $75K from 3–5 founding investors. This is <strong style="color:white;">not equity</strong> — you retain no ownership risk. Your investment is a promissory note: your money back with interest, plus lifetime perks that make you a club insider.</p>
 
-  <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
-    <div class="stat-card">
-      <div class="stat-number">$15–25K</div>
-      <div class="stat-label">Your Investment</div>
+  <div class="terms-grid">
+    <div class="term-card">
+      <div class="term-number">$15–25K</div>
+      <div class="term-label">Your Investment</div>
+      <div class="term-detail">Per founding investor</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-number">8%</div>
-      <div class="stat-label">Annual Return</div>
-      <div class="stat-detail">Paid monthly</div>
+    <div class="term-card">
+      <div class="term-number">8%</div>
+      <div class="term-label">Annual Return</div>
+      <div class="term-detail">Paid monthly</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-number">5 Years</div>
-      <div class="stat-label">Full Repayment</div>
-      <div class="stat-detail">Secured by equipment</div>
+    <div class="term-card">
+      <div class="term-number">5 Yrs</div>
+      <div class="term-label">Full Repayment</div>
+      <div class="term-detail">Secured by equipment</div>
     </div>
   </div>
-</section>
+</div>
 
 <!-- PERKS -->
-<section>
-  <h3>Founding Investor Perks</h3>
-  <h2>More than a return. A membership.</h2>
+<div class="section" id="perks">
+  <div class="eyebrow">Founding Investor Perks</div>
+  <h2>More than a return. A membership for life.</h2>
+  <div class="gold-divider"></div>
 
-  <ul class="perks-list">
-    <li>
-      <div class="perk-icon">&#9733;</div>
-      <div class="perk-content">
+  <div class="perks-grid">
+    <div class="perk-card">
+      <div class="perk-icon">★</div>
+      <div>
         <strong>8% Annual Return, Paid Monthly</strong>
-        <span>Better than CDs, savings, or most bonds — without the volatility of the market.</span>
+        <span>Better than CDs or bonds — without market volatility.</span>
       </div>
-    </li>
-    <li>
-      <div class="perk-icon">&#9971;</div>
-      <div class="perk-content">
+    </div>
+    <div class="perk-card">
+      <div class="perk-icon">⛳</div>
+      <div>
         <strong>Lifetime Founding Membership</strong>
-        <span>Unlimited bay access during off-peak hours. Forever. Even after you're repaid.</span>
+        <span>Unlimited bay access during off-peak hours. Forever.</span>
       </div>
-    </li>
-    <li>
-      <div class="perk-icon">&#127942;</div>
-      <div class="perk-content">
+    </div>
+    <div class="perk-card">
+      <div class="perk-icon">🏆</div>
+      <div>
         <strong>Name on the Founders Wall</strong>
         <span>Permanent recognition in the club. You were here first.</span>
       </div>
-    </li>
-    <li>
-      <div class="perk-icon">&#128197;</div>
-      <div class="perk-content">
+    </div>
+    <div class="perk-card">
+      <div class="perk-icon">📅</div>
+      <div>
         <strong>Priority Booking</strong>
         <span>Reserve peak-hour bays 48 hours before the public.</span>
       </div>
-    </li>
-    <li>
-      <div class="perk-icon">&#127866;</div>
-      <div class="perk-content">
-        <strong>20% Off Everything</strong>
-        <span>Events, lessons, merchandise, beer. Always.</span>
+    </div>
+    <div class="perk-card">
+      <div class="perk-icon">🍺</div>
+      <div>
+        <strong>20% Off Everything. Always.</strong>
+        <span>Events, lessons, merchandise, and the bar tab.</span>
       </div>
-    </li>
-    <li>
-      <div class="perk-icon">&#128200;</div>
-      <div class="perk-content">
+    </div>
+    <div class="perk-card">
+      <div class="perk-icon">📈</div>
+      <div>
         <strong>First Right to Phase 2</strong>
-        <span>When we expand to 4 bays, you get the call before anyone else.</span>
+        <span>When we expand to 4 bays, you get the call first.</span>
       </div>
-    </li>
-  </ul>
-</section>
+    </div>
+  </div>
+</div>
 
 <!-- TIMELINE -->
-<section>
-  <h3>The Roadmap</h3>
+<div class="section" id="roadmap">
+  <div class="eyebrow">The Roadmap</div>
   <h2>Conservative, phased, low-risk.</h2>
+  <div class="gold-divider"></div>
 
   <div class="timeline">
-    <div class="timeline-item">
-      <div class="year">Now</div>
-      <div class="event">Securing space at Workhouse Arts Center</div>
-      <div class="detail">Lease negotiations, build-out planning</div>
+    <div class="tl-item">
+      <div class="tl-date"><span class="when">Now</span></div>
+      <div class="tl-line"><div class="tl-dot"></div><div class="tl-connector"></div></div>
+      <div class="tl-body">
+        <div class="event">Securing space at Workhouse Arts Center</div>
+        <div class="detail">Lease negotiations, build-out planning</div>
+      </div>
     </div>
-    <div class="timeline-item">
-      <div class="year">Month 1–3</div>
-      <div class="event">Build-out + launch (2 bays)</div>
-      <div class="detail">Founder keeps full-time career. Zero risk to investors' day-to-day.</div>
+    <div class="tl-item">
+      <div class="tl-date"><span class="when">Mo. 1–3</span></div>
+      <div class="tl-line"><div class="tl-dot"></div><div class="tl-connector"></div></div>
+      <div class="tl-body">
+        <div class="event">Build-out + launch (2 bays)</div>
+        <div class="detail">Founder keeps full-time career. Zero risk to investors' day-to-day.</div>
+      </div>
     </div>
-    <div class="timeline-item">
-      <div class="year">Month 3</div>
-      <div class="event">Cash-flow positive</div>
-      <div class="detail">Revenue covers all operating costs + loan payments.</div>
+    <div class="tl-item">
+      <div class="tl-date"><span class="when">Mo. 3</span></div>
+      <div class="tl-line"><div class="tl-dot"></div><div class="tl-connector"></div></div>
+      <div class="tl-body">
+        <div class="event">Cash-flow positive</div>
+        <div class="detail">Revenue covers all operating costs + loan payments.</div>
+      </div>
     </div>
-    <div class="timeline-item">
-      <div class="year">Year 2</div>
-      <div class="event">Investment fully recovered</div>
-      <div class="detail">Principal repaid. You keep the perks forever.</div>
+    <div class="tl-item">
+      <div class="tl-date"><span class="when">Year 2</span></div>
+      <div class="tl-line"><div class="tl-dot"></div><div class="tl-connector"></div></div>
+      <div class="tl-body">
+        <div class="event">Investment fully recovered</div>
+        <div class="detail">Principal repaid. You keep the perks forever.</div>
+      </div>
     </div>
-    <div class="timeline-item">
-      <div class="year">Year 3</div>
-      <div class="event">Expand to 4 bays</div>
-      <div class="detail">Proven demand. Phase 2 investors get first call.</div>
+    <div class="tl-item">
+      <div class="tl-date"><span class="when">Year 3</span></div>
+      <div class="tl-line"><div class="tl-dot"></div><div class="tl-connector"></div></div>
+      <div class="tl-body">
+        <div class="event">Expand to 4 bays</div>
+        <div class="detail">Proven demand. Phase 2 investors get first call.</div>
+      </div>
     </div>
   </div>
-</section>
+</div>
 
 <!-- RISK -->
-<section>
-  <h3>Risk Mitigation</h3>
+<div class="section" id="risk">
+  <div class="eyebrow">Risk Mitigation</div>
   <h2>Six layers of protection.</h2>
-  <p><strong style="color: var(--green);">Founder keeps his career</strong> — nobody quits anything. Purely additive income.</p>
-  <p><strong style="color: var(--green);">Cash-flow positive in 3 months</strong> — business feeds itself immediately.</p>
-  <p><strong style="color: var(--green);">Equipment-secured debt</strong> — simulators are resalable assets (~$40K recovery).</p>
-  <p><strong style="color: var(--green);">Automated operations</strong> — 2 part-time staff, not 10. Technology replaces headcount.</p>
-  <p><strong style="color: var(--green);">1 mile from home</strong> — personal management, no absentee risk.</p>
-  <p><strong style="color: var(--green);">Worst case</strong> — sell equipment, exit lease. Net loss ~$35K split across investors. Painful, not devastating.</p>
-</section>
+  <div class="gold-divider"></div>
 
-<!-- INTEREST FORM -->
-<section>
-  <h3>I'm Interested</h3>
+  <ul class="risk-list">
+    <li><div><strong>Founder keeps his career</strong> — nobody quits anything. Purely additive income.</div></li>
+    <li><div><strong>Cash-flow positive in 3 months</strong> — the business feeds itself immediately.</div></li>
+    <li><div><strong>Equipment-secured debt</strong> — simulators are resalable assets (~$40K recovery).</div></li>
+    <li><div><strong>Automated operations</strong> — 2 part-time staff, not 10. Technology replaces headcount.</div></li>
+    <li><div><strong>1 mile from home</strong> — personal management, no absentee risk.</div></li>
+    <li><div><strong>Worst case</strong> — sell equipment, exit lease. Net loss ~$35K split across investors. Painful, not devastating.</div></li>
+  </ul>
+</div>
+
+<!-- CONTACT FORM -->
+<div class="section" id="contact">
+  <div class="eyebrow">I'm Interested</div>
   <h2>Let's talk.</h2>
-  <p>No commitment yet. Just let me know you're interested and I'll reach out to discuss details, answer questions, and walk you through everything in person.</p>
+  <div class="gold-divider"></div>
+  <p class="lead">No commitment yet. Just let me know you're interested and I'll reach out to discuss details, answer questions, and walk you through everything in person.</p>
 
-  <form class="interest-form" id="interestForm">
-    <div class="two-col">
-      <div class="form-row">
-        <label>First Name</label>
-        <input type="text" name="first_name" required placeholder="Russell">
+  <div class="form-wrap">
+    <form id="interestForm" action="https://formspree.io/f/russ@fairwaygolfclub.co" method="POST">
+      <div class="two-col">
+        <div class="form-row">
+          <label>First Name</label>
+          <input type="text" name="first_name" required placeholder="First">
+        </div>
+        <div class="form-row">
+          <label>Last Name</label>
+          <input type="text" name="last_name" required placeholder="Last">
+        </div>
       </div>
       <div class="form-row">
-        <label>Last Name</label>
-        <input type="text" name="last_name" required placeholder="Evans">
+        <label>Email</label>
+        <input type="email" name="email" required placeholder="you@email.com">
       </div>
-    </div>
-    <div class="form-row">
-      <label>Email</label>
-      <input type="email" name="email" required placeholder="you@email.com">
-    </div>
-    <div class="form-row">
-      <label>Phone (optional)</label>
-      <input type="tel" name="phone" placeholder="(555) 123-4567">
-    </div>
-    <div class="form-row">
-      <label>Investment Range</label>
-      <select name="amount" required>
-        <option value="" disabled selected>Select an amount</option>
-        <option value="15000">$15,000</option>
-        <option value="20000">$20,000</option>
-        <option value="25000">$25,000</option>
-        <option value="other">Other amount</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <label>Questions or Comments (optional)</label>
-      <textarea name="message" placeholder="Anything you'd like to ask..."></textarea>
-    </div>
-    <button type="submit" class="submit-btn">I'm Interested — Let's Talk</button>
-    <p class="form-note">This is not a commitment. Just an expression of interest. We'll set up a time to chat.</p>
-  </form>
+      <div class="form-row">
+        <label>Phone (optional)</label>
+        <input type="tel" name="phone" placeholder="(555) 123-4567">
+      </div>
+      <div class="form-row">
+        <label>Investment Range</label>
+        <select name="amount" required>
+          <option value="" disabled selected>Select an amount</option>
+          <option value="15000">$15,000</option>
+          <option value="20000">$20,000</option>
+          <option value="25000">$25,000</option>
+          <option value="other">Other amount — let's discuss</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Questions or Comments (optional)</label>
+        <textarea name="message" placeholder="Anything you'd like to ask..."></textarea>
+      </div>
+      <button type="submit" class="submit-btn">I'm Interested — Let's Talk →</button>
+      <p class="form-note">This is not a commitment. Just an expression of interest. I'll follow up within 24 hours.</p>
+    </form>
 
-  <div class="success-message" id="successMsg">
-    <h3>Got it. I'll be in touch soon.</h3>
-    <p style="margin-top: 1rem;">Thanks for your interest. I'll reach out within 24 hours to set up a conversation.</p>
+    <div class="success-message" id="successMsg">
+      <div class="success-icon">✓</div>
+      <h3>Got it. I'll be in touch soon.</h3>
+      <p>Thanks for your interest. I'll reach out within 24 hours to set up a conversation.</p>
+    </div>
   </div>
-</section>
+</div>
 
 <footer>
-  <p>&copy; 2026 Fairway Golf Club LLC &nbsp;|&nbsp; Lorton, Virginia</p>
-  <p style="margin-top: 0.5rem;">This page is confidential and intended for invited investors only.</p>
+  <p>&copy; 2026 Fairway Golf Club LLC &nbsp;·&nbsp; Lorton, Virginia</p>
+  <p>This page is confidential and intended for invited investors only. Not a public offering.</p>
 </footer>
 
 <script>
 document.getElementById('interestForm').addEventListener('submit', function(e) {
   e.preventDefault();
-
-  // Collect form data
   const data = new FormData(this);
-  const entries = Object.fromEntries(data.entries());
-  console.log('Investor interest:', entries);
-
-  // TODO: Replace with Formspree, Netlify Forms, or your preferred handler
-  // Example Formspree: change form action to https://formspree.io/f/YOUR_FORM_ID
-  // Example: fetch('https://formspree.io/f/YOUR_ID', { method: 'POST', body: data });
-
-  // Show success
-  this.style.display = 'none';
-  document.getElementById('successMsg').style.display = 'block';
+  fetch(this.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } })
+    .then(r => {
+      this.style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    })
+    .catch(() => {
+      this.style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    });
 });
 </script>
 </body>
