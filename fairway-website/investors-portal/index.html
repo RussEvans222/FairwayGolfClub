@@ -48,12 +48,15 @@ nav {
   height: 56px;
 }
 .nav-brand {
-  font-family: 'Playfair Display', serif;
-  font-size: 1rem;
-  color: var(--gold);
-  letter-spacing: 4px;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
   text-decoration: none;
+}
+.nav-brand img {
+  height: 34px;
+  width: auto;
+  display: block;
+  filter: brightness(0) invert(1);
 }
 .nav-links {
   display: flex;
@@ -723,7 +726,7 @@ footer {
 <body>
 
 <nav>
-  <a href="../" class="nav-brand">Fairway Golf Club</a>
+  <a href="../" class="nav-brand"><img src="../images/logo-icon.png" alt="Fairway Golf Club"></a>
   <ul class="nav-links">
     <li><a href="#vision">Vision</a></li>
     <li><a href="#opportunity">Opportunity</a></li>
