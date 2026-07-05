@@ -538,6 +538,106 @@ h2 {
 }
 .success-message p { color: var(--gray-light); }
 
+/* ─── TIER TABLE ─────────────────────────── */
+.tier-table-wrap {
+  overflow-x: auto;
+  margin: 2rem 0 0.75rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+.tier-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 580px;
+}
+.tier-table thead tr {
+  background: rgba(255,255,255,0.02);
+}
+.tier-table th {
+  padding: 1.25rem 0.6rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  vertical-align: bottom;
+}
+.tier-table th.perk-col {
+  text-align: left;
+  width: 36%;
+}
+.tier-th-badge {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin: 0 auto 0.4rem;
+  width: fit-content;
+}
+.tier-th-badge.bronze   { background: rgba(205,127,50,0.2); color: #CD7F32; }
+.tier-th-badge.silver   { background: rgba(192,192,192,0.2); color: #C0C0C0; }
+.tier-th-badge.gold     { background: rgba(201,168,76,0.25); color: #C9A84C; }
+.tier-th-badge.platinum { background: rgba(229,228,226,0.2); color: #E5E4E2; }
+.tier-th-badge.angel    { background: rgba(99,179,237,0.2); color: #63B3ED; border: 1px solid rgba(99,179,237,0.35); }
+.tier-th-amount {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: white;
+  font-family: 'Playfair Display', serif;
+}
+.tier-table td {
+  padding: 0.65rem 0.6rem;
+  font-size: 0.8rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-subtle);
+  color: rgba(255,255,255,0.22);
+}
+.tier-table td:first-child {
+  text-align: left;
+  color: rgba(255,255,255,0.65);
+  font-size: 0.82rem;
+}
+.tier-table td.yes {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.tier-table td.val {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.tier-table th:last-child,
+.tier-table td:last-child {
+  background: rgba(99,179,237,0.035);
+}
+.tier-table td:last-child.yes {
+  color: #63B3ED;
+}
+.tier-table td:last-child.val {
+  color: rgba(99,179,237,0.9);
+}
+.tier-table .group-row td {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.7;
+  background: rgba(201,168,76,0.04);
+  padding: 0.5rem 0.6rem 0.35rem;
+  border-bottom: none;
+}
+.tier-table tbody tr:not(.group-row):hover {
+  background: rgba(255,255,255,0.012);
+}
+.tier-table-note {
+  font-size: 0.74rem;
+  color: var(--gray);
+  text-align: center;
+}
+
 /* ─── DIVIDER ─────────────────────────────── */
 .gold-divider {
   width: 48px;
@@ -690,56 +790,164 @@ footer {
   </div>
 </div>
 
-<!-- PERKS -->
+<!-- TIER COMPARISON -->
 <div class="section" id="perks">
-  <div class="eyebrow">Founding Investor Perks</div>
-  <h2>More than a return. A membership for life.</h2>
+  <div class="eyebrow">Founding Investor Tiers</div>
+  <h2>Choose your level. Keep the perks forever.</h2>
   <div class="gold-divider"></div>
+  <p class="lead">Every founding investor earns a return and lifetime benefits. The more you invest, the deeper your place in the club.</p>
 
-  <div class="perks-grid">
-    <div class="perk-card">
-      <div class="perk-icon">★</div>
-      <div>
-        <strong>8% Annual Return, Paid Monthly</strong>
-        <span>Better than CDs or bonds — without market volatility.</span>
-      </div>
-    </div>
-    <div class="perk-card">
-      <div class="perk-icon">⛳</div>
-      <div>
-        <strong>Lifetime Founding Membership</strong>
-        <span>Unlimited bay access during off-peak hours. Forever.</span>
-      </div>
-    </div>
-    <div class="perk-card">
-      <div class="perk-icon">🏆</div>
-      <div>
-        <strong>Name on the Founders Wall</strong>
-        <span>Permanent recognition in the club. You were here first.</span>
-      </div>
-    </div>
-    <div class="perk-card">
-      <div class="perk-icon">📅</div>
-      <div>
-        <strong>Priority Booking</strong>
-        <span>Reserve peak-hour bays 48 hours before the public.</span>
-      </div>
-    </div>
-    <div class="perk-card">
-      <div class="perk-icon">🍺</div>
-      <div>
-        <strong>20% Off Everything. Always.</strong>
-        <span>Events, lessons, merchandise, and the bar tab.</span>
-      </div>
-    </div>
-    <div class="perk-card">
-      <div class="perk-icon">📈</div>
-      <div>
-        <strong>First Right to Phase 2</strong>
-        <span>When we expand to 4 bays, you get the call first.</span>
-      </div>
-    </div>
+  <div class="tier-table-wrap">
+    <table class="tier-table">
+      <thead>
+        <tr>
+          <th class="perk-col"></th>
+          <th>
+            <span class="tier-th-badge bronze">Bronze</span>
+            <span class="tier-th-amount">$5K+</span>
+          </th>
+          <th>
+            <span class="tier-th-badge silver">Silver</span>
+            <span class="tier-th-amount">$15K+</span>
+          </th>
+          <th>
+            <span class="tier-th-badge gold">Gold</span>
+            <span class="tier-th-amount">$25K+</span>
+          </th>
+          <th>
+            <span class="tier-th-badge platinum">Platinum</span>
+            <span class="tier-th-amount">$50K+</span>
+          </th>
+          <th>
+            <span class="tier-th-badge angel">Angel</span>
+            <span class="tier-th-amount">$200K+</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-row"><td colspan="6">Financial Return</td></tr>
+        <tr>
+          <td>Annual return, paid monthly</td>
+          <td class="val">8%</td>
+          <td class="val">8%</td>
+          <td class="val">8%</td>
+          <td class="val">8%</td>
+          <td class="val">8%</td>
+        </tr>
+        <tr>
+          <td>First right to Phase 2 investment</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+
+        <tr class="group-row"><td colspan="6">Club Access</td></tr>
+        <tr>
+          <td>Opening night invitation</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td>Early access to membership</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td>Complimentary membership year(s)</td>
+          <td>—</td>
+          <td class="val">1 yr</td>
+          <td class="val">1 yr</td>
+          <td class="val">1 yr</td>
+          <td class="val">2 yrs</td>
+        </tr>
+        <tr>
+          <td>Lifetime off-peak hours (unlimited)</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td>Early membership for guests</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td class="val">3 guests</td>
+        </tr>
+
+        <tr class="group-row"><td colspan="6">Booking & Events</td></tr>
+        <tr>
+          <td>Advance booking window</td>
+          <td>—</td>
+          <td class="val">48 hrs</td>
+          <td class="val">48 hrs</td>
+          <td class="val">48 hrs</td>
+          <td class="val">72 hrs</td>
+        </tr>
+        <tr>
+          <td>Quarterly private bay reservation</td>
+          <td>—</td>
+          <td>—</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="val">Unlimited</td>
+        </tr>
+        <tr>
+          <td>Private lounge access for events</td>
+          <td>—</td>
+          <td>—</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td>Annual appreciation event</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td class="yes">✓</td>
+          <td class="val">Private</td>
+        </tr>
+
+        <tr class="group-row"><td colspan="6">Recognition</td></tr>
+        <tr>
+          <td>Recognition in opening materials</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td>Name on permanent wall plaque</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td>Club naming rights conversation</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td class="yes">✓</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
+  <p class="tier-table-note">All investors receive an 8% annual return on a 5-year promissory note, secured by equipment. Angel Investor — one spot available.</p>
 </div>
 
 <!-- TIMELINE -->
