@@ -506,22 +506,5 @@ footer {
   <div class="footer-link"><a href="investors-portal/">Founding Investor Portal →</a></div>
 </footer>
 
-<script>
-document.getElementById('signupForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const data = new FormData(this);
-  fetch(this.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } })
-    .then(() => {
-      this.style.display = 'none';
-      document.querySelector('.note').style.display = 'none';
-      document.getElementById('successMsg').style.display = 'block';
-    })
-    .catch(() => {
-      this.style.display = 'none';
-      document.querySelector('.note').style.display = 'none';
-      document.getElementById('successMsg').style.display = 'block';
-    });
-});
-</script>
 </body>
 </html>

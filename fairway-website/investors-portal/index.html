@@ -820,20 +820,5 @@ footer {
   <p>This page is confidential and intended for invited investors only. Not a public offering.</p>
 </footer>
 
-<script>
-document.getElementById('interestForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const data = new FormData(this);
-  fetch(this.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } })
-    .then(r => {
-      this.style.display = 'none';
-      document.getElementById('successMsg').style.display = 'block';
-    })
-    .catch(() => {
-      this.style.display = 'none';
-      document.getElementById('successMsg').style.display = 'block';
-    });
-});
-</script>
 </body>
 </html>
