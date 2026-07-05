@@ -137,13 +137,19 @@ sf project deploy start --source-dir force-app/main/default/staticresources --ta
 
 ---
 
+## Architecture Decision: Two Separate Frontends
+
+- **`fairwaygolfclub.co`** (Cloudflare Pages) — public marketing site, lead capture, investor portal. This is the permanent public frontend. No plans to replace it with Experience Cloud.
+- **Experience Cloud site** (`Fairway_Golf_Club1`) — will be the **member-facing end user portal** once the club opens. Separate purpose entirely — member bookings, AI coaching data, session history, etc. The 6 LWC components were built to mirror the marketing site visually but will serve the member portal use case.
+
+---
+
 ## Pending / Next Steps
 
 - [ ] **Cloudflare Stream** — Upload `Fairway_Golf_Club_-_The_Member-to-Investor_Tour.mp4` to Cloudflare Stream, get embed URL, wire into `investors-portal/index.html` video placeholder section
-- [ ] **Experience Builder** — Wire the 6 LWC components into the Fairway Golf Club Experience Site pages
 - [ ] **Lead assignment rule** — Auto-assign incoming web leads to Russell + trigger email alert
 - [ ] **Web-to-Lead on homepage** — Consider adding first/last name fields so leads don't come in as "Unknown"
-- [ ] **Images** — Further image improvements flagged as in-progress
+- [ ] **Experience Cloud member portal** — Design and build the member-facing portal (bookings, coaching data, session history) — separate from the marketing site
 
 ---
 
