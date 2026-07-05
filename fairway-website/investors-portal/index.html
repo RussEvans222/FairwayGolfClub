@@ -735,7 +735,10 @@ footer {
   <p class="lead">No commitment yet. Just let me know you're interested and I'll reach out to discuss details, answer questions, and walk you through everything in person.</p>
 
   <div class="form-wrap">
-    <form id="interestForm" action="https://formspree.io/f/russ@fairwaygolfclub.co" method="POST">
+    <form id="interestForm" action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8" method="POST">
+      <input type="hidden" name="oid" value="00Dak000011rATC">
+      <input type="hidden" name="retURL" value="https://fairwaygolfclub.co/investors-portal/?thanks=1">
+      <input type="hidden" name="lead_source" value="Website - Investor Portal">
       <div class="two-col">
         <div class="form-row">
           <label>First Name</label>
@@ -756,29 +759,35 @@ footer {
       </div>
       <div class="form-row">
         <label>Investment Range</label>
-        <select name="amount" required>
+        <select name="00Nak000002XXXX" id="investment_range" required>
           <option value="" disabled selected>Select an amount</option>
-          <option value="15000">$15,000</option>
-          <option value="20000">$20,000</option>
-          <option value="25000">$25,000</option>
-          <option value="other">Other amount — let's discuss</option>
+          <option value="$15,000">$15,000</option>
+          <option value="$20,000">$20,000</option>
+          <option value="$25,000">$25,000</option>
+          <option value="Other - Let's Discuss">Other amount — let's discuss</option>
         </select>
       </div>
       <div class="form-row">
         <label>Questions or Comments (optional)</label>
-        <textarea name="message" placeholder="Anything you'd like to ask..."></textarea>
+        <textarea name="description" placeholder="Anything you'd like to ask..."></textarea>
       </div>
       <button type="submit" class="submit-btn">I'm Interested — Let's Talk →</button>
       <p class="form-note">This is not a commitment. Just an expression of interest. I'll follow up within 24 hours.</p>
     </form>
 
-    <div class="success-message" id="successMsg">
+    <div class="success-message" id="successMsg" style="display:none">
       <div class="success-icon">✓</div>
       <h3>Got it. I'll be in touch soon.</h3>
       <p>Thanks for your interest. I'll reach out within 24 hours to set up a conversation.</p>
     </div>
   </div>
 </div>
+<script>
+  if(window.location.search.includes('thanks=1')){
+    document.getElementById('interestForm').style.display='none';
+    document.getElementById('successMsg').style.display='block';
+  }
+</script>
 
 <footer>
   <p>&copy; 2026 Fairway Golf Club LLC &nbsp;·&nbsp; Lorton, Virginia</p>
