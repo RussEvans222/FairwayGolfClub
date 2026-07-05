@@ -910,6 +910,14 @@ footer {
           <td class="val">8%</td>
         </tr>
         <tr>
+          <td>5-yr interest (est. value)</td>
+          <td class="val">~$2K</td>
+          <td class="val">~$6K</td>
+          <td class="val">~$10K</td>
+          <td class="val">~$20K</td>
+          <td class="val">~$80K</td>
+        </tr>
+        <tr>
           <td>First right to Phase 2 investment</td>
           <td class="yes">✓</td>
           <td class="yes">✓</td>
@@ -928,26 +936,26 @@ footer {
           <td class="yes">✓</td>
         </tr>
         <tr>
-          <td>Early access to membership</td>
-          <td class="yes">✓</td>
-          <td class="yes">✓</td>
-          <td class="yes">✓</td>
-          <td class="yes">✓</td>
-          <td class="yes">✓</td>
-        </tr>
-        <tr>
           <td>Complimentary membership year(s)</td>
-          <td>—</td>
           <td class="val">1 yr</td>
-          <td class="val">1 yr</td>
-          <td class="val">1 yr</td>
+          <td class="val">3 yrs</td>
+          <td class="val">2 yrs</td>
+          <td class="val">2 yrs</td>
           <td class="val">2 yrs</td>
         </tr>
         <tr>
-          <td>Lifetime off-peak hours (unlimited)</td>
+          <td>Lifetime off-peak bay access</td>
           <td>—</td>
           <td>—</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td>20% off events, lessons &amp; bar</td>
           <td>—</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
           <td class="yes">✓</td>
           <td class="yes">✓</td>
         </tr>
@@ -963,7 +971,7 @@ footer {
         <tr class="group-row"><td colspan="6">Booking & Events</td></tr>
         <tr>
           <td>Advance booking window</td>
-          <td>—</td>
+          <td class="val">24 hrs</td>
           <td class="val">48 hrs</td>
           <td class="val">48 hrs</td>
           <td class="val">48 hrs</td>
@@ -991,7 +999,7 @@ footer {
           <td>—</td>
           <td>—</td>
           <td class="yes">✓</td>
-          <td class="val">Private</td>
+          <td class="val">Private 1-on-1</td>
         </tr>
 
         <tr class="group-row"><td colspan="6">Recognition</td></tr>
@@ -1213,15 +1221,16 @@ footer {
       name: 'Angel Investor',
       cls: 'tier-angel',
       perks: [
-        'Full club naming rights conversation — you made this possible',
+        'Club naming rights conversation — you made this possible',
         'Name on permanent wall plaque at the club',
-        'Lifetime off-peak hours (unlimited, complimentary)',
-        'Annual private appreciation event — just you and the founder',
+        'Lifetime off-peak bay access (unlimited, complimentary) — your 8% return covers 44+ years of membership',
+        '20% off everything, always — events, lessons, bar tab',
+        'Annual private appreciation event with the founder',
         'Unlimited private bay reservations (subject to availability)',
         'Private lounge access for all events',
         'Preferred 72-hour advance booking window',
-        'Two complimentary membership years',
-        'Early access to membership for up to 3 guests',
+        'Two complimentary full membership years',
+        'Early membership access for up to 3 guests',
         'Recognition in all opening materials',
         'Opening night VIP invitation'
       ],
@@ -1233,56 +1242,58 @@ footer {
       cls: 'tier-platinum',
       perks: [
         'Name on permanent wall plaque at the club',
-        'Lifetime off-peak hours (unlimited, complimentary)',
+        'Lifetime off-peak bay access (unlimited, complimentary) — your 8% return covers 11+ years of membership',
+        '20% off everything, always — events, lessons, bar tab',
         'Annual Platinum appreciation event',
         'Quarterly private bay reservation',
-        'Private lounge access for events',
+        'Private lounge access for all events',
         'Preferred 48-hour advance booking window',
-        'One complimentary membership year',
-        'Early access to membership',
+        'Two complimentary full membership years',
         'Recognition in all opening materials',
         'Opening night invitation'
       ],
-      note: 'Our highest standard tier. Upgrade to Angel Investor at $200,000 to cover the full buildout — one spot, extraordinary recognition.'
+      note: 'Your 8% return over 5 years = $20,000 — equivalent to 11+ years of membership. We give you lifetime.'
     },
     {
       min: 25000,
       name: 'Gold',
       cls: 'tier-gold',
       perks: [
+        'Lifetime off-peak bay access (unlimited, complimentary) — your 8% return covers 5+ years of membership',
+        '20% off everything, always — events, lessons, bar tab',
         'Quarterly private bay reservation',
         'Private lounge access for events',
         'Preferred 48-hour advance booking window',
-        'One complimentary membership year',
-        'Early access to membership',
+        'Two complimentary full membership years',
         'Recognition in all opening materials',
         'Opening night invitation'
       ],
-      note: 'Upgrade to Platinum at $50,000 to add lifetime off-peak hours and name on plaque.'
+      note: 'Your 8% return over 5 years = $10,000 — equivalent to 5+ years of membership. We give you lifetime off-peak.'
     },
     {
       min: 15000,
       name: 'Silver',
       cls: 'tier-silver',
       perks: [
+        '3 complimentary full membership years — your 8% return over 5 years covers this almost exactly',
+        '20% off everything, always — events, lessons, bar tab',
         'Preferred 48-hour advance booking window',
-        'One complimentary membership year',
-        'Early access to membership',
         'Recognition in all opening materials',
         'Opening night invitation'
       ],
-      note: 'Upgrade to Gold at $25,000 for private bay reservations and lounge access.'
+      note: 'Your 8% return over 5 years = $6,000 — nearly 3.5 years of membership. We give you 3 years, front-loaded.'
     },
     {
       min: 5000,
       name: 'Bronze',
       cls: 'tier-bronze',
       perks: [
-        'Early access to membership',
+        '1 complimentary full membership year — your 8% return over 5 years more than covers it',
+        'Preferred 24-hour advance booking window',
         'Recognition in all opening materials',
         'Opening night invitation'
       ],
-      note: 'Upgrade to Silver at $15,000 for a complimentary membership year and priority booking.'
+      note: 'Your 8% return over 5 years = $2,000 — more than a full year of membership. We give it to you upfront.'
     }
   ];
 
