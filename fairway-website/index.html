@@ -32,7 +32,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 5rem 2rem 2rem;
+  padding: 6.5rem 2rem 2rem;
   overflow: hidden;
 }
 .hero-bg {
@@ -102,9 +102,28 @@ body {
 }
 .signup-form {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
   max-width: 420px;
   margin: 0 auto 0.75rem;
+}
+.signup-row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+.recaptcha-wrap {
+  height: 66px;
+  width: 258px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.recaptcha-wrap .g-recaptcha {
+  transform: scale(0.85);
+  transform-origin: center;
 }
 .signup-form input {
   flex: 1;
@@ -344,7 +363,7 @@ body {
   left: 0;
   right: 0;
   z-index: 200;
-  height: 52px;
+  height: 84px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -365,7 +384,7 @@ body {
   text-decoration: none;
 }
 .top-nav .brand img {
-  height: 34px;
+  height: 68px;
   width: auto;
   display: block;
   filter: brightness(0) invert(1);
@@ -427,7 +446,7 @@ footer {
   .gallery { grid-template-columns: repeat(2, 1fr); height: auto; }
   .gallery-item { height: 180px; }
   .footer { flex-direction: column; gap: 1rem; text-align: center; }
-  .signup-form { flex-direction: column; }
+  .signup-row { flex-direction: column; }
 }
 </style>
 <script src="https://www.google.com/recaptcha/api.js"></script>
@@ -477,9 +496,13 @@ footer {
       <input type="hidden" name="last_name" value="Unknown">
       <input type="hidden" name="company" value="Individual">
       <input type="hidden" name="00Nak00004DAbhV" value="General Interest">
-      <input type="email" name="email" placeholder="Your email — be first to know" required id="emailInput">
-      <button type="submit">Notify Me</button>
-      <div class="g-recaptcha" data-sitekey="6LeXE0YtAAAAABNLw7oPp_gT8umYKYmEuxSKHMC3" style="margin-top:1rem;transform:scale(0.85);transform-origin:center;"></div>
+      <div class="signup-row">
+        <input type="email" name="email" placeholder="Your email — be first to know" required id="emailInput">
+        <button type="submit">Notify Me</button>
+      </div>
+      <div class="recaptcha-wrap">
+        <div class="g-recaptcha" data-sitekey="6LeXE0YtAAAAABNLw7oPp_gT8umYKYmEuxSKHMC3"></div>
+      </div>
     </form>
     <p class="note">No spam. Just the opening date when it's set.</p>
     <p class="success-msg" id="successMsg" style="display:none">You're on the list. We'll be in touch.</p>
