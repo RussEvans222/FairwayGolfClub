@@ -771,13 +771,22 @@ footer {
         <input type="tel" name="phone" placeholder="(555) 123-4567">
       </div>
       <div class="form-row">
-        <label>Investment Range</label>
-        <select id="investment_range" required>
+        <label>I am interested in</label>
+        <select name="Interest_Type__c" id="interest_type" required onchange="toggleInvestment(this.value)">
+          <option value="" disabled selected>Select one</option>
+          <option value="Founding Investor">Becoming a Founding Investor</option>
+          <option value="Future Member">Joining as a Member</option>
+          <option value="General Interest">Just staying in the loop</option>
+        </select>
+      </div>
+      <div class="form-row" id="investmentRow" style="display:none">
+        <label>Investment Amount</label>
+        <select name="Investment_Interest__c" id="investment_range">
           <option value="" disabled selected>Select an amount</option>
-          <option value="$15,000">$15,000</option>
-          <option value="$20,000">$20,000</option>
-          <option value="$25,000">$25,000</option>
-          <option value="Other - Let's Discuss">Other amount — let's discuss</option>
+          <option value="15000">$15,000</option>
+          <option value="20000">$20,000</option>
+          <option value="25000">$25,000</option>
+          <option value="50000">$50,000+</option>
         </select>
       </div>
       <div class="form-row">
@@ -801,11 +810,9 @@ footer {
     document.getElementById('interestForm').style.display='none';
     document.getElementById('successMsg').style.display='block';
   }
-  document.getElementById('interestForm').addEventListener('submit', function() {
-    var range = document.getElementById('investment_range').value;
-    var desc  = document.getElementById('descriptionField');
-    desc.value = ('Investment Range: ' + range + (desc.value ? '\n\n' + desc.value : ''));
-  });
+  function toggleInvestment(val) {
+    document.getElementById('investmentRow').style.display = (val === 'Founding Investor') ? 'flex' : 'none';
+  }
 </script>
 
 <footer>
