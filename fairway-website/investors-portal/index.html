@@ -452,6 +452,73 @@ h2 {
   color: var(--gray);
   margin-top: 1rem;
 }
+/* Tier card */
+.tier-card {
+  display: none;
+  margin-top: 0.75rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid rgba(201,168,76,0.3);
+  background: rgba(201,168,76,0.06);
+  animation: fadeIn 0.25s ease;
+}
+.tier-card.show { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+.tier-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 0.65rem;
+}
+.tier-bronze .tier-badge { background: rgba(205,127,50,0.2); color: #CD7F32; }
+.tier-silver .tier-badge { background: rgba(192,192,192,0.2); color: #C0C0C0; }
+.tier-gold   .tier-badge { background: rgba(201,168,76,0.25); color: #C9A84C; }
+.tier-platinum .tier-badge { background: rgba(229,228,226,0.2); color: #E5E4E2; }
+.tier-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.tier-card ul li {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.7);
+  padding: 0.2rem 0;
+  padding-left: 1.1rem;
+  position: relative;
+  line-height: 1.5;
+}
+.tier-card ul li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  font-size: 0.75rem;
+}
+.tier-card .tier-note {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 0.6rem;
+  font-style: italic;
+}
+.amount-prefix {
+  position: relative;
+}
+.amount-prefix span {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,0.4);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+.amount-prefix input {
+  padding-left: 1.75rem !important;
+}
 .success-message {
   display: none;
   text-align: center;
@@ -781,13 +848,16 @@ footer {
       </div>
       <div class="form-row" id="investmentRow" style="display:none">
         <label>Investment Amount</label>
-        <select name="00Nak00004DAbhW" id="investment_range">
-          <option value="" disabled selected>Select an amount</option>
-          <option value="15000">$15,000</option>
-          <option value="20000">$20,000</option>
-          <option value="25000">$25,000</option>
-          <option value="50000">$50,000+</option>
-        </select>
+        <div class="amount-prefix">
+          <span>$</span>
+          <input type="number" name="00Nak00004DAbhW" id="investment_amount" min="1" step="1000" placeholder="Enter amount" oninput="updateTier(this.value)">
+        </div>
+        <input type="hidden" name="00Nak00004DB8lV" id="investor_tier_field">
+        <div class="tier-card" id="tierCard">
+          <div class="tier-badge" id="tierBadge"></div>
+          <ul id="tierPerks"></ul>
+          <p class="tier-note" id="tierNote"></p>
+        </div>
       </div>
       <div class="form-row">
         <label>Questions or Comments (optional)</label>
@@ -810,8 +880,106 @@ footer {
     document.getElementById('interestForm').style.display='none';
     document.getElementById('successMsg').style.display='block';
   }
+
   function toggleInvestment(val) {
-    document.getElementById('investmentRow').style.display = (val === 'Founding Investor') ? 'flex' : 'none';
+    var row = document.getElementById('investmentRow');
+    row.style.display = (val === 'Founding Investor') ? 'block' : 'none';
+    if (val !== 'Founding Investor') {
+      document.getElementById('tierCard').classList.remove('show');
+      document.getElementById('investment_amount').value = '';
+    }
+  }
+
+  var TIERS = [
+    {
+      min: 50000,
+      name: 'Platinum',
+      cls: 'tier-platinum',
+      perks: [
+        'Name on permanent wall plaque at the club',
+        'Lifetime off-peak hours (unlimited, complimentary)',
+        'Annual Platinum appreciation event',
+        'Quarterly private bay reservation',
+        'Private lounge access for events',
+        'Preferred 48-hour advance booking window',
+        'One complimentary membership year',
+        'Early access to membership',
+        'Recognition in all opening materials',
+        'Opening night invitation'
+      ],
+      note: 'Our highest level of recognition — reserved for Charter Founders.'
+    },
+    {
+      min: 25000,
+      name: 'Gold',
+      cls: 'tier-gold',
+      perks: [
+        'Quarterly private bay reservation',
+        'Private lounge access for events',
+        'Preferred 48-hour advance booking window',
+        'One complimentary membership year',
+        'Early access to membership',
+        'Recognition in all opening materials',
+        'Opening night invitation'
+      ],
+      note: 'Upgrade to Platinum at $50,000 to add lifetime off-peak hours and name on plaque.'
+    },
+    {
+      min: 15000,
+      name: 'Silver',
+      cls: 'tier-silver',
+      perks: [
+        'Preferred 48-hour advance booking window',
+        'One complimentary membership year',
+        'Early access to membership',
+        'Recognition in all opening materials',
+        'Opening night invitation'
+      ],
+      note: 'Upgrade to Gold at $25,000 for private bay reservations and lounge access.'
+    },
+    {
+      min: 5000,
+      name: 'Bronze',
+      cls: 'tier-bronze',
+      perks: [
+        'Early access to membership',
+        'Recognition in all opening materials',
+        'Opening night invitation'
+      ],
+      note: 'Upgrade to Silver at $15,000 for a complimentary membership year and priority booking.'
+    }
+  ];
+
+  function updateTier(val) {
+    var amount = parseInt(val, 10);
+    var card   = document.getElementById('tierCard');
+    var badge  = document.getElementById('tierBadge');
+    var perks  = document.getElementById('tierPerks');
+    var note   = document.getElementById('tierNote');
+
+    if (!amount || amount < 1) { card.classList.remove('show'); return; }
+
+    var tier = null;
+    for (var i = 0; i < TIERS.length; i++) {
+      if (amount >= TIERS[i].min) { tier = TIERS[i]; break; }
+    }
+
+    var tierField = document.getElementById('investor_tier_field');
+
+    if (!tier) {
+      card.className = 'tier-card show';
+      badge.textContent = 'No Tier';
+      perks.innerHTML = '';
+      note.textContent = 'Any investment is welcome — perks begin at $5,000.';
+      tierField.value = 'Below Threshold';
+      return;
+    }
+
+    card.className = 'tier-card show ' + tier.cls;
+    badge.textContent = tier.name;
+    perks.innerHTML = tier.perks.map(function(p){ return '<li>' + p + '</li>'; }).join('');
+    note.textContent = tier.note;
+    tierField.value = tier.name;
   }
 </script>
 
