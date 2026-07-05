@@ -57,13 +57,27 @@ body {
   margin-bottom: 2rem;
   opacity: 0.85;
 }
-.logo-text {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(2.8rem, 8vw, 5rem);
-  color: white;
-  letter-spacing: 6px;
-  line-height: 1.05;
+.hero-logo-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
   margin-bottom: 0.75rem;
+}
+.hero-logo-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -22% -12%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.16), rgba(255,255,255,0) 70%);
+  filter: blur(6px);
+  z-index: 0;
+}
+.hero-logo {
+  position: relative;
+  z-index: 1;
+  width: min(480px, 85vw);
+  height: auto;
+  display: block;
+  filter: brightness(0) invert(1);
 }
 .divider {
   width: 60px;
@@ -346,12 +360,15 @@ body {
   border-color: rgba(255,255,255,0.05);
 }
 .top-nav .brand {
-  font-family: 'Playfair Display', serif;
-  font-size: 0.88rem;
-  color: var(--gold);
-  letter-spacing: 4px;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
   text-decoration: none;
+}
+.top-nav .brand img {
+  height: 34px;
+  width: auto;
+  display: block;
+  filter: brightness(0) invert(1);
 }
 .top-nav .investor-link {
   font-size: 0.7rem;
@@ -430,7 +447,7 @@ footer {
 
 <!-- TOP NAV -->
 <nav class="top-nav" id="topNav">
-  <a href="/" class="brand">Fairway Golf Club</a>
+  <a href="/" class="brand"><img src="images/logo-icon.png" alt="Fairway Golf Club"></a>
   <a href="investors-portal/" class="investor-link">Founding Investors</a>
 </nav>
 <script>
@@ -445,7 +462,9 @@ footer {
   <div class="hero-bg"></div>
   <div class="hero-content">
     <p class="coming-soon">Coming 2027</p>
-    <h1 class="logo-text">FAIRWAY<br>GOLF CLUB</h1>
+    <div class="hero-logo-wrap">
+      <img src="images/logo-text.png" alt="Fairway Golf Club" class="hero-logo">
+    </div>
     <div class="divider"></div>
     <p class="tagline">The First AI-Powered Golf Improvement Club</p>
     <p class="location">Northern Virginia</p>
