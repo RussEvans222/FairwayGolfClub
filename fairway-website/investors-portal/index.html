@@ -638,6 +638,43 @@ h2 {
   text-align: center;
 }
 
+/* ─── RENDERING NOTICE ───────────────────── */
+.rendering-notice {
+  text-align: center;
+  padding: 0.55rem 1.5rem;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.5px;
+  background: rgba(0,0,0,0.25);
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ─── DISCLAIMER BOX ─────────────────────── */
+.disclaimer-box {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 2rem 2.5rem;
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.8;
+}
+.disclaimer-box strong {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 0.75rem;
+}
+.disclaimer-box a {
+  color: rgba(201,168,76,0.55);
+  text-decoration: none;
+}
+.disclaimer-box a:hover { color: var(--gold); }
+
 /* ─── DIVIDER ─────────────────────────────── */
 .gold-divider {
   width: 48px;
@@ -702,6 +739,9 @@ footer {
   <p class="hero-sub">We're building Northern Virginia's premier AI-powered indoor golf club — and we're inviting a small group of founding investors to make it happen.</p>
   <a href="#contact" class="hero-cta">Express Interest</a>
 </div>
+
+<!-- RENDERING NOTICE -->
+<div class="rendering-notice">All images are conceptual renderings and artistic visualizations. They do not represent the actual or final appearance of the facility.</div>
 
 <!-- HERO IMAGE STRIP -->
 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; height: 260px; overflow: hidden;">
@@ -1016,6 +1056,22 @@ footer {
   </ul>
 </div>
 
+<!-- INVESTMENT DISCLAIMER -->
+<div class="section" id="disclaimer">
+  <div class="disclaimer-box">
+    <strong>Important Investment Disclosures</strong>
+    This page is for informational purposes only and does not constitute an offer to sell or a solicitation of an offer to buy any security. The investment opportunity described herein is offered only to individuals who have been personally invited by Fairway Golf Club LLC. Investments are in the form of promissory notes and are not registered securities under federal or state securities laws.
+
+    <br><br>Investing involves risk, including the possible loss of principal. Past performance is not indicative of future results. The financial projections and forward-looking statements contained on this page are estimates only and are not guarantees of future performance. Actual results may differ materially.
+
+    <br><br>All images on this page are conceptual renderings and artistic visualizations created for illustrative purposes only. They do not represent the actual or final appearance of the facility, equipment, or any completed construction.
+
+    <br><br>You should consult with your own legal, tax, and financial advisors before making any investment decision. Fairway Golf Club LLC is a Virginia limited liability company. This offering is limited in scope and available only to a small number of invited individuals.
+
+    <br><br>By submitting the interest form on this page, you are not committing to any investment. You agree to our <a href="../legal/">Privacy Policy and Terms of Use</a>.
+  </div>
+</div>
+
 <!-- CONTACT FORM -->
 <div class="section" id="contact">
   <div class="eyebrow">I'm Interested</div>
@@ -1213,8 +1269,9 @@ footer {
 </script>
 
 <footer>
-  <p>&copy; 2026 Fairway Golf Club LLC &nbsp;·&nbsp; Lorton, Virginia</p>
+  <p>&copy; 2026 Fairway Golf Club LLC &nbsp;·&nbsp; Northern Virginia</p>
   <p>This page is confidential and intended for invited investors only. Not a public offering.</p>
+  <p style="margin-top:0.5rem;"><a href="../legal/" style="color:rgba(201,168,76,0.4);text-decoration:none;font-size:0.68rem;letter-spacing:1px;">Privacy Policy &amp; Terms of Use</a></p>
 </footer>
 
 </body>

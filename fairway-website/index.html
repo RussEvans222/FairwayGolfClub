@@ -312,6 +312,17 @@ body {
 }
 .gallery-item:hover img { filter: brightness(1); transform: scale(1.05); }
 
+/* ── RENDERING NOTICE ── */
+.rendering-notice {
+  text-align: center;
+  padding: 0.55rem 1.5rem;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.5px;
+  background: rgba(0,0,0,0.25);
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
 /* ── FOOTER ── */
 footer {
   background: #080F1A;
@@ -405,6 +416,9 @@ footer {
   </div>
   <div class="scroll-hint">Scroll</div>
 </section>
+
+<!-- RENDERING NOTICE -->
+<div class="rendering-notice">All images are conceptual renderings and artistic visualizations. They do not represent the actual or final appearance of the facility.</div>
 
 <!-- PHOTO STRIP -->
 <div class="photo-strip">
@@ -504,7 +518,11 @@ footer {
 <footer>
   <div class="footer-brand">FAIRWAY GOLF CLUB</div>
   <div class="footer-copy">&copy; 2026 Fairway Golf Club LLC &nbsp;·&nbsp; Northern Virginia</div>
-  <div class="footer-link"><a href="investors-portal/">Founding Investor Portal →</a></div>
+  <div class="footer-link">
+    <a href="investors-portal/">Founding Investor Portal</a>
+    &nbsp;·&nbsp;
+    <a href="legal/">Legal &amp; Privacy</a>
+  </div>
 </footer>
 
 </body>
