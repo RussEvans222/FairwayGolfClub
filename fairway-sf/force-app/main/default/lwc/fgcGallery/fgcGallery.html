@@ -1,0 +1,9 @@
+<template>
+    <div class="fgc-gallery">
+        <template for:each={images} for:item="img">
+            <div key={img.id} class="gallery-item">
+                <img src={img.src} alt={img.alt} loading="lazy" />
+            </div>
+        </template>
+    </div>
+</template>

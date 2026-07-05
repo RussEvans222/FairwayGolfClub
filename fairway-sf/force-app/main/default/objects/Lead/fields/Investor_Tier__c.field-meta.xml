@@ -4,11 +4,12 @@
     <label>Investor Tier</label>
     <type>Picklist</type>
     <required>false</required>
-    <description>Investor tier based on investment amount. Bronze=$5K+, Silver=$15K+, Gold=$25K+, Platinum=$50K+.</description>
+    <description>Investor tier based on investment amount. Bronze=$5K+, Silver=$15K+, Gold=$25K+, Platinum=$50K+, Angel=$200K+.</description>
     <valueSet>
         <restricted>true</restricted>
         <valueSetDefinition>
             <sorted>false</sorted>
+            <value><fullName>Angel Investor</fullName><default>false</default><label>Angel Investor</label></value>
             <value><fullName>Platinum</fullName><default>false</default><label>Platinum</label></value>
             <value><fullName>Gold</fullName><default>false</default><label>Gold</label></value>
             <value><fullName>Silver</fullName><default>false</default><label>Silver</label></value>

@@ -1,0 +1,23 @@
+<template>
+    <section class="fgc-hero">
+        <div class="hero-content">
+            <p class="coming-soon">Coming 2027</p>
+            <h1 class="logo-text">FAIRWAY<br/>GOLF CLUB</h1>
+            <div class="divider"></div>
+            <p class="tagline">The First AI-Powered Golf Improvement Club</p>
+            <p class="location">Northern Virginia</p>
+            <template if:false={submitted}>
+                <form class="signup-form" onsubmit={handleSubmit}>
+                    <input class="email-input" type="email" placeholder="Your email — be first to know"
+                           value={email} onchange={handleEmailChange} required />
+                    <button class="notify-btn" type="submit">Notify Me</button>
+                </form>
+                <p class="note">No spam. Just the opening date when it&apos;s set.</p>
+            </template>
+            <template if:true={submitted}>
+                <p class="success-msg">You&apos;re on the list. We&apos;ll be in touch.</p>
+            </template>
+        </div>
+        <div class="scroll-hint">Scroll</div>
+    </section>
+</template>

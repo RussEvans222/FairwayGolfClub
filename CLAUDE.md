@@ -86,6 +86,8 @@ force-app/main/default/
 | Interest Type | `Interest_Type__c` | Picklist | Founding Investor / Future Member / General Interest |
 | Investment Interest | `Investment_Interest__c` | Currency | Dollar amount selected on investor form |
 
+**Investor Tier picklist values:** Angel Investor ($200K+) / Platinum ($50K+) / Gold ($25K+) / Silver ($15K+) / Bronze ($5K+) / Below Threshold. Angel is one spot only — covers full Phase 1 Target buildout (~$217K-$354K).
+
 **FLS note:** Both fields need the `Fairway_Admin` permission set assigned to be editable. If fields are read-only on a Lead record, run:
 ```bash
 sf org assign permset --name Fairway_Admin --target-org FairwayGolfClub

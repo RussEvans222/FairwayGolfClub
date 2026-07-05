@@ -1,0 +1,16 @@
+<template>
+    <section class="fgc-features">
+        <p class="section-eyebrow">What We&apos;re Building</p>
+        <h2 class="section-title">Golf that actually makes you better.</h2>
+        <p class="section-sub">Every visit builds on the last. Your AI coach tracks your swing data, sets your goals, and has your session ready when you walk in the door.</p>
+        <div class="features-grid">
+            <template for:each={features} for:item="f">
+                <div key={f.id} class="feature-card">
+                    <div class="feature-icon">{f.icon}</div>
+                    <h3>{f.title}</h3>
+                    <p>{f.description}</p>
+                </div>
+            </template>
+        </div>
+    </section>
+</template>

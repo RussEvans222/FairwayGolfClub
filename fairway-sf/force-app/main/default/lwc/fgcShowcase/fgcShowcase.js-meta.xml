@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightningCommunity__Default">
+            <property name="eyebrow"   type="String" label="Eyebrow Text" />
+            <property name="heading"   type="String" label="Heading" />
+            <property name="body"      type="String" label="Body Text" />
+            <property name="imageFile" type="String" label="Image Filename (e.g. ai-checkin.png)" />
+            <property name="imageAlt"  type="String" label="Image Alt Text" />
+            <property name="reverse"   type="Boolean" label="Reverse Layout (image on right)" default="false" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

@@ -1,0 +1,122 @@
+:host { display: block; }
+
+.fgc-hero {
+    position: relative;
+    min-height: 100vh;
+    background: #0a0a0a url('/resource/fgcImages/lounge-simulator.png') center/cover no-repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    color: #fff;
+}
+
+.fgc-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,.7) 100%);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+}
+
+.coming-soon {
+    font-size: .75rem;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    margin-bottom: 1rem;
+}
+
+.logo-text {
+    font-size: clamp(2.8rem, 8vw, 5.5rem);
+    font-weight: 700;
+    letter-spacing: .12em;
+    line-height: 1.05;
+    margin: 0 0 1.25rem;
+    color: #fff;
+}
+
+.divider {
+    width: 48px;
+    height: 2px;
+    background: #c9a84c;
+    margin: 0 auto 1.25rem;
+}
+
+.tagline {
+    font-size: 1.15rem;
+    letter-spacing: .06em;
+    color: rgba(255,255,255,.85);
+    margin: 0 0 .4rem;
+}
+
+.location {
+    font-size: .8rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    margin: 0 0 2.25rem;
+}
+
+.signup-form {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: .75rem;
+}
+
+.email-input {
+    flex: 1 1 240px;
+    max-width: 320px;
+    padding: .75rem 1rem;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 4px;
+    color: #fff;
+    font-size: .95rem;
+}
+
+.email-input::placeholder { color: rgba(255,255,255,.45); }
+
+.notify-btn {
+    padding: .75rem 1.75rem;
+    background: #c9a84c;
+    color: #0a0a0a;
+    font-size: .85rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.notify-btn:hover { background: #e0c068; }
+
+.note, .success-msg {
+    font-size: .78rem;
+    color: rgba(255,255,255,.5);
+    letter-spacing: .04em;
+}
+
+.success-msg { color: #c9a84c; font-size: .95rem; }
+
+.scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: .7rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.4);
+}

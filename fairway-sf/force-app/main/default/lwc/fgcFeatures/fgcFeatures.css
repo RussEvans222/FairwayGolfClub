@@ -1,0 +1,74 @@
+:host { display: block; }
+
+.fgc-features {
+    background: #111;
+    padding: 6rem 2rem;
+    text-align: center;
+    color: #fff;
+}
+
+.section-eyebrow {
+    font-size: .7rem;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    margin: 0 0 .75rem;
+}
+
+.section-title {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    margin: 0 0 1rem;
+    color: #fff;
+}
+
+.section-sub {
+    max-width: 580px;
+    margin: 0 auto 3.5rem;
+    color: rgba(255,255,255,.55);
+    line-height: 1.7;
+    font-size: 1rem;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.feature-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 8px;
+    padding: 2rem 1.5rem;
+    transition: border-color .25s, background .25s;
+}
+
+.feature-card:hover {
+    background: rgba(201,168,76,.06);
+    border-color: rgba(201,168,76,.3);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #fff;
+    margin: 0 0 .6rem;
+}
+
+.feature-card p {
+    font-size: .9rem;
+    color: rgba(255,255,255,.5);
+    line-height: 1.6;
+    margin: 0;
+}
