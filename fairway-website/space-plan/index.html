@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Requirements — Fairway Golf Club</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E2C06A;
+  --gold-dim: rgba(201,168,76,0.12);
+  --dark: #0C1422;
+  --darker: #080F1A;
+  --gray: #6B7A99;
+  --border-subtle: rgba(255,255,255,0.06);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--darker);
+  color: rgba(255,255,255,0.75);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(8,15,26,0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.nav-brand { display: flex; align-items: center; text-decoration: none; }
+.nav-brand img {
+  height: 42px;
+  width: auto;
+  display: block;
+  filter: brightness(0) invert(1);
+}
+.nav-back {
+  font-size: 0.72rem;
+  color: var(--gray);
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-back:hover { color: var(--gold); }
+
+.page-header {
+  text-align: center;
+  padding: 4rem 2rem 3rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(201,168,76,0.06), transparent);
+}
+.page-header .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.35rem 1rem;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 50px;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.page-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  color: white;
+  margin-bottom: 0.75rem;
+}
+.page-header p.sub {
+  font-size: 0.9rem;
+  color: var(--gray);
+  max-width: 560px;
+  margin: 0 auto;
+}
+.toc {
+  max-width: 760px;
+  margin: 2.5rem auto 0;
+  padding: 0 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+.toc a {
+  font-size: 0.72rem;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 50px;
+  color: rgba(201,168,76,0.7);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.toc a:hover { border-color: var(--gold); color: var(--gold); }
+
+/* QUICK FACTS */
+.quick-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.75rem;
+  max-width: 920px;
+  margin: 3rem auto 0;
+  padding: 0 2rem;
+}
+.fact { text-align: center; }
+.fact-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.55rem;
+  color: var(--gold);
+  margin-bottom: 0.35rem;
+  line-height: 1.1;
+}
+.fact-label {
+  font-size: 0.65rem;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  line-height: 1.5;
+}
+
+.content {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 4rem 2rem 5rem;
+}
+.section-block {
+  margin-bottom: 3.5rem;
+  padding-bottom: 3.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.section-block:last-child { border-bottom: none; margin-bottom: 0; }
+.section-eyebrow {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 0.5rem;
+}
+.section-block h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  color: white;
+  margin-bottom: 1rem;
+  line-height: 1.25;
+}
+.section-block h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  margin: 1.75rem 0 0.6rem;
+  letter-spacing: 0.25px;
+}
+.section-block p {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 1rem;
+}
+.section-block ul {
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+.section-block li {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 0.4rem;
+  line-height: 1.7;
+}
+.note-box {
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 10px;
+  padding: 1.1rem 1.4rem;
+  margin: 1.25rem 0;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.7;
+}
+
+/* TABLES */
+.table-scroll { overflow-x: auto; margin: 1rem 0 1.5rem; }
+.space-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; min-width: 520px; }
+.space-table caption {
+  text-align: left;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--gold);
+  margin-bottom: 0.6rem;
+}
+.space-table th {
+  text-align: left;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gold);
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid rgba(201,168,76,0.25);
+  white-space: nowrap;
+}
+.space-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: rgba(255,255,255,0.55);
+  vertical-align: top;
+}
+.space-table td:first-child { color: rgba(255,255,255,0.85); font-weight: 600; white-space: nowrap; }
+.space-table tr.total-row td {
+  color: white;
+  font-weight: 700;
+  border-bottom: none;
+  padding-top: 0.9rem;
+}
+
+/* RENDERINGS */
+.render-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin: 1.5rem 0;
+}
+.render-img-wrap {
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.render-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.render-img-wrap.render-missing::before {
+  content: 'Rendering pending';
+  color: rgba(255,255,255,0.3);
+  font-size: 0.72rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0 1rem;
+}
+.render-caption {
+  font-size: 0.75rem;
+  color: var(--gray);
+  margin-top: 0.6rem;
+  text-align: center;
+}
+.floorplan-wrap {
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px dashed rgba(255,255,255,0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin: 1.5rem 0 0.6rem;
+}
+.floorplan-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.floorplan-wrap.render-missing { background: rgba(255,255,255,0.03); }
+.floorplan-wrap.render-missing::before {
+  content: 'Floor plan pending';
+  color: rgba(255,255,255,0.3);
+  font-size: 0.72rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.18);
+  border-top: 1px solid var(--border-subtle);
+  line-height: 2;
+}
+footer a { color: rgba(201,168,76,0.35); text-decoration: none; }
+footer a:hover { color: var(--gold); }
+
+@media (max-width: 600px) {
+  .content { padding: 3rem 1.25rem 4rem; }
+  .space-table { font-size: 0.78rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="../" class="nav-brand"><img src="../images/logo-icon.png" alt="Fairway Golf Club"></a>
+  <a href="../" class="nav-back">← Back to Site</a>
+</nav>
+
+<div class="page-header">
+  <div class="eyebrow">Prepared for Site Discussion</div>
+  <h1>Site &amp; Space Requirements</h1>
+  <p class="sub">A working reference for evaluating space, cost, and availability for the first Fairway Golf Club location — figures are planning-level and subject to verification during a site walkthrough.</p>
+  <nav class="toc">
+    <a href="#space-program">Space Program</a>
+    <a href="#renderings">Renderings</a>
+    <a href="#floor-plan">Floor Plan</a>
+    <a href="#infrastructure">Infrastructure</a>
+    <a href="#questions">Questions &amp; Next Steps</a>
+  </nav>
+  <div class="quick-facts">
+    <div class="fact"><div class="fact-num">4</div><div class="fact-label">Simulator Bays<br>2 Private + 2 Open</div></div>
+    <div class="fact"><div class="fact-num">~4,134</div><div class="fact-label">Sq Ft<br>Total Needed</div></div>
+    <div class="fact"><div class="fact-num">~1,210</div><div class="fact-label">Sq Ft<br>Lounge</div></div>
+    <div class="fact"><div class="fact-num">12'</div><div class="fact-label">Ceiling Height<br>Recommended (10' min)</div></div>
+    <div class="fact"><div class="fact-num">400A</div><div class="fact-label">Electrical Service<br>Recommended</div></div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- SPACE PROGRAM -->
+  <div class="section-block" id="space-program">
+    <div class="section-eyebrow">Section 1</div>
+    <h2>Space Program</h2>
+    <p>This is a space requirement, not a fit-out of any specific building — the footprint below is sized only to what the program actually needs, so a location owner can judge whether their available space (whatever shape it happens to be) can reasonably accommodate it. Entrance/reception opens directly onto a large lounge on one side (no wall — open threshold) and a hallway on the other. That hallway leads immediately to two open-concept bays sitting right behind the lounge, so the social scene stays visible from the seating area, then continues back further to two enclosed private bays, both restrooms, and the mechanical room — each with its own independent door off the hallway.</p>
+
+    <h3>Full Layout — 4 Bays (2 Open + 2 Private)</h3>
+    <div class="table-scroll">
+      <table class="space-table">
+        <thead>
+          <tr><th>Zone</th><th>Dimensions</th><th>Sq Ft</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Entrance / Reception</td><td>20' × 10'</td><td>200</td><td>Arrival + check-in desk; open to lounge, door to hallway</td></tr>
+          <tr><td>Lounge</td><td>~30' × 35' + entry sliver</td><td>~1,210</td><td>Large social/waiting area; open threshold to entrance and to the open bays behind it</td></tr>
+          <tr><td>Open Bay 1</td><td>15' × 18'</td><td>270</td><td>Open-plan, low partition/net divider, sits directly behind the lounge with a sightline to it</td></tr>
+          <tr><td>Open Bay 2</td><td>15' × 18'</td><td>270</td><td>Same spec as Open Bay 1</td></tr>
+          <tr><td>Hallway</td><td>6' wide × ~84' long</td><td>~504</td><td>Connects entrance to every room below; each has its own independent door</td></tr>
+          <tr><td>Staff Office</td><td>20' × 10'</td><td>200</td><td>Own door off the hallway, near the front — not a dead end reached only through reception</td></tr>
+          <tr><td>Private Bay 1</td><td>20' × 18'</td><td>360</td><td>Enclosed, full walls + door off hallway; 12' ceiling recommended (10' min)</td></tr>
+          <tr><td>Private Bay 2</td><td>20' × 18'</td><td>360</td><td>Same spec as Private Bay 1</td></tr>
+          <tr><td>Men's Wash &amp; Change</td><td>20' × 12'</td><td>240</td><td>Toilet, vanity, bench + cubby storage, optional shower stall — own door off hallway</td></tr>
+          <tr><td>Women's Wash &amp; Change</td><td>20' × 12'</td><td>240</td><td>Same spec, own door off hallway</td></tr>
+          <tr><td>Mechanical / IT</td><td>20' × 14'</td><td>280</td><td>HVAC, network rack, water heater — own door off hallway, not routed through a restroom</td></tr>
+          <tr class="total-row"><td>Total</td><td></td><td>~4,134</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note-box">The building outline is intentionally stepped, not a plain rectangle — the lounge/open-bay side only runs as deep as that program needs (~63 ft), while the hallway/private-bay/restroom/mechanical side runs deeper (~94 ft) to fit everything with its own door. All figures are planning-level for early site conversations and should be verified with an architect walkthrough before anything is finalized.</div>
+  </div>
+
+  <!-- RENDERINGS -->
+  <div class="section-block" id="renderings">
+    <div class="section-eyebrow">Section 2</div>
+    <h2>Concept Renderings</h2>
+    <p>Conceptual visualizations of the layout described above. These are AI-generated concept renderings for planning discussion only — not final design, finishes, or architectural drawings.</p>
+    <div class="render-grid">
+      <div>
+        <div class="render-img-wrap">
+          <img src="../images/space-plan/suite-hero.png" alt="Two open bays flanking a central bar, with lounge seating in the foreground" onerror="this.style.display='none'; this.parentElement.classList.add('render-missing');">
+        </div>
+        <p class="render-caption">The open bays &amp; social scene</p>
+      </div>
+      <div>
+        <div class="render-img-wrap">
+          <img src="../images/space-plan/suite-social.png" alt="Two open bays with a central bar and lounge seating, closer view" onerror="this.style.display='none'; this.parentElement.classList.add('render-missing');">
+        </div>
+        <p class="render-caption">Open bays, closer view</p>
+      </div>
+      <div>
+        <div class="render-img-wrap">
+          <img src="../images/space-plan/wash-change.png" alt="Wash and change room concept with lockers and shower stall" onerror="this.style.display='none'; this.parentElement.classList.add('render-missing');">
+        </div>
+        <p class="render-caption">Wash &amp; change room concept</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOOR PLAN -->
+  <div class="section-block" id="floor-plan">
+    <div class="section-eyebrow">Section 3</div>
+    <h2>Floor Plan</h2>
+    <p>Right-sized to the program's actual needs rather than fit to any specific existing shell — the lounge and open bays sit up front (open bays adjacent to the lounge, preserving the sightline), with the hallway continuing back to the private bays, restrooms, and mechanical room. Drawn as a precise vector diagram rather than an AI rendering so every wall and dimension is exact.</p>
+    <div class="floorplan-wrap" style="aspect-ratio: 400/600; max-width: 480px; margin-left: auto; margin-right: auto;">
+      <svg viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg" role="img" style="width:100%; height:100%;">
+        <title>Fairway Golf Club — space requirement floor plan</title>
+        <desc>Right-sized floor plan with staff office and corrected openings.</desc>
+        <rect x="0" y="0" width="400" height="600" fill="#ffffff"/>
+        <polygon points="70,500 250,500 250,450 350,450 350,30 220,30 220,185 70,185" fill="none" stroke="#000" stroke-width="2.5"/>
+        <polygon points="70,500 150,500 150,450 220,450 220,275 70,275" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="145" y="358" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700">LOUNGE</text>
+        <text x="145" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" fill="#555">~1,210 sq ft</text>
+        <rect x="150" y="450" width="100" height="50" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="200" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" font-weight="700">ENTRANCE / RECEPTION</text>
+        <text x="200" y="481" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">20' x 10' (200 sq ft)</text>
+        <rect x="250" y="400" width="100" height="50" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="300" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" font-weight="700">STAFF OFFICE</text>
+        <text x="300" y="431" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">20' x 10' (200 sq ft)</text>
+        <rect x="70" y="185" width="75" height="90" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="107" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="700">OPEN BAY 1</text>
+        <text x="107" y="237" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">15' x 18'</text>
+        <rect x="145" y="185" width="75" height="90" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="182" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="700">OPEN BAY 2</text>
+        <text x="182" y="237" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">15' x 18'</text>
+        <rect x="220" y="30" width="30" height="420" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="235" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="700" transform="rotate(-90 235 245)">6' HALLWAY</text>
+        <rect x="250" y="310" width="100" height="90" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="300" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="700">PRIVATE BAY 1</text>
+        <text x="300" y="362" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">20' x 18'</text>
+        <rect x="250" y="220" width="100" height="90" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="300" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="700">PRIVATE BAY 2</text>
+        <text x="300" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">20' x 18'</text>
+        <rect x="250" y="160" width="100" height="60" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="300" y="185" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="700">MEN'S WASH &amp; CHANGE</text>
+        <text x="300" y="197" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">20' x 12'</text>
+        <rect x="250" y="100" width="100" height="60" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="300" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="700">WOMEN'S WASH &amp; CHANGE</text>
+        <text x="300" y="137" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">20' x 12'</text>
+        <rect x="250" y="30" width="100" height="70" fill="none" stroke="#000" stroke-width="1.5"/>
+        <text x="300" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" font-weight="700">MECHANICAL / IT</text>
+        <text x="300" y="72" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#555">20' x 14'</text>
+
+        <line x1="190" y1="500" x2="210" y2="500" stroke="#fff" stroke-width="3.5"/>
+        <path d="M 190 500 A 20 20 0 0 1 210 480" fill="none" stroke="#000" stroke-width="0.75"/>
+
+        <line x1="150" y1="450" x2="220" y2="450" stroke="#fff" stroke-width="3.5"/>
+        <line x1="150" y1="450" x2="220" y2="450" stroke="#000" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="185" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="6" fill="#777" font-style="italic">open</text>
+
+        <line x1="228" y1="450" x2="242" y2="450" stroke="#fff" stroke-width="3.5"/>
+        <path d="M 228 450 A 14 14 0 0 0 242 436" fill="none" stroke="#000" stroke-width="0.75"/>
+
+        <line x1="250" y1="415" x2="250" y2="430" stroke="#fff" stroke-width="3.5"/>
+        <path d="M 250 415 A 15 15 0 0 1 265 415" fill="none" stroke="#000" stroke-width="0.75"/>
+
+        <line x1="250" y1="345" x2="250" y2="360" stroke="#fff" stroke-width="3.5"/>
+        <path d="M 250 345 A 15 15 0 0 1 235 345" fill="none" stroke="#000" stroke-width="0.75"/>
+
+        <line x1="250" y1="255" x2="250" y2="270" stroke="#fff" stroke-width="3.5"/>
+        <path d="M 250 255 A 15 15 0 0 1 235 255" fill="none" stroke="#000" stroke-width="0.75"/>
+
+        <line x1="250" y1="185" x2="250" y2="198" stroke="#fff" stroke-width="3.5"/>
+        <path d="M 250 185 A 13 13 0 0 1 237 185" fill="none" stroke="#000" stroke-width="0.75"/>
+
+        <line x1="250" y1="125" x2="250" y2="138" stroke="#fff" stroke-width="3.5"/>
+        <path d="M 250 125 A 13 13 0 0 1 237 125" fill="none" stroke="#000" stroke-width="0.75"/>
+
+        <line x1="250" y1="55" x2="250" y2="68" stroke="#fff" stroke-width="3.5"/>
+        <path d="M 250 55 A 13 13 0 0 1 237 55" fill="none" stroke="#000" stroke-width="0.75"/>
+
+        <line x1="145" y1="185" x2="145" y2="275" stroke="#fff" stroke-width="3.5"/>
+        <line x1="145" y1="185" x2="145" y2="275" stroke="#000" stroke-width="1" stroke-dasharray="4,3"/>
+
+        <line x1="70" y1="275" x2="220" y2="275" stroke="#fff" stroke-width="3.5"/>
+        <line x1="70" y1="275" x2="220" y2="275" stroke="#000" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="145" y="268" text-anchor="middle" font-family="Arial, sans-serif" font-size="6" fill="#777" font-style="italic">open — sightline to lounge</text>
+
+        <line x1="55" y1="500" x2="55" y2="185" stroke="#000" stroke-width="0.75"/>
+        <line x1="50" y1="500" x2="60" y2="500" stroke="#000" stroke-width="0.75"/>
+        <line x1="50" y1="185" x2="60" y2="185" stroke="#000" stroke-width="0.75"/>
+        <text x="42" y="342" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" transform="rotate(-90 42 342)">63 ft</text>
+
+        <line x1="365" y1="500" x2="365" y2="30" stroke="#000" stroke-width="0.75"/>
+        <line x1="360" y1="500" x2="370" y2="500" stroke="#000" stroke-width="0.75"/>
+        <line x1="360" y1="30" x2="370" y2="30" stroke="#000" stroke-width="0.75"/>
+        <text x="378" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" transform="rotate(-90 378 265)">94 ft</text>
+
+        <text x="200" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="7.5" fill="#777" font-style="italic">Footprint shown at minimum size needed — not fit to any specific existing space</text>
+
+        <circle cx="30" cy="555" r="13" fill="none" stroke="#000" stroke-width="1"/>
+        <line x1="30" y1="564" x2="30" y2="546" stroke="#000" stroke-width="1"/>
+        <polygon points="30,543 26,551 34,551" fill="#000"/>
+        <text x="30" y="577" text-anchor="middle" font-family="Arial, sans-serif" font-size="7">N</text>
+
+        <line x1="260" y1="555" x2="360" y2="555" stroke="#000" stroke-width="1"/>
+        <line x1="260" y1="551" x2="260" y2="559" stroke="#000" stroke-width="1"/>
+        <line x1="310" y1="551" x2="310" y2="559" stroke="#000" stroke-width="1"/>
+        <line x1="360" y1="551" x2="360" y2="559" stroke="#000" stroke-width="1"/>
+        <text x="260" y="568" text-anchor="middle" font-family="Arial, sans-serif" font-size="6.5">0</text>
+        <text x="310" y="568" text-anchor="middle" font-family="Arial, sans-serif" font-size="6.5">10</text>
+        <text x="360" y="568" text-anchor="middle" font-family="Arial, sans-serif" font-size="6.5">20 ft</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- INFRASTRUCTURE -->
+  <div class="section-block" id="infrastructure">
+    <div class="section-eyebrow">Section 4</div>
+    <h2>Infrastructure &amp; Utility Requirements</h2>
+
+    <h3>Electrical</h3>
+    <ul>
+      <li>Recommended: <strong style="color:rgba(255,255,255,0.7)">400A service</strong>, sized for all four bays plus the lounge and office load from day one</li>
+      <li>Per-bay draw: ~2,500–5,000W across 3–4 dedicated circuits (projector, gaming PC, launch monitor, auto-tee/ball return, lighting/AV)</li>
+    </ul>
+
+    <h3>HVAC / Climate Control</h3>
+    <ul>
+      <li>Each bay produces 5,000–10,000 BTU/hr of waste heat — plan for 1–2 additional tons of cooling per bay beyond base HVAC</li>
+      <li>Target consistent temperature: 68–72°F</li>
+    </ul>
+
+    <h3>Networking</h3>
+    <ul>
+      <li>Business-class fiber preferred, minimum 100 Mbps symmetric</li>
+      <li>Hardwired CAT6 to each bay; separate guest WiFi network for customer devices</li>
+    </ul>
+
+    <h3>Acoustics</h3>
+    <ul>
+      <li>Golf ball impacts peak at 85–95 dB — acoustic panels needed on shared walls and ceiling</li>
+      <li>Private bays: solid walls + door provide most of the isolation from the hallway; standard acoustic treatment applies</li>
+      <li>Open bays: only a low partition or ceiling-mounted net separates them from each other and the lounge, so they need heavier acoustic paneling and ceiling baffles to keep impact noise from carrying into the social space</li>
+      <li>Rubber flooring or thick turf over concrete in all bays to absorb impact vibration</li>
+    </ul>
+
+    <h3>Plumbing (New — Wash &amp; Change Rooms)</h3>
+    <ul>
+      <li>Two wet walls (shower stalls), floor drains, and waterproof membrane</li>
+      <li>Water heater / tankless unit sized for two simultaneous showers <strong style="color:rgba(255,255,255,0.7)">at full four-bay occupancy</strong></li>
+      <li>Dedicated exhaust fan per restroom (80–110 CFM) for moisture control</li>
+    </ul>
+  </div>
+
+  <!-- QUESTIONS & NEXT STEPS -->
+  <div class="section-block" id="questions">
+    <div class="section-eyebrow">Section 5</div>
+    <h2>Questions for Ownership / Landlord</h2>
+
+    <h3>Space &amp; Structure</h3>
+    <ul>
+      <li>Is there a column grid or structural obstruction within the target footprint?</li>
+      <li>What is the existing clear ceiling height, and is 12' achievable?</li>
+      <li>What is the floor load capacity?</li>
+    </ul>
+
+    <h3>Utilities</h3>
+    <ul>
+      <li>What electrical service is currently available, and is there a path to 400A?</li>
+      <li>Are there existing sanitary/water lines near the proposed restroom location, or would new lines need to be run?</li>
+      <li>Is there drain capacity for two additional shower stalls?</li>
+    </ul>
+
+    <h3>Lease</h3>
+    <ul>
+      <li>What lease term flexibility is available?</li>
+      <li>Does the space allow for the private/open bay mix and staff office build-out described above, or are there constraints on interior partition changes?</li>
+    </ul>
+
+    <h3>Access</h3>
+    <ul>
+      <li>What loading/delivery access exists for simulator equipment?</li>
+      <li>What parking is available for members and staff?</li>
+    </ul>
+
+    <h3>Alignment</h3>
+    <ul>
+      <li>Are there use restrictions that would conflict with a small bar/lounge component?</li>
+    </ul>
+
+    <h3>Deal-Breakers / Non-Negotiables</h3>
+    <ul>
+      <li>Less than 10' clear ceiling height in the bay area</li>
+      <li>No reasonable path to ~4,134 sq ft for the full four-bay layout (shape can flex — the total area and adjacencies are what matter)</li>
+      <li>No reasonable path to 400A electrical service</li>
+      <li>No usable equipment delivery access (freight elevator or ground-level access)</li>
+      <li>Zoning or lease restrictions that prohibit a bar/lounge component</li>
+    </ul>
+
+    <div class="note-box">This page is a planning reference, not a finished proposal — all figures are subject to revision after a walkthrough and architect review.</div>
+  </div>
+
+</div>
+
+<footer>
+  <p>&copy; 2026 Fairway Golf Club LLC &nbsp;·&nbsp; Northern Virginia</p>
+  <p><a href="../">Home</a></p>
+</footer>
+
+</body>
+</html>
