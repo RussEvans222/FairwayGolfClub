@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Game Result</label>
+    <pluralLabel>Game Results</pluralLabel>
+    <description>One record per participant per game session (Closest to Pin, Long Drive, Wolf, Vegas, etc). Only applies when Golf_Session__c.Session_Type__c = Game.</description>
+    <nameField>
+        <label>Game Result Name</label>
+        <type>AutoNumber</type>
+        <displayFormat>GR-{0000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+</CustomObject>

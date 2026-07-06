@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Simulator Bay</label>
+    <pluralLabel>Simulator Bays</pluralLabel>
+    <description>A physical golf simulator bay: the hardware, launch monitor, and software running in it.</description>
+    <nameField>
+        <label>Bay Name</label>
+        <type>Text</type>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+</CustomObject>

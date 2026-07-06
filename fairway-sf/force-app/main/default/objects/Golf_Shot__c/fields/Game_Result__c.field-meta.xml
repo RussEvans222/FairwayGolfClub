@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Game_Result__c</fullName>
+    <label>Game Result</label>
+    <type>Lookup</type>
+    <referenceTo>Game_Result__c</referenceTo>
+    <relationshipName>Golf_Shots</relationshipName>
+    <relationshipLabel>Golf Shots</relationshipLabel>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+    <description>Set only when this shot occurred during a scored game (Session_Type__c = Game).</description>
+</CustomField>

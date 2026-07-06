@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Simulator_Player_Slot__c</fullName>
+    <label>Simulator Player Slot</label>
+    <type>Number</type>
+    <precision>2</precision>
+    <scale>0</scale>
+    <required>true</required>
+    <description>The local player slot number (1-4) as known by the simulator software. This is the join key every incoming shot uses to find this participant.</description>
+</CustomField>

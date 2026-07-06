@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Session_Type__c</fullName>
+    <label>Session Type</label>
+    <type>Picklist</type>
+    <required>true</required>
+    <description>Drives which child result object applies: Round uses Round_Hole_Result__c, Game uses Game_Result__c, all other types produce Golf_Shot__c only.</description>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Practice</fullName><default>true</default><label>Practice</label></value>
+            <value><fullName>Round</fullName><default>false</default><label>Round</label></value>
+            <value><fullName>Game</fullName><default>false</default><label>Game</label></value>
+            <value><fullName>League</fullName><default>false</default><label>League</label></value>
+            <value><fullName>Lesson</fullName><default>false</default><label>Lesson</label></value>
+            <value><fullName>Fitting</fullName><default>false</default><label>Fitting</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

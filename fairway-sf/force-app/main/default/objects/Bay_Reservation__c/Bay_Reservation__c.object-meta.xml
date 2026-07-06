@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Bay Reservation</label>
+    <pluralLabel>Bay Reservations</pluralLabel>
+    <description>A booked block of time on a Simulator Bay. The commercial transaction that a Golf Session happens under.</description>
+    <nameField>
+        <label>Reservation Name</label>
+        <type>AutoNumber</type>
+        <displayFormat>RES-{0000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <enableActivities>true</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+</CustomObject>

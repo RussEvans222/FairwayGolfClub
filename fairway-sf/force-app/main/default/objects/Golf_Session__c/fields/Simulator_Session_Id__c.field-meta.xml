@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Simulator_Session_Id__c</fullName>
+    <label>Simulator Session ID</label>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+    <description>The raw session identifier from the simulator/launch monitor software.</description>
+</CustomField>

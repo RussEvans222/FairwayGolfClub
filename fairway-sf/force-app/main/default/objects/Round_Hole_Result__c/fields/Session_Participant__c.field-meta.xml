@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Session_Participant__c</fullName>
+    <label>Session Participant</label>
+    <type>Lookup</type>
+    <referenceTo>Session_Participant__c</referenceTo>
+    <relationshipName>Round_Hole_Results</relationshipName>
+    <relationshipLabel>Round Hole Results</relationshipLabel>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>true</required>
+</CustomField>

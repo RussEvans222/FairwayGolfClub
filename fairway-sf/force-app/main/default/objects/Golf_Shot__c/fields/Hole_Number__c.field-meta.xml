@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Hole_Number__c</fullName>
+    <label>Hole Number</label>
+    <type>Number</type>
+    <precision>2</precision>
+    <scale>0</scale>
+    <required>false</required>
+    <description>Blank for pure practice shots. Populated when the shot occurred during a Round session.</description>
+</CustomField>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Score_To_Par__c</fullName>
+    <label>Score To Par</label>
+    <type>Number</type>
+    <formula>Strokes__c - Par__c</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <precision>3</precision>
+    <scale>0</scale>
+    <required>false</required>
+</CustomField>

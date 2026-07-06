@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Club__c</fullName>
+    <label>Club</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Driver</fullName><default>false</default><label>Driver</label></value>
+            <value><fullName>3 Wood</fullName><default>false</default><label>3 Wood</label></value>
+            <value><fullName>5 Wood</fullName><default>false</default><label>5 Wood</label></value>
+            <value><fullName>Hybrid</fullName><default>false</default><label>Hybrid</label></value>
+            <value><fullName>3 Iron</fullName><default>false</default><label>3 Iron</label></value>
+            <value><fullName>4 Iron</fullName><default>false</default><label>4 Iron</label></value>
+            <value><fullName>5 Iron</fullName><default>false</default><label>5 Iron</label></value>
+            <value><fullName>6 Iron</fullName><default>false</default><label>6 Iron</label></value>
+            <value><fullName>7 Iron</fullName><default>false</default><label>7 Iron</label></value>
+            <value><fullName>8 Iron</fullName><default>false</default><label>8 Iron</label></value>
+            <value><fullName>9 Iron</fullName><default>false</default><label>9 Iron</label></value>
+            <value><fullName>Pitching Wedge</fullName><default>false</default><label>Pitching Wedge</label></value>
+            <value><fullName>Gap Wedge</fullName><default>false</default><label>Gap Wedge</label></value>
+            <value><fullName>Sand Wedge</fullName><default>false</default><label>Sand Wedge</label></value>
+            <value><fullName>Lob Wedge</fullName><default>false</default><label>Lob Wedge</label></value>
+            <value><fullName>Putter</fullName><default>false</default><label>Putter</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

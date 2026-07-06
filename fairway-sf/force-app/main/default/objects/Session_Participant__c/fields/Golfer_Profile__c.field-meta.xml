@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Golfer_Profile__c</fullName>
+    <label>Golfer Profile</label>
+    <type>Lookup</type>
+    <referenceTo>Golfer_Profile__c</referenceTo>
+    <relationshipName>Session_Participants</relationshipName>
+    <relationshipLabel>Session Participants</relationshipLabel>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+    <description>Blank for anonymous guests who don't have a Golfer Profile.</description>
+</CustomField>

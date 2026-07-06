@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Shot_Shape__c</fullName>
+    <label>Shot Shape</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Straight</fullName><default>false</default><label>Straight</label></value>
+            <value><fullName>Fade</fullName><default>false</default><label>Fade</label></value>
+            <value><fullName>Draw</fullName><default>false</default><label>Draw</label></value>
+            <value><fullName>Slice</fullName><default>false</default><label>Slice</label></value>
+            <value><fullName>Hook</fullName><default>false</default><label>Hook</label></value>
+            <value><fullName>Push</fullName><default>false</default><label>Push</label></value>
+            <value><fullName>Pull</fullName><default>false</default><label>Pull</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -76,6 +76,13 @@ force-app/main/default/
   objects/Lead/
     fields/                   # 2 custom fields
     listViews/                 # Investor leads list view
+  objects/                    # Golfer360 operational objects — see "Golfer360 Data Model" below.
+                               # NOT YET DEPLOYED to the org as of 2026-07-05 — built and committed from a
+                               # machine without the Salesforce CLI installed. Deploy from a machine that
+                               # has `sf` installed and authenticated to FairwayGolfClub before assuming
+                               # any of this exists in the actual org.
+  applications/Fairway_Ops    # Lightning app bundling the Golfer360 object tabs (not yet deployed)
+  tabs/                       # Custom tabs for the Golfer360 objects (not yet deployed)
   permissionsets/             # Fairway_Admin permission set
   networks/                   # Experience Site network metadata
 ```
@@ -139,6 +146,48 @@ sf project deploy start --source-dir force-app/main/default/staticresources --ta
 
 ---
 
+## Golfer360 Data Model (operational side — bookings, bays, shot data)
+
+**Status as of 2026-07-05: metadata is built and committed to this repo, but NOT YET DEPLOYED to the org.** It was built on a machine without the Salesforce CLI installed. Before treating any of this as "live," deploy it first:
+
+```bash
+sf project deploy start --source-dir force-app/main/default/objects --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/tabs --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/applications --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/permissionsets --target-org FairwayGolfClub
+sf org assign permset --name Fairway_Admin --target-org FairwayGolfClub
+```
+
+### Why this exists
+Russell wants to know which physical golfer hit which physical shot, in which bay, during which reservation — turning simulator "Player 1/Player 2" slots into permanent Golfer360 history. `Session_Participant__c` is the bridge object that makes this possible: every shot/hole-result/game-result attributes back to a golfer through it. See `fairway-sf`'s git history (commit adding this section) for the full architecture memo this was designed from — it covers vendor API reality (TrackMan/Foresight/Uneekor), a 3-phase integration model (native API → session export → console-owned player mapping), and a Data Cloud/middleware plan for later phases.
+
+### Objects (9, all custom, no Data Cloud/middleware yet — mock data only for now)
+| Object | Purpose |
+|---|---|
+| `Golfer_Profile__c` | Golfer360 performance identity, 1:1 with a `Contact` (handicap, tendencies, rollup stats) |
+| `Simulator_Bay__c` | A physical bay: launch monitor type, software, status |
+| `Bay_Reservation__c` | The booked time block (commercial transaction) |
+| `Golf_Session__c` | An actual play/practice session within a reservation. `Session_Type__c` = Practice / Round / Game / League / Lesson / Fitting — drives which child result object applies |
+| `Session_Participant__c` | **The bridge object.** Maps a simulator's local player slot (1-4) to a `Golfer_Profile__c` (or leaves it blank for an anonymous guest). Has `Team__c` for team game formats (Wolf/Vegas/Stableford) |
+| `Golf_Shot__c` | Universal atomic shot fact — logged for every session type. Ball-flight fields (ball speed, carry, spin, etc.) are populated by nearly all launch monitors; club-delivery fields (club speed, attack angle, face angle, etc.) only by premium doppler/camera units — check `Data_Tier__c` (Ball Only / Ball + Club) before trusting club fields are populated. Has `Raw_Payload_JSON__c` to hold the full mock/vendor JSON per shot |
+| `Round_Hole_Result__c` | One record per participant per hole, only when `Session_Type__c` = Round. Deliberately score-only (Hole/Par/Strokes/Score-to-Par) — no putts/GIR/fairway yet since many sim setups can't reliably capture that |
+| `Game_Result__c` | One record per participant per game session, only when `Session_Type__c` = Game (Closest to Pin, Long Drive, Wolf, Vegas, etc.) |
+| `Practice_Insight__c` | AI/coach-generated observation + recommendation surfaced to a golfer |
+
+Relationship chain: `Contact` → `Golfer_Profile__c` → `Session_Participant__c` ← `Golf_Session__c` ← `Bay_Reservation__c` ← `Simulator_Bay__c`. `Golf_Shot__c`, `Round_Hole_Result__c`, and `Game_Result__c` all hang off `Golf_Session__c` + `Session_Participant__c`; only one of the latter two applies per session, based on `Session_Type__c`.
+
+**Deferred to a later phase** (not built yet): `Membership__c`/Salesforce Subscription Management, `Golf_Club__c` (bag/club performance), `Coaching_Plan__c`, real-time middleware, Data Cloud ingestion, computer vision/RFID attribution.
+
+### Supporting metadata
+- `Fairway_Admin` permission set was extended with object + field permissions for all 9 objects, plus visibility into the new `Fairway_Ops` Lightning app.
+- `Fairway_Ops` (`applications/Fairway_Ops.app-meta.xml`) — a separate Lightning app bundling tabs for all 9 objects, so this doesn't clutter the Sales app used for Lead management.
+- `Golf_Session__c` has a `Fairway_Active_Sessions` list view (filters `Status__c = In Progress`) for "who's on the bays right now."
+
+### Verification once deployed
+Create one record per object in dependency order (Bay → Reservation → Session → Participant → [Game_Result or Round_Hole_Result] → Shot), covering all three session shapes (one Practice session with plain shots, one Round session with `Round_Hole_Result__c` records and shots tagged `Hole_Number__c`, one Game session with `Game_Result__c` records and shots linked via `Game_Result__c` lookup). Confirm the three shapes stay distinct on `Golf_Shot__c` (a Practice shot has no `Hole_Number__c`/`Game_Result__c`; a Round shot has `Hole_Number__c` but no `Game_Result__c`; a Game shot has `Game_Result__c` but no `Hole_Number__c`).
+
+---
+
 ## Architecture Decision: Two Separate Frontends
 
 - **`fairwaygolfclub.co`** (Cloudflare Pages) — public marketing site, lead capture, investor portal. This is the permanent public frontend. No plans to replace it with Experience Cloud.
@@ -152,6 +201,7 @@ sf project deploy start --source-dir force-app/main/default/staticresources --ta
 - [ ] **Lead assignment rule** — Auto-assign incoming web leads to Russell + trigger email alert
 - [ ] **Web-to-Lead on homepage** — Consider adding first/last name fields so leads don't come in as "Unknown"
 - [ ] **Experience Cloud member portal** — Design and build the member-facing portal (bookings, coaching data, session history) — separate from the marketing site
+- [ ] **Deploy the Golfer360 data model** — 9 new custom objects + permission set updates + `Fairway_Ops` app are committed to `fairway-sf/` but not yet deployed to the org (built on a machine without the Salesforce CLI). See "Golfer360 Data Model" section above for the deploy commands and verification steps.
 
 ---
 

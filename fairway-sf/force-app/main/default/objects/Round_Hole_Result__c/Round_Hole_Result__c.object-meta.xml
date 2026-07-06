@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Round Hole Result</label>
+    <pluralLabel>Round Hole Results</pluralLabel>
+    <description>One record per participant per hole. Only applies when Golf_Session__c.Session_Type__c = Round. Kept deliberately lean for MVP (score only) since many simulator setups don't reliably capture real putting/GIR/fairway data.</description>
+    <nameField>
+        <label>Round Hole Result Name</label>
+        <type>AutoNumber</type>
+        <displayFormat>RHR-{00000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+</CustomObject>

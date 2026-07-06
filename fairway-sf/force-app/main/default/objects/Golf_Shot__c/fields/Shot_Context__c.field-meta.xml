@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Shot_Context__c</fullName>
+    <label>Shot Context</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Tee</fullName><default>false</default><label>Tee</label></value>
+            <value><fullName>Fairway</fullName><default>false</default><label>Fairway</label></value>
+            <value><fullName>Rough</fullName><default>false</default><label>Rough</label></value>
+            <value><fullName>Bunker</fullName><default>false</default><label>Bunker</label></value>
+            <value><fullName>Green</fullName><default>false</default><label>Green</label></value>
+            <value><fullName>Recovery</fullName><default>false</default><label>Recovery</label></value>
+            <value><fullName>Range</fullName><default>true</default><label>Range</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

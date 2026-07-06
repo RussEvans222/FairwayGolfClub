@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Insight_Type__c</fullName>
+    <label>Insight Type</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Trend</fullName><default>false</default><label>Trend</label></value>
+            <value><fullName>Miss Pattern</fullName><default>false</default><label>Miss Pattern</label></value>
+            <value><fullName>Consistency</fullName><default>false</default><label>Consistency</label></value>
+            <value><fullName>Club Recommendation</fullName><default>false</default><label>Club Recommendation</label></value>
+            <value><fullName>Practice Recommendation</fullName><default>false</default><label>Practice Recommendation</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

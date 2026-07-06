@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Practice Insight</label>
+    <pluralLabel>Practice Insights</pluralLabel>
+    <description>AI or coach-generated observation/recommendation surfaced to a golfer, typically tied to a session.</description>
+    <nameField>
+        <label>Practice Insight Name</label>
+        <type>AutoNumber</type>
+        <displayFormat>PI-{0000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+</CustomObject>

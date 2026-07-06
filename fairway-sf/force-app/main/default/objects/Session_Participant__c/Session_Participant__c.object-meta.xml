@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Session Participant</label>
+    <pluralLabel>Session Participants</pluralLabel>
+    <description>The bridge between a simulator's temporary player slot and a permanent Golfer Profile. Every shot, hole result, and game result attributes back to a golfer through this object.</description>
+    <nameField>
+        <label>Session Participant Name</label>
+        <type>AutoNumber</type>
+        <displayFormat>SP-{0000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+</CustomObject>

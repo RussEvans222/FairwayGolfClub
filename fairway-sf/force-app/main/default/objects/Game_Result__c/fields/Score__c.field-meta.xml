@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Score__c</fullName>
+    <label>Score</label>
+    <type>Number</type>
+    <precision>8</precision>
+    <scale>2</scale>
+    <required>false</required>
+    <description>Generic score field; meaning depends on Game_Type (e.g. yards for Long Drive, points for Wolf/Vegas).</description>
+</CustomField>

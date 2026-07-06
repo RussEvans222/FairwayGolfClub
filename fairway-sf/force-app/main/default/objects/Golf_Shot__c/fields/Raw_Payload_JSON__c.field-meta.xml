@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Raw_Payload_JSON__c</fullName>
+    <label>Raw Payload JSON</label>
+    <type>LongTextArea</type>
+    <length>32768</length>
+    <visibleLines>10</visibleLines>
+    <required>false</required>
+    <description>Full mock/vendor JSON payload for this shot, so the future middleware/Data Cloud story can be demoed without building it.</description>
+</CustomField>
