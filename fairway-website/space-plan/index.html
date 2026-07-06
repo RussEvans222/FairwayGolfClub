@@ -246,7 +246,9 @@ nav {
   justify-content: center;
   position: relative;
 }
-.render-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.render-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s; }
+.render-img-wrap:not(.render-missing) { cursor: zoom-in; }
+.render-img-wrap:not(.render-missing):hover img { transform: scale(1.04); }
 .render-img-wrap.render-missing::before {
   content: 'Rendering pending';
   color: rgba(255,255,255,0.3);
@@ -282,6 +284,70 @@ nav {
   font-size: 0.72rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
+}
+.floorplan-wrap:not(.render-missing) { cursor: zoom-in; }
+
+/* LIGHTBOX */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,8,14,0.94);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 3rem 2rem;
+  cursor: zoom-out;
+}
+.lightbox.active { display: flex; }
+.lightbox-content {
+  max-width: 92vw;
+  max-height: 88vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+.lightbox-content img {
+  max-width: 92vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  display: block;
+}
+.lightbox-content svg {
+  width: auto;
+  height: 88vh;
+  max-width: 92vw;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.lightbox-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.75rem;
+  font-size: 2.2rem;
+  line-height: 1;
+  color: white;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 0.2s;
+  padding: 0.5rem;
+}
+.lightbox-close:hover { opacity: 1; }
+.lightbox-hint {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
 }
 
 footer {
@@ -370,19 +436,19 @@ footer a:hover { color: var(--gold); }
     <div class="render-grid">
       <div>
         <div class="render-img-wrap">
-          <img src="../images/space-plan/suite-hero.png" alt="Two open bays flanking a central bar, with lounge seating in the foreground" onerror="this.style.display='none'; this.parentElement.classList.add('render-missing');">
+          <img src="../images/space-plan/suite-hero.png" alt="Two open bays flanking a central bar, with lounge seating in the foreground" onclick="openLightboxImg(this)" onerror="this.style.display='none'; this.parentElement.classList.add('render-missing');">
         </div>
         <p class="render-caption">The open bays &amp; social scene</p>
       </div>
       <div>
         <div class="render-img-wrap">
-          <img src="../images/space-plan/suite-social.png" alt="Two open bays with a central bar and lounge seating, closer view" onerror="this.style.display='none'; this.parentElement.classList.add('render-missing');">
+          <img src="../images/space-plan/suite-social.png" alt="Two open bays with a central bar and lounge seating, closer view" onclick="openLightboxImg(this)" onerror="this.style.display='none'; this.parentElement.classList.add('render-missing');">
         </div>
         <p class="render-caption">Open bays, closer view</p>
       </div>
       <div>
         <div class="render-img-wrap">
-          <img src="../images/space-plan/wash-change.png" alt="Wash and change room concept with lockers and shower stall" onerror="this.style.display='none'; this.parentElement.classList.add('render-missing');">
+          <img src="../images/space-plan/wash-change.png" alt="Wash and change room concept with lockers and shower stall" onclick="openLightboxImg(this)" onerror="this.style.display='none'; this.parentElement.classList.add('render-missing');">
         </div>
         <p class="render-caption">Wash &amp; change room concept</p>
       </div>
@@ -394,8 +460,8 @@ footer a:hover { color: var(--gold); }
     <div class="section-eyebrow">Section 3</div>
     <h2>Floor Plan</h2>
     <p>Right-sized to the program's actual needs rather than fit to any specific existing shell — the lounge and open bays sit up front (open bays adjacent to the lounge, preserving the sightline), with the hallway continuing back to the private bays, restrooms, and mechanical room. Drawn as a precise vector diagram rather than an AI rendering so every wall and dimension is exact.</p>
-    <div class="floorplan-wrap" style="aspect-ratio: 400/600; max-width: 480px; margin-left: auto; margin-right: auto;">
-      <svg viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg" role="img" style="width:100%; height:100%;">
+    <div class="floorplan-wrap" style="aspect-ratio: 400/600; max-width: 480px; margin-left: auto; margin-right: auto;" onclick="openLightboxSvg('floorPlanSvg')">
+      <svg id="floorPlanSvg" viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg" role="img" style="width:100%; height:100%;">
         <title>Fairway Golf Club — space requirement floor plan</title>
         <desc>Right-sized floor plan with staff office and corrected openings.</desc>
         <rect x="0" y="0" width="400" height="600" fill="#ffffff"/>
@@ -589,6 +655,40 @@ footer a:hover { color: var(--gold); }
   <p>&copy; 2026 Fairway Golf Club LLC &nbsp;·&nbsp; Northern Virginia</p>
   <p><a href="../">Home</a></p>
 </footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="if(event.target.id==='lightbox') closeLightbox();">
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close">&times;</button>
+  <div class="lightbox-content" id="lightboxContent"></div>
+  <div class="lightbox-hint">Click anywhere outside the image, or press Esc, to close</div>
+</div>
+<script>
+  function openLightboxImg(imgEl) {
+    if (imgEl.parentElement.classList.contains('render-missing')) return;
+    var content = document.getElementById('lightboxContent');
+    content.innerHTML = '';
+    var img = document.createElement('img');
+    img.src = imgEl.src;
+    img.alt = imgEl.alt || '';
+    content.appendChild(img);
+    document.getElementById('lightbox').classList.add('active');
+  }
+  function openLightboxSvg(svgId) {
+    var svgEl = document.getElementById(svgId);
+    var content = document.getElementById('lightboxContent');
+    content.innerHTML = '';
+    var clone = svgEl.cloneNode(true);
+    clone.removeAttribute('style');
+    content.appendChild(clone);
+    document.getElementById('lightbox').classList.add('active');
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('active');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
 
 </body>
 </html>
