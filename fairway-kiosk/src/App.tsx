@@ -285,15 +285,17 @@ export default function App() {
   // Find the next available (unoccupied) bay from current schedule
   function findAvailableBay(): { bayId: string; bayName: string; bayLabel: string } | null {
     const now = Date.now()
-    // Build set of bay IDs currently occupied (active or dispatched)
+    // Build set of bay IDs currently occupied:
+    // Dispatched = member heading to bay (regardless of clock time)
+    // In Progress = session underway
+    // Scheduled but past start = late, still counts
     const occupiedBayIds = new Set(
       scheduledSessions
         .filter(s => {
-          const start = new Date(s.startTime).getTime()
           const end = new Date(s.endTime).getTime()
-          const isActiveOrDispatched = s.status === 'Dispatched' || s.status === 'In Progress'
-          const isRunning = start <= now && end > now
-          return isActiveOrDispatched && isRunning
+          if (end <= now) return false // session already over
+          return s.status === 'Dispatched' || s.status === 'In Progress' ||
+            (s.status === 'Scheduled' && new Date(s.startTime).getTime() <= now)
         })
         .map(s => s.bayId)
         .filter(Boolean)
