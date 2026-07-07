@@ -2,10 +2,48 @@ import { useEffect, useState } from 'react'
 import { getEasternHour } from '../utils/time'
 import type { ScheduledSession } from '../types'
 
+interface BaySummary {
+  bayId: string
+  bayName: string
+}
+
 interface Props {
   bayName: string | null
   sessions: ScheduledSession[]
+  bays: BaySummary[]
   onStart: () => void
+}
+
+const BAY_WORD_NUMS: Record<string, string> = {
+  one: '1', two: '2', three: '3', four: '4', five: '5', six: '6',
+}
+
+function shortBayName(name: string): string {
+  const m = name.match(/Bay\s*(?:Number)?\s*(\w+)/i)
+  if (!m) return name
+  const raw = m[1].toLowerCase()
+  return `Bay ${BAY_WORD_NUMS[raw] ?? m[1]}`
+}
+
+interface BayStatus extends BaySummary {
+  active: boolean
+  golferFirstName?: string
+  minutesLeft?: number
+}
+
+function getBayStatuses(bays: BaySummary[], sessions: ScheduledSession[]): BayStatus[] {
+  const now = Date.now()
+  return bays.map(bay => {
+    const session = sessions.find(s =>
+      s.bayId === bay.bayId &&
+      (s.status === 'Dispatched' || s.status === 'In Progress') &&
+      new Date(s.endTime).getTime() > now
+    )
+    if (!session) return { ...bay, active: false }
+    const golferFirstName = session.players[0]?.displayName?.split(' ')[0] || 'Golfer'
+    const minutesLeft = Math.max(0, Math.round((new Date(session.endTime).getTime() - now) / 60_000))
+    return { ...bay, active: true, golferFirstName, minutesLeft }
+  })
 }
 
 const TAGLINES = [
@@ -40,8 +78,9 @@ function formatWait(totalSeconds: number): string {
   return s === 0 ? `${m}m` : `${m}m ${s}s`
 }
 
-export default function WelcomeScreen({ bayName, sessions, onStart }: Props) {
+export default function WelcomeScreen({ bayName, sessions, bays, onStart }: Props) {
   const [pulse, setPulse] = useState(false)
+  const bayStatuses = getBayStatuses(bays, sessions)
   const [tagline] = useState(() => TAGLINES[Math.floor(Date.now() / 1000) % TAGLINES.length])
   const [waitSeconds, setWaitSeconds] = useState<number | null>(() => {
     const mins = computeWaitMinutes(sessions)
@@ -123,6 +162,28 @@ export default function WelcomeScreen({ bayName, sessions, onStart }: Props) {
           </div>
         </div>
       ) : null}
+
+      {/* Active sessions — live status per bay */}
+      {bayStatuses.length > 0 && (
+        <div className="flex gap-3 flex-wrap justify-center max-w-lg">
+          {bayStatuses.map(b => (
+            <div
+              key={b.bayId}
+              className={`rounded-xl border px-4 py-2 flex items-center gap-2 ${
+                b.active ? 'border-[#C9A84C]/30 bg-[#C9A84C]/5' : 'border-green-500/20 bg-green-500/5'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${b.active ? 'bg-[#C9A84C]' : 'bg-green-400'}`} />
+              <span className="text-white text-xs font-medium">{shortBayName(b.bayName)}</span>
+              {b.active ? (
+                <span className="text-[#888] text-xs">{b.golferFirstName} · {b.minutesLeft}m left</span>
+              ) : (
+                <span className="text-green-400 text-xs">Open</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Tap CTA */}
       <div className={`flex flex-col items-center gap-3 transition-opacity duration-700 ${pulse ? 'opacity-100' : 'opacity-35'}`}>

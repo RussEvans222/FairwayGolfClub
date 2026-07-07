@@ -45,6 +45,9 @@ export default function App() {
   // Scheduled sessions state
   const [scheduledSessions, setScheduledSessions] = useState<ScheduledSession[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(false)
+  // Authoritative bay list (all active ServiceResources) — never inferred from the schedule,
+  // otherwise a bay with zero bookings today would look like it doesn't exist.
+  const [allBays, setAllBays] = useState<{ bayId: string; bayName: string }[]>([])
   const [selectedSession, setSelectedSession] = useState<ScheduledSession | null>(null)
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState<number>(0)
 
@@ -195,6 +198,23 @@ export default function App() {
     if (screen === 'welcome' || screen === 'scheduled-sessions') loadSchedule()
   }, [screen, loadSchedule])
 
+  // Load the real bay list once auth is available — this is the source of truth
+  // for "which bays exist," independent of whether they have any bookings today.
+  const loadBays = useCallback(async () => {
+    try {
+      const bays = await query<{ Id: string; Name: string }>(
+        `SELECT Id, Name FROM ServiceResource WHERE IsActive = true ORDER BY Name ASC`
+      )
+      setAllBays(bays.map(b => ({ bayId: b.Id, bayName: b.Name })))
+    } catch (e) {
+      console.error('Failed to load bay list', e)
+    }
+  }, [query])
+
+  useEffect(() => {
+    if (auth) loadBays()
+  }, [auth, loadBays])
+
   // ── Screen handlers ───────────────────────────────────────────────────
 
   function handleStart() {
@@ -321,7 +341,9 @@ export default function App() {
     return appt.id
   }, [create])
 
-  // Find the next available (unoccupied) bay from current schedule
+  // Find the next available (unoccupied) bay, checked against the real bay list —
+  // never inferred from today's schedule, and never a hardcoded guess. A bay with
+  // zero appointments today is still a real bay and must still count as available.
   function findAvailableBay(): { bayId: string; bayName: string; bayLabel: string } | null {
     const now = Date.now()
     // Build set of bay IDs currently occupied:
@@ -340,24 +362,13 @@ export default function App() {
         .filter(Boolean)
     )
 
-    // Find a scheduled session for a bay that is NOT occupied right now
-    // (use it only to learn bay names — don't hijack the appointment)
-    const allBayIds = new Map<string, { bayId: string; bayName: string; bayLabel: string }>()
-    for (const s of scheduledSessions) {
-      if (s.bayId && s.bayName && !allBayIds.has(s.bayId)) {
-        allBayIds.set(s.bayId, { bayId: s.bayId, bayName: s.bayName, bayLabel: s.bayLabel })
+    for (const bay of allBays) {
+      if (!occupiedBayIds.has(bay.bayId)) {
+        return { bayId: bay.bayId, bayName: bay.bayName, bayLabel: bay.bayName }
       }
     }
 
-    for (const [bayId, bay] of allBayIds) {
-      if (!occupiedBayIds.has(bayId)) return bay
-    }
-
-    // If we have no bay names from schedule, return a generic assignment
-    if (allBayIds.size === 0) {
-      return { bayId: 'walk-in', bayName: 'Bay 1', bayLabel: 'Bay 1' }
-    }
-    return null // all bays occupied
+    return null // all bays occupied (or the bay list hasn't loaded yet) — route to queue
   }
 
   // ── Member walk-in: look up by email ─────────────────────────────────────
@@ -473,7 +484,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingMember, scheduledSessions, createWalkInAppointment])
+  }, [pendingMember, scheduledSessions, allBays, createWalkInAppointment])
 
   // Walk-in flow handlers
 
@@ -577,7 +588,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, create, session.players.length, addPlayer, scheduledSessions, createWalkInAppointment])
+  }, [query, create, session.players.length, addPlayer, scheduledSessions, allBays, createWalkInAppointment])
 
   const fetchGreeting = useCallback(async (appointmentId: string) => {
     type GreetingRow = {
@@ -704,7 +715,7 @@ export default function App() {
     <div className="w-screen h-screen bg-[#0A0A0A] overflow-hidden select-none"
          onDoubleClick={(e) => { if ((e.target as HTMLElement).dataset.logout) handleStaffLogout() }}>
       {screen === 'welcome' && (
-        <WelcomeScreen bayName={null} sessions={scheduledSessions} onStart={handleStart} />
+        <WelcomeScreen bayName={null} sessions={scheduledSessions} bays={allBays} onStart={handleStart} />
       )}
       {screen === 'scheduled-sessions' && (
         <ScheduledSessionsScreen
