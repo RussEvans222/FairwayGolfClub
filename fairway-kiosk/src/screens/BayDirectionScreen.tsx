@@ -138,6 +138,19 @@ export default function BayDirectionScreen({
         </div>
       )}
 
+      {/* Free tier upsell */}
+      {isWalkIn && (
+        <div className="rounded-2xl border border-[#C9A84C]/20 bg-[#111] px-6 py-4 max-w-sm w-full text-left">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-base">📊</span>
+            <span className="text-[#C9A84C] text-xs font-bold uppercase tracking-wide">Your Free Golfer360 Profile</span>
+          </div>
+          <p className="text-[#888] text-xs leading-relaxed">
+            We've created a free profile for you — every shot today is tracked. After your session, scan the QR at the desk to claim your stats and see your AI coaching insights.
+          </p>
+        </div>
+      )}
+
       {/* Countdown */}
       <div className="flex flex-col items-center gap-1 mt-2">
         <p className="text-[#444] text-xs">Returning to home screen in {remaining}s</p>

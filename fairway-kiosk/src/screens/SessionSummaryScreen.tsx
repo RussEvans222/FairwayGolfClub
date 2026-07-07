@@ -22,10 +22,11 @@ interface Props {
   session: SessionState
   stats: SummaryStats
   coachTip: CoachTipData | null
+  isGuest?: boolean
   onDone: () => void
 }
 
-export default function SessionSummaryScreen({ session, stats, coachTip, onDone }: Props) {
+export default function SessionSummaryScreen({ session, stats, coachTip, isGuest = false, onDone }: Props) {
   return (
     <div className="w-full h-full flex flex-col items-center justify-start gap-8 px-16 pt-16 pb-10 overflow-y-auto">
       {/* Header */}
@@ -75,6 +76,22 @@ export default function SessionSummaryScreen({ session, stats, coachTip, onDone 
             ))}
         </div>
       </div>
+
+      {/* Guest upsell */}
+      {isGuest && (
+        <div className="w-full max-w-2xl rounded-2xl border border-[#C9A84C]/30 bg-[#C9A84C]/5 px-6 py-5">
+          <div className="flex items-start gap-4">
+            <span className="text-3xl flex-shrink-0">🏌️</span>
+            <div>
+              <p className="text-[#C9A84C] font-semibold text-base">Want to see your stats every session?</p>
+              <p className="text-[#888] text-sm mt-1 leading-relaxed">
+                Your Golfer360 profile is already created — it's free. Sign up at the front desk to unlock your full stats history, AI coaching insights, and track your improvement over time.
+              </p>
+              <p className="text-white text-sm font-medium mt-2">Membership starts at $X/month. First session free.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <GoldButton size="lg" onClick={onDone} className="mt-4">
         Done — Back to Start

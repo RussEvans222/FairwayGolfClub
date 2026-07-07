@@ -7,6 +7,7 @@ interface Props {
   loading: boolean
   onSelectPlayer: (session: ScheduledSession, playerIndex: number) => void
   onWalkIn: () => void
+  onAddGuest: (session: ScheduledSession) => void
 }
 
 function formatTime(iso: string) {
@@ -105,7 +106,7 @@ function StatusBadge({ status, isLate }: { status: string; isLate: boolean }) {
   )
 }
 
-export default function ScheduledSessionsScreen({ sessions, loading, onSelectPlayer, onWalkIn }: Props) {
+export default function ScheduledSessionsScreen({ sessions, loading, onSelectPlayer, onWalkIn, onAddGuest }: Props) {
   const now = Date.now()
 
   const upcoming = useMemo(() => upcomingSessions(sessions), [sessions])
@@ -215,6 +216,22 @@ export default function ScheduledSessionsScreen({ sessions, loading, onSelectPla
                       )
                     })}
                   </div>
+
+                  {/* Add Guest — only shown when at least one player is checked in */}
+                  {s.players.some(p => p.checkedIn) && (
+                    <button
+                      onClick={() => onAddGuest(s)}
+                      className="w-full flex items-center gap-3 px-5 py-3 border-t border-[#1E1E1E] hover:bg-[#C9A84C]/5 active:bg-[#C9A84C]/10 transition-all text-left"
+                    >
+                      <div className="w-8 h-8 rounded-full border border-dashed border-[#C9A84C]/40 flex items-center justify-center flex-shrink-0">
+                        <span className="text-[#C9A84C] text-sm">+</span>
+                      </div>
+                      <div>
+                        <p className="text-[#C9A84C] text-sm font-medium">Add a Guest</p>
+                        <p className="text-[#555] text-xs">Guests pay $35/session · get a free Golfer360 profile</p>
+                      </div>
+                    </button>
+                  )}
                 </div>
               )
             })}

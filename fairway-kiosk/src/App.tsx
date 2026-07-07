@@ -16,6 +16,7 @@ import SessionActiveScreen from './screens/SessionActiveScreen'
 import SessionSummaryScreen from './screens/SessionSummaryScreen'
 import StaffLoginScreen from './screens/StaffLoginScreen'
 import SetupPinScreen from './screens/SetupPinScreen'
+import GuestPaymentScreen from './screens/GuestPaymentScreen'
 
 interface SummaryStats {
   avgBallSpeed: number | null
@@ -48,6 +49,8 @@ export default function App() {
   // Walk-in / active session state
   const [walkInSession, setWalkInSession] = useState<ScheduledSession | null>(null)
   const [walkInPlayer, setWalkInPlayer] = useState<ScheduledPlayer | null>(null)
+  // Pending guest data — held between registration and payment confirmation
+  const [pendingGuest, setPendingGuest] = useState<{ firstName: string; lastName: string; email: string; skill: SkillLevel } | null>(null)
   const { session, addPlayer, reset } = useSession()
   const [summaryStats, setSummaryStats] = useState<SummaryStats>({
     avgBallSpeed: null, avgCarryDistance: null, bestCarry: null, shotCount: null, durationMinutes: null,
@@ -198,6 +201,7 @@ export default function App() {
     setSelectedSession(null)
     setWalkInSession(null)
     setWalkInPlayer(null)
+    setPendingGuest(null)
     setSummaryStats({ avgBallSpeed: null, avgCarryDistance: null, bestCarry: null, shotCount: null, durationMinutes: null })
     setCoachTip(null)
     setScreen('welcome')
@@ -322,6 +326,14 @@ export default function App() {
   }
 
   // Walk-in flow handlers
+
+  // Step 1: collect info → hold it, show payment screen
+  function handleGuestRegistered(data: { firstName: string; lastName: string; email: string; skill: SkillLevel }) {
+    setPendingGuest(data)
+    setScreen('guest-payment')
+  }
+
+  // Step 2: payment confirmed → create SF records, assign bay
   const handleGuestComplete = useCallback(async (data: {
     firstName: string; lastName: string; email: string; skill: SkillLevel
   }) => {
@@ -349,7 +361,7 @@ export default function App() {
         profile = profiles[0]
       } else {
         const pr = await create<{ id: string }>('Golfer_Profile__c', {
-          Contact__c: contact.Id, Skill_Segment__c: data.skill,
+          Contact__c: contact.Id, Skill_Segment__c: data.skill, Profile_Tier__c: 'Free',
         })
         profile = {
           Id: pr.id, Name: `${data.firstName} ${data.lastName}`, Skill_Segment__c: data.skill,
@@ -533,6 +545,10 @@ export default function App() {
           loading={sessionsLoading}
           onSelectPlayer={handleSelectPlayer}
           onWalkIn={() => setScreen('player-type')}
+          onAddGuest={(s) => {
+            setSelectedSession(s)
+            setScreen('guest-registration')
+          }}
         />
       )}
       {screen === 'pin-entry' && selectedSession && currentPlayer && (
@@ -576,9 +592,16 @@ export default function App() {
       )}
       {screen === 'guest-registration' && (
         <GuestRegistrationScreen
-          onComplete={handleGuestComplete}
+          onComplete={handleGuestRegistered}
           onBack={() => setScreen('player-type')}
           loading={loading}
+        />
+      )}
+      {screen === 'guest-payment' && pendingGuest && (
+        <GuestPaymentScreen
+          guestName={`${pendingGuest.firstName} ${pendingGuest.lastName}`}
+          onConfirm={() => handleGuestComplete(pendingGuest)}
+          onBack={() => setScreen('guest-registration')}
         />
       )}
       {screen === 'session-active' && (
@@ -589,6 +612,7 @@ export default function App() {
           session={session}
           stats={summaryStats}
           coachTip={coachTip}
+          isGuest={!!walkInSession}
           onDone={handleReset}
         />
       )}

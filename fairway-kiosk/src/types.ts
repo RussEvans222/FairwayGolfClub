@@ -69,6 +69,7 @@ export type Screen =
   | 'bay-direction'
   | 'player-type'
   | 'guest-registration'
+  | 'guest-payment'
   | 'session-active'
   | 'session-summary'
 

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Profile_Tier__c</fullName>
+    <label>Profile Tier</label>
+    <description>Identifies whether this golfer is a free walk-in/guest, a paying member, or a founding member. Drives upsell prompts on the kiosk and access to full stats history.</description>
+    <inlineHelpText>Free = walk-in or guest with basic stat tracking. Member = active paying member. Founding = charter founding member with complimentary access.</inlineHelpText>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Free</fullName>
+                <default>true</default>
+                <label>Free</label>
+            </value>
+            <value>
+                <fullName>Member</fullName>
+                <default>false</default>
+                <label>Member</label>
+            </value>
+            <value>
+                <fullName>Founding</fullName>
+                <default>false</default>
+                <label>Founding</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
