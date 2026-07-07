@@ -311,6 +311,135 @@ body {
   line-height: 1.6;
 }
 
+/* ── SURVEY ── */
+.survey {
+  padding: 5rem 2rem 6rem;
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+.survey-buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0 2.5rem;
+}
+.survey-btn {
+  padding: 0.9rem 1.8rem;
+  border-radius: 50px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.survey-btn:hover:not(:disabled) { border-color: var(--gold); transform: translateY(-1px); }
+.survey-btn:disabled { opacity: 0.6; cursor: default; }
+.survey-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 2.5rem;
+}
+.survey-bar-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 40px;
+  align-items: center;
+  gap: 0.75rem;
+}
+.survey-bar-label {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
+  text-align: right;
+}
+.survey-bar-track {
+  height: 10px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.survey-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+.survey-bar-yes { background: #c98500; }
+.survey-bar-no { background: #e66767; }
+.survey-bar-count {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.75);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+.survey-followup {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: left;
+}
+.survey-followup p {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 1rem;
+}
+.survey-followup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.survey-followup-form input[type="email"],
+.survey-followup-form input[type="text"],
+.survey-followup-form textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  color: white;
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+}
+.survey-followup-form textarea { min-height: 70px; }
+.survey-followup-form input::placeholder,
+.survey-followup-form textarea::placeholder { color: rgba(255,255,255,0.35); }
+.survey-followup-form input:focus,
+.survey-followup-form textarea:focus { border-color: var(--gold); }
+.survey-followup-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+.survey-followup-actions button[type="submit"] {
+  padding: 0.7rem 1.4rem;
+  background: var(--gold);
+  color: var(--dark);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.survey-followup-actions button[type="submit"]:hover { background: var(--gold-light); }
+.survey-skip {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.survey-skip:hover { color: rgba(255,255,255,0.7); }
+.survey-thanks {
+  color: var(--gold);
+  font-size: 0.95rem;
+}
+
 /* ── IMAGE SHOWCASE ── */
 .showcase {
   display: grid;
@@ -488,6 +617,7 @@ footer {
   .gallery-item { height: 180px; }
   .footer { flex-direction: column; gap: 1rem; text-align: center; }
   .signup-row { flex-direction: column; }
+  .survey-buttons { flex-direction: column; align-items: stretch; }
 }
 </style>
 <script src="https://www.google.com/recaptcha/api.js"></script>
@@ -607,6 +737,161 @@ footer {
     </div>
   </div>
 </section>
+
+<!-- SURVEY -->
+<section class="survey" id="survey">
+  <p class="section-eyebrow">Quick Pulse Check</p>
+  <h2 class="section-title">Does this sound cool?</h2>
+  <p class="section-sub">One click, no sign-up required. Tell us what you think — it helps us build the right thing.</p>
+
+  <div class="survey-buttons" id="surveyButtons">
+    <button type="button" class="survey-btn" data-vote="yes">👍 Yes, I'm in</button>
+    <button type="button" class="survey-btn" data-vote="no">👎 Not for me</button>
+  </div>
+
+  <div class="survey-chart" id="surveyChart" aria-live="polite">
+    <div class="survey-bar-row">
+      <span class="survey-bar-label">Yes</span>
+      <div class="survey-bar-track"><div class="survey-bar-fill survey-bar-yes" id="barYes"></div></div>
+      <span class="survey-bar-count" id="countYes">0</span>
+    </div>
+    <div class="survey-bar-row">
+      <span class="survey-bar-label">No</span>
+      <div class="survey-bar-track"><div class="survey-bar-fill survey-bar-no" id="barNo"></div></div>
+      <span class="survey-bar-count" id="countNo">0</span>
+    </div>
+  </div>
+
+  <div class="survey-followup" id="followupYes" style="display:none">
+    <p>Want updates when we open?</p>
+    <form id="surveyYesForm" class="survey-followup-form" action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00Dak000011rATC" method="POST" target="hidden_iframe_survey">
+      <input type="hidden" name="captcha_settings" value='{"keyname":"ReCaptcha","fallback":"true","orgId":"00Dak000011rATC","ts":""}'>
+      <input type="hidden" name="oid" value="00Dak000011rATC">
+      <input type="hidden" name="lead_source" value="Website - Survey Vote">
+      <input type="hidden" name="last_name" value="Unknown">
+      <input type="hidden" name="company" value="Individual">
+      <input type="hidden" name="00Nak00004DAbhV" value="General Interest">
+      <input type="hidden" name="description" id="surveyYesDescription" value="Survey vote: Yes">
+      <input type="email" name="email" placeholder="you@email.com (optional)">
+      <div class="recaptcha-wrap"><div class="g-recaptcha" data-sitekey="6LeXE0YtAAAAABNLw7oPp_gT8umYKYmEuxSKHMC3"></div></div>
+      <div class="survey-followup-actions">
+        <button type="submit">Submit</button>
+        <button type="button" class="survey-skip" data-skip>Skip</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="survey-followup" id="followupNo" style="display:none">
+    <p>Mind telling us why? Totally optional, and anonymous if you'd like.</p>
+    <form id="surveyNoForm" class="survey-followup-form" action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00Dak000011rATC" method="POST" target="hidden_iframe_survey">
+      <input type="hidden" name="captcha_settings" value='{"keyname":"ReCaptcha","fallback":"true","orgId":"00Dak000011rATC","ts":""}'>
+      <input type="hidden" name="oid" value="00Dak000011rATC">
+      <input type="hidden" name="lead_source" value="Website - Survey Vote">
+      <input type="hidden" name="last_name" value="Unknown" id="surveyNoLastName">
+      <input type="hidden" name="company" value="Individual">
+      <input type="hidden" name="00Nak00004DAbhV" value="General Interest">
+      <textarea name="description" id="surveyNoDescription" placeholder="What would make it more interesting to you?"></textarea>
+      <input type="text" id="surveyNoName" placeholder="Your name (optional)">
+      <input type="email" name="email" placeholder="Email (optional)">
+      <div class="recaptcha-wrap"><div class="g-recaptcha" data-sitekey="6LeXE0YtAAAAABNLw7oPp_gT8umYKYmEuxSKHMC3"></div></div>
+      <div class="survey-followup-actions">
+        <button type="submit">Submit</button>
+        <button type="button" class="survey-skip" data-skip>Skip</button>
+      </div>
+    </form>
+  </div>
+
+  <p class="survey-thanks" id="surveyThanks" style="display:none">Thanks for weighing in! 🙌</p>
+  <iframe name="hidden_iframe_survey" style="display:none" title="hidden"></iframe>
+</section>
+<script>
+(function() {
+  var VOTE_KEY = 'fgc_survey_vote';
+  var voteLocation = {};
+  var yesEl = document.getElementById('countYes');
+  var noEl = document.getElementById('countNo');
+  var barYes = document.getElementById('barYes');
+  var barNo = document.getElementById('barNo');
+  var buttonsWrap = document.getElementById('surveyButtons');
+  var followupYes = document.getElementById('followupYes');
+  var followupNo = document.getElementById('followupNo');
+  var thanksEl = document.getElementById('surveyThanks');
+  var voted = localStorage.getItem(VOTE_KEY);
+
+  function renderCounts(yes, no) {
+    var total = yes + no;
+    barYes.style.width = (total ? Math.round((yes / total) * 100) : 0) + '%';
+    barNo.style.width = (total ? Math.round((no / total) * 100) : 0) + '%';
+    yesEl.textContent = yes;
+    noEl.textContent = no;
+  }
+
+  function lockButtons(vote) {
+    buttonsWrap.querySelectorAll('button').forEach(function(b) { b.disabled = true; });
+    var picked = buttonsWrap.querySelector('[data-vote="' + vote + '"]');
+    if (picked) picked.textContent = vote === 'yes' ? "You said Yes ✓" : "You said No ✓";
+  }
+
+  fetch('/api/vote').then(function(r) { return r.json(); }).then(function(data) {
+    renderCounts(data.yes || 0, data.no || 0);
+  }).catch(function() {});
+
+  if (voted) lockButtons(voted);
+
+  buttonsWrap.addEventListener('click', function(e) {
+    var btn = e.target.closest('button[data-vote]');
+    if (!btn || voted) return;
+    var vote = btn.dataset.vote;
+    buttonsWrap.querySelectorAll('button').forEach(function(b) { b.disabled = true; });
+
+    fetch('/api/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vote: vote })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      renderCounts(data.yes || 0, data.no || 0);
+      voteLocation = { city: data.city, region: data.region };
+      localStorage.setItem(VOTE_KEY, vote);
+      voted = vote;
+      lockButtons(vote);
+      (vote === 'yes' ? followupYes : followupNo).style.display = 'block';
+    }).catch(function() {
+      buttonsWrap.querySelectorAll('button').forEach(function(b) { b.disabled = false; });
+    });
+  });
+
+  document.querySelectorAll('.survey-skip').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      followupYes.style.display = 'none';
+      followupNo.style.display = 'none';
+      thanksEl.style.display = 'block';
+    });
+  });
+
+  function locationLabel() {
+    return voteLocation.city ? (voteLocation.city + (voteLocation.region ? ', ' + voteLocation.region : '')) : 'Unknown';
+  }
+
+  document.getElementById('surveyYesForm').addEventListener('submit', function() {
+    document.getElementById('surveyYesDescription').value = 'Survey vote: Yes | Location: ' + locationLabel();
+    setTimeout(function() {
+      followupYes.style.display = 'none';
+      thanksEl.style.display = 'block';
+    }, 600);
+  });
+
+  document.getElementById('surveyNoForm').addEventListener('submit', function() {
+    var ta = document.getElementById('surveyNoDescription');
+    ta.value = 'Survey vote: No | Location: ' + locationLabel() + ' | Feedback: ' + (ta.value.trim() || '(none provided)');
+    var nameInput = document.getElementById('surveyNoName');
+    if (nameInput.value.trim()) document.getElementById('surveyNoLastName').value = nameInput.value.trim();
+    setTimeout(function() {
+      followupNo.style.display = 'none';
+      thanksEl.style.display = 'block';
+    }, 600);
+  });
+})();
+</script>
 
 <!-- SHOWCASE: AI CHECK-IN -->
 <div class="showcase">
