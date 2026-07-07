@@ -46,6 +46,8 @@ export default function App() {
   const [selectedPlayerIndex, setSelectedPlayerIndex] = useState<number>(0)
 
   // Walk-in / active session state
+  const [walkInSession, setWalkInSession] = useState<ScheduledSession | null>(null)
+  const [walkInPlayer, setWalkInPlayer] = useState<ScheduledPlayer | null>(null)
   const { session, addPlayer, reset } = useSession()
   const [summaryStats, setSummaryStats] = useState<SummaryStats>({
     avgBallSpeed: null, avgCarryDistance: null, bestCarry: null, shotCount: null, durationMinutes: null,
@@ -178,9 +180,9 @@ export default function App() {
     }
   }, [query])
 
-  // Reload schedule when we navigate to the sessions screen
+  // Reload schedule when we navigate to welcome or sessions screen
   useEffect(() => {
-    if (screen === 'scheduled-sessions') loadSchedule()
+    if (screen === 'welcome' || screen === 'scheduled-sessions') loadSchedule()
   }, [screen, loadSchedule])
 
   // ── Screen handlers ───────────────────────────────────────────────────
@@ -194,6 +196,8 @@ export default function App() {
     reset()
     setError(null)
     setSelectedSession(null)
+    setWalkInSession(null)
+    setWalkInPlayer(null)
     setSummaryStats({ avgBallSpeed: null, avgCarryDistance: null, bestCarry: null, shotCount: null, durationMinutes: null })
     setCoachTip(null)
     setScreen('welcome')
@@ -278,6 +282,43 @@ export default function App() {
     }
   }, [selectedSession, selectedPlayerIndex, patch])
 
+  // Find the next available (unoccupied) bay from current schedule
+  function findAvailableBay(): { bayId: string; bayName: string; bayLabel: string } | null {
+    const now = Date.now()
+    // Build set of bay IDs currently occupied (active or dispatched)
+    const occupiedBayIds = new Set(
+      scheduledSessions
+        .filter(s => {
+          const start = new Date(s.startTime).getTime()
+          const end = new Date(s.endTime).getTime()
+          const isActiveOrDispatched = s.status === 'Dispatched' || s.status === 'In Progress'
+          const isRunning = start <= now && end > now
+          return isActiveOrDispatched && isRunning
+        })
+        .map(s => s.bayId)
+        .filter(Boolean)
+    )
+
+    // Find a scheduled session for a bay that is NOT occupied right now
+    // (use it only to learn bay names — don't hijack the appointment)
+    const allBayIds = new Map<string, { bayId: string; bayName: string; bayLabel: string }>()
+    for (const s of scheduledSessions) {
+      if (s.bayId && s.bayName && !allBayIds.has(s.bayId)) {
+        allBayIds.set(s.bayId, { bayId: s.bayId, bayName: s.bayName, bayLabel: s.bayLabel })
+      }
+    }
+
+    for (const [bayId, bay] of allBayIds) {
+      if (!occupiedBayIds.has(bayId)) return bay
+    }
+
+    // If we have no bay names from schedule, return a generic assignment
+    if (allBayIds.size === 0) {
+      return { bayId: 'walk-in', bayName: 'Bay 1', bayLabel: 'Bay 1' }
+    }
+    return null // all bays occupied
+  }
+
   // Walk-in flow handlers
   const handleGuestComplete = useCallback(async (data: {
     firstName: string; lastName: string; email: string; skill: SkillLevel
@@ -314,19 +355,48 @@ export default function App() {
           Average_7_Iron_Carry__c: null, Average_Driver_Carry__c: null,
         }
       }
+
       addPlayer({
         slot: session.players.length + 1, contact, profile,
         displayName: `${data.firstName} ${data.lastName}`, isGuest: true,
       })
-      // Walk-ins go straight to session active (staff will configure bay separately)
-      // For now route to session active placeholder
-      setScreen('session-active')
+
+      // Assign the next available bay (not currently occupied)
+      const bay = findAvailableBay()
+      const now = new Date().toISOString()
+      const endTime = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+
+      // Build a synthetic session for BayDirectionScreen (no SF appointment created for walk-ins)
+      const syntheticSession: ScheduledSession = {
+        reservationId: 'walk-in',
+        sessionId: null,
+        bayId: bay?.bayId ?? 'walk-in',
+        bayName: bay?.bayName ?? 'Bay 1',
+        bayLabel: bay?.bayLabel ?? 'Bay 1',
+        startTime: now,
+        endTime,
+        status: 'Dispatched',
+        players: [{
+          profileId: profile.Id,
+          contactId: contact.Id,
+          displayName: `${data.firstName} ${data.lastName}`,
+          isGuest: true,
+          checkedIn: true,
+          pin: null,
+        }],
+      }
+
+      const syntheticPlayer: ScheduledPlayer = syntheticSession.players[0]
+      setWalkInSession(syntheticSession)
+      setWalkInPlayer(syntheticPlayer)
+      setScreen('bay-direction')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.')
     } finally {
       setLoading(false)
     }
-  }, [query, create, session.players.length, addPlayer])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, create, session.players.length, addPlayer, scheduledSessions])
 
   const fetchGreeting = useCallback(async (appointmentId: string) => {
     type GreetingRow = {
@@ -453,7 +523,7 @@ export default function App() {
     <div className="w-screen h-screen bg-[#0A0A0A] overflow-hidden select-none"
          onDoubleClick={(e) => { if ((e.target as HTMLElement).dataset.logout) handleStaffLogout() }}>
       {screen === 'welcome' && (
-        <WelcomeScreen bayName={null} onStart={handleStart} />
+        <WelcomeScreen bayName={null} sessions={scheduledSessions} onStart={handleStart} />
       )}
       {screen === 'scheduled-sessions' && (
         <ScheduledSessionsScreen
@@ -483,14 +553,18 @@ export default function App() {
           error={error}
         />
       )}
-      {screen === 'bay-direction' && selectedSession && currentPlayer && (
-        <BayDirectionScreen
-          session={selectedSession}
-          player={currentPlayer}
-          onDone={handleReset}
-          fetchGreeting={fetchGreeting}
-        />
-      )}
+      {screen === 'bay-direction' && (() => {
+        const baySession = walkInSession ?? selectedSession
+        const bayPlayer = walkInPlayer ?? currentPlayer
+        return baySession && bayPlayer ? (
+          <BayDirectionScreen
+            session={baySession}
+            player={bayPlayer}
+            onDone={handleReset}
+            fetchGreeting={walkInSession ? undefined : fetchGreeting}
+          />
+        ) : null
+      })()}
       {screen === 'player-type' && (
         <PlayerTypeScreen
           onGuest={() => setScreen('guest-registration')}

@@ -50,9 +50,11 @@ export default function BayDirectionScreen({
     return () => clearTimeout(t)
   }, [remaining, onDone])
 
-  const firstName = greeting?.firstName ?? player.displayName?.split(' ')[0] ?? 'Welcome'
+  const isWalkIn = session.reservationId === 'walk-in' || player.isGuest
+  const firstName = greeting?.firstName ?? player.displayName?.split(' ')[0] ?? 'Golfer'
   const bayLabel = greeting?.bayName ?? session.bayLabel
   const initial = firstName[0]?.toUpperCase() ?? '?'
+  const welcomeLine = isWalkIn ? `Let's get you started, ${firstName}!` : `Welcome back, ${firstName}.`
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-7 px-10 text-center overflow-y-auto py-8">
@@ -64,11 +66,13 @@ export default function BayDirectionScreen({
         </div>
         <div>
           <h1 className="text-4xl font-bold text-white">
-            Welcome back, <span className="text-[#C9A84C]">{firstName}.</span>
+            <span className="text-[#C9A84C]">{welcomeLine}</span>
           </h1>
-          <p className="text-[#666] text-sm mt-1">
-            {formatTime(session.startTime)} – {formatTime(session.endTime)}
-          </p>
+          {!isWalkIn && (
+            <p className="text-[#666] text-sm mt-1">
+              {formatTime(session.startTime)} – {formatTime(session.endTime)}
+            </p>
+          )}
         </div>
       </div>
 

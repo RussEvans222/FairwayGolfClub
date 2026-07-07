@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { ScheduledSession } from '../types'
+import { getEasternHour } from '../utils/time'
 
 interface Props {
   sessions: ScheduledSession[]
@@ -13,7 +14,7 @@ function formatTime(iso: string) {
 }
 
 function getHour() {
-  return new Date().getHours()
+  return getEasternHour()
 }
 
 // Sessions starting within the next 60 minutes or currently active
