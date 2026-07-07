@@ -5,7 +5,8 @@
     <label>Fairway Kiosk App</label>
     <oauthConfig>
         <callbackUrl>http://localhost:5180/
-https://kiosk.fairwaygolfclub.co/</callbackUrl>
+https://kiosk.fairwaygolfclub.co/
+https://fairway-kiosk.pages.dev/</callbackUrl>
         <consumerKey>3MVG9JJwBBbcN47LfOSqoMzg6MvSJkwE3fpNuaQzV7Yx3d8VU_zfm9uHa.hFqVLOObL7MybEf3JRJcpvq8Aox</consumerKey>
         <isAdminApproved>false</isAdminApproved>
         <isClientCredentialEnabled>false</isClientCredentialEnabled>
@@ -23,7 +24,7 @@ https://kiosk.fairwaygolfclub.co/</callbackUrl>
         <scopes>RefreshToken</scopes>
     </oauthConfig>
     <oauthPolicy>
-        <ipRelaxation>ENFORCE</ipRelaxation>
+        <ipRelaxation>BYPASS</ipRelaxation>
         <isTokenExchangeFlowEnabled>false</isTokenExchangeFlowEnabled>
         <refreshTokenPolicy>infinite</refreshTokenPolicy>
     </oauthPolicy>

@@ -3,7 +3,7 @@ import { useSession } from './hooks/useSession'
 import { useSalesforce, saveAuth, clearAuth } from './hooks/useSalesforce'
 import type {
   Screen, SkillLevel, GolferProfile, Contact,
-  ScheduledSession, ScheduledPlayer,
+  ScheduledSession, ScheduledPlayer, QueueEntry,
 } from './types'
 
 import WelcomeScreen from './screens/WelcomeScreen'
@@ -11,12 +11,14 @@ import ScheduledSessionsScreen from './screens/ScheduledSessionsScreen'
 import PinEntryScreen from './screens/PinEntryScreen'
 import BayDirectionScreen from './screens/BayDirectionScreen'
 import PlayerTypeScreen from './screens/PlayerTypeScreen'
+import MemberWalkInScreen from './screens/MemberWalkInScreen'
 import GuestRegistrationScreen from './screens/GuestRegistrationScreen'
 import SessionActiveScreen from './screens/SessionActiveScreen'
 import SessionSummaryScreen from './screens/SessionSummaryScreen'
 import StaffLoginScreen from './screens/StaffLoginScreen'
 import SetupPinScreen from './screens/SetupPinScreen'
 import GuestPaymentScreen from './screens/GuestPaymentScreen'
+import BayQueueScreen from './screens/BayQueueScreen'
 
 interface SummaryStats {
   avgBallSpeed: number | null
@@ -51,6 +53,11 @@ export default function App() {
   const [walkInPlayer, setWalkInPlayer] = useState<ScheduledPlayer | null>(null)
   // Pending guest data — held between registration and payment confirmation
   const [pendingGuest, setPendingGuest] = useState<{ firstName: string; lastName: string; email: string; skill: SkillLevel } | null>(null)
+  // Member walk-in lookup result — held through payment screen
+  const [pendingMember, setPendingMember] = useState<{ contactId: string; profileId: string | null; firstName: string; lastName: string; email: string } | null>(null)
+  // Bay queue
+  const [bayQueue, setBayQueue] = useState<QueueEntry[]>([])
+  const [queueEntry, setQueueEntry] = useState<QueueEntry | null>(null)
   const { session, addPlayer, reset } = useSession()
   const [summaryStats, setSummaryStats] = useState<SummaryStats>({
     avgBallSpeed: null, avgCarryDistance: null, bestCarry: null, shotCount: null, durationMinutes: null,
@@ -202,6 +209,8 @@ export default function App() {
     setWalkInSession(null)
     setWalkInPlayer(null)
     setPendingGuest(null)
+    setPendingMember(null)
+    setQueueEntry(null)
     setSummaryStats({ avgBallSpeed: null, avgCarryDistance: null, bestCarry: null, shotCount: null, durationMinutes: null })
     setCoachTip(null)
     setScreen('welcome')
@@ -325,6 +334,86 @@ export default function App() {
     return null // all bays occupied
   }
 
+  // ── Member walk-in: look up by email ─────────────────────────────────────
+  const handleMemberSearch = useCallback(async (email: string) => {
+    const contacts = await query<Contact>(
+      `SELECT Id, FirstName, LastName, Email FROM Contact WHERE Email = '${email}' LIMIT 1`
+    )
+    if (!contacts.length) return null
+    const c = contacts[0]
+    const profiles = await query<GolferProfile>(
+      `SELECT Id, Name, Skill_Segment__c FROM Golfer_Profile__c WHERE Contact__c = '${c.Id}' LIMIT 1`
+    )
+    return {
+      contactId: c.Id,
+      profileId: profiles.length ? profiles[0].Id : null,
+      firstName: c.FirstName,
+      lastName: c.LastName,
+      email: c.Email,
+    }
+  }, [query])
+
+  // Called when member is identified — route to payment screen then bay or queue
+  function handleMemberWalkInFound(data: { contactId: string; profileId: string | null; firstName: string; lastName: string; email: string }) {
+    setPendingMember(data)
+    setScreen('guest-payment')
+  }
+
+  // After payment, assign bay or add to queue
+  const handleMemberWalkInComplete = useCallback(async () => {
+    if (!pendingMember) return
+    setLoading(true)
+    setError(null)
+    try {
+      const bay = findAvailableBay()
+      const now = new Date().toISOString()
+      const endTime = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+
+      if (bay) {
+        const syntheticSession: ScheduledSession = {
+          reservationId: 'walk-in',
+          sessionId: null,
+          bayId: bay.bayId,
+          bayName: bay.bayName,
+          bayLabel: bay.bayLabel,
+          startTime: now,
+          endTime,
+          status: 'Dispatched',
+          players: [{
+            profileId: pendingMember.profileId,
+            contactId: pendingMember.contactId,
+            displayName: `${pendingMember.firstName} ${pendingMember.lastName}`,
+            isGuest: false,
+            checkedIn: true,
+            pin: null,
+          }],
+        }
+        setWalkInSession(syntheticSession)
+        setWalkInPlayer(syntheticSession.players[0])
+        setScreen('bay-direction')
+      } else {
+        // All bays occupied — add to queue
+        const entry: QueueEntry = {
+          id: `q-${Date.now()}`,
+          displayName: `${pendingMember.firstName} ${pendingMember.lastName}`,
+          contactId: pendingMember.contactId,
+          profileId: pendingMember.profileId,
+          skill: 'Intermediate',
+          isMember: true,
+          joinedAt: Date.now(),
+        }
+        setBayQueue(prev => [...prev, entry])
+        setQueueEntry(entry)
+        setScreen('bay-queue')
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong.')
+    } finally {
+      setLoading(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingMember, scheduledSessions])
+
   // Walk-in flow handlers
 
   // Step 1: collect info → hold it, show payment screen
@@ -400,10 +489,26 @@ export default function App() {
         }],
       }
 
-      const syntheticPlayer: ScheduledPlayer = syntheticSession.players[0]
-      setWalkInSession(syntheticSession)
-      setWalkInPlayer(syntheticPlayer)
-      setScreen('bay-direction')
+      if (bay) {
+        const syntheticPlayer: ScheduledPlayer = syntheticSession.players[0]
+        setWalkInSession(syntheticSession)
+        setWalkInPlayer(syntheticPlayer)
+        setScreen('bay-direction')
+      } else {
+        // All bays occupied — put guest in queue
+        const entry: QueueEntry = {
+          id: `q-${Date.now()}`,
+          displayName: `${data.firstName} ${data.lastName}`,
+          contactId: contact.Id,
+          profileId: profile.Id,
+          skill: data.skill,
+          isMember: false,
+          joinedAt: Date.now(),
+        }
+        setBayQueue(prev => [...prev, entry])
+        setQueueEntry(entry)
+        setScreen('bay-queue')
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.')
     } finally {
@@ -587,7 +692,18 @@ export default function App() {
         <PlayerTypeScreen
           onGuest={() => setScreen('guest-registration')}
           onMember={() => setScreen('scheduled-sessions')}
+          onWalkInMember={() => setScreen('member-walkin')}
           onBack={() => setScreen('scheduled-sessions')}
+        />
+      )}
+      {screen === 'member-walkin' && (
+        <MemberWalkInScreen
+          onFound={handleMemberWalkInFound}
+          onNotFound={() => setScreen('guest-registration')}
+          onBack={() => setScreen('player-type')}
+          loading={loading}
+          error={error}
+          onSearch={handleMemberSearch}
         />
       )}
       {screen === 'guest-registration' && (
@@ -597,11 +713,27 @@ export default function App() {
           loading={loading}
         />
       )}
-      {screen === 'guest-payment' && pendingGuest && (
+      {screen === 'guest-payment' && (pendingGuest || pendingMember) && (
         <GuestPaymentScreen
-          guestName={`${pendingGuest.firstName} ${pendingGuest.lastName}`}
-          onConfirm={() => handleGuestComplete(pendingGuest)}
-          onBack={() => setScreen('guest-registration')}
+          guestName={pendingMember
+            ? `${pendingMember.firstName} ${pendingMember.lastName}`
+            : `${pendingGuest!.firstName} ${pendingGuest!.lastName}`}
+          onConfirm={pendingMember
+            ? () => handleMemberWalkInComplete()
+            : () => handleGuestComplete(pendingGuest!)}
+          onBack={() => pendingMember ? setScreen('member-walkin') : setScreen('guest-registration')}
+        />
+      )}
+      {screen === 'bay-queue' && queueEntry && (
+        <BayQueueScreen
+          queueInfo={{
+            position: bayQueue.findIndex(e => e.id === queueEntry.id) + 1,
+            totalInQueue: bayQueue.length,
+            displayName: queueEntry.displayName,
+            isMember: queueEntry.isMember,
+          }}
+          sessions={scheduledSessions}
+          onDone={handleReset}
         />
       )}
       {screen === 'session-active' && (

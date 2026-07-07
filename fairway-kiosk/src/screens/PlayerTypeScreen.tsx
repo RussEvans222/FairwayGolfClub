@@ -3,27 +3,35 @@ import GoldButton from '../components/GoldButton'
 interface Props {
   onGuest: () => void
   onMember: () => void
+  onWalkInMember: () => void
   onBack: () => void
 }
 
 const OPTIONS = [
   {
+    label: 'I Have a Reservation',
+    sub: 'Find your scheduled tee time.',
+    icon: '📅',
+    action: 'member',
+  },
+  {
+    label: 'Member Walk-In',
+    sub: 'No reservation — find my account.',
+    icon: '⛳',
+    action: 'walkin-member',
+  },
+  {
     label: 'New Guest',
-    sub: "First time here? Let's get you set up.",
+    sub: "First time? Let's get you set up.",
     icon: '🆕',
     action: 'guest',
   },
-  {
-    label: 'Member Check-In',
-    sub: 'Sign in with email or PIN.',
-    icon: '⛳',
-    action: 'member',
-  },
 ]
 
-export default function PlayerTypeScreen({ onGuest, onMember, onBack }: Props) {
+export default function PlayerTypeScreen({ onGuest, onMember, onWalkInMember, onBack }: Props) {
   function handle(action: string) {
     if (action === 'guest') onGuest()
+    else if (action === 'walkin-member') onWalkInMember()
     else onMember()
   }
 
@@ -34,18 +42,19 @@ export default function PlayerTypeScreen({ onGuest, onMember, onBack }: Props) {
         <p className="text-[#888] mt-2">Choose how you'd like to get started.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 w-full max-w-2xl">
+      <div className="flex flex-col gap-4 w-full max-w-md">
         {OPTIONS.map(o => (
           <button
             key={o.action}
             onClick={() => handle(o.action)}
-            className="rounded-3xl border border-[#2A2A2A] bg-[#111] hover:border-[#C9A84C]/60 hover:bg-[#C9A84C]/5 p-8 flex flex-col items-center gap-4 transition-all active:scale-95"
+            className="rounded-2xl border border-[#2A2A2A] bg-[#111] hover:border-[#C9A84C]/60 hover:bg-[#C9A84C]/5 px-6 py-5 flex items-center gap-5 transition-all active:scale-[0.98] text-left w-full"
           >
-            <span className="text-5xl">{o.icon}</span>
-            <div className="text-center">
-              <p className="text-white font-semibold text-xl">{o.label}</p>
-              <p className="text-[#888] text-sm mt-1">{o.sub}</p>
+            <span className="text-4xl flex-shrink-0">{o.icon}</span>
+            <div>
+              <p className="text-white font-semibold text-lg">{o.label}</p>
+              <p className="text-[#666] text-sm mt-0.5">{o.sub}</p>
             </div>
+            <span className="ml-auto text-[#444]">›</span>
           </button>
         ))}
       </div>

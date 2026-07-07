@@ -68,10 +68,22 @@ export type Screen =
   | 'pin-setup'
   | 'bay-direction'
   | 'player-type'
+  | 'member-walkin'
   | 'guest-registration'
   | 'guest-payment'
+  | 'bay-queue'
   | 'session-active'
   | 'session-summary'
+
+export interface QueueEntry {
+  id: string
+  displayName: string
+  contactId: string
+  profileId: string | null
+  skill: SkillLevel
+  isMember: boolean
+  joinedAt: number
+}
 
 export type SessionType = 'Practice' | 'Round' | 'Game'
 export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Competitive'
