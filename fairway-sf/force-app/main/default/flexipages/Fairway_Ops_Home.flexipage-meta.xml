@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Fairway Ops Command Center — live session grid, bay status, and daily usage</description>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentName>c:fairwayOpsDashboard</componentName>
+                <identifier>c__fairwayOpsDashboard</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>main</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <masterLabel>Fairway Ops Home</masterLabel>
+    <template>
+        <name>lightning_OneColumn</name>
+    </template>
+    <type>AppPage</type>
+</FlexiPage>

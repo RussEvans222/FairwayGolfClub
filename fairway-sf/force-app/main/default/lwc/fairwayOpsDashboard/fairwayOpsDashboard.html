@@ -1,0 +1,117 @@
+<template>
+    <div class="dashboard">
+
+        <!-- Header bar -->
+        <div class="dash-header">
+            <div class="dash-title">
+                <span class="logo-mark">⛳</span>
+                <span>Fairway Ops</span>
+                <span class="dash-date">{todayLabel}</span>
+            </div>
+            <div class="header-actions">
+                <lightning-button-icon icon-name="utility:refresh"
+                    alternative-text="Refresh" title="Refresh"
+                    onclick={handleRefresh} variant="border-inverse">
+                </lightning-button-icon>
+            </div>
+        </div>
+
+        <!-- Stat tiles -->
+        <div class="stat-strip">
+            <div class="stat-tile">
+                <span class="stat-value">{stats.totalSessions}</span>
+                <span class="stat-label">Sessions Today</span>
+            </div>
+            <div class="stat-tile">
+                <span class="stat-value green">{stats.checkedIn}</span>
+                <span class="stat-label">Checked In</span>
+            </div>
+            <div class="stat-tile">
+                <span class="stat-value blue">{stats.scheduled}</span>
+                <span class="stat-label">Upcoming</span>
+            </div>
+            <div class="stat-tile">
+                <span class={lateClass}>{stats.late}</span>
+                <span class="stat-label">Late</span>
+            </div>
+            <div class="stat-tile">
+                <span class="stat-value">{stats.baysActive} / {totalBays}</span>
+                <span class="stat-label">Bays Active</span>
+            </div>
+            <div class="stat-tile usage-tile">
+                <div class="usage-bar-wrap">
+                    <div class="usage-bar" style={usageBarStyle}></div>
+                </div>
+                <span class="stat-label">{stats.usagePercent}% of daily goal ({stats.usageGoal} sessions)</span>
+            </div>
+        </div>
+
+        <!-- Main grid: sessions left, bays right -->
+        <div class="main-grid">
+
+            <!-- Sessions panel -->
+            <div class="panel">
+                <div class="panel-header">Today's Schedule</div>
+                <template if:true={loadingSessions}>
+                    <div class="loading-msg">Loading…</div>
+                </template>
+                <template if:false={loadingSessions}>
+                    <template if:true={noSessions}>
+                        <div class="empty-msg">No sessions scheduled today.</div>
+                    </template>
+                    <template for:each={sessions} for:item="s">
+                        <div key={s.appointmentId} class={s.rowClass}>
+                            <div class="session-time">{s.timeRange}</div>
+                            <div class="session-info">
+                                <span class="session-name">{s.contactName}</span>
+                                <span class="session-bay">{s.bayName}</span>
+                            </div>
+                            <div class="session-badge-wrap">
+                                <template if:true={s.isLate}>
+                                    <span class="badge badge-late">LATE</span>
+                                </template>
+                                <template if:false={s.isLate}>
+                                    <span class={s.badgeClass}>{s.statusLabel}</span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+            <!-- Bays panel -->
+            <div class="panel">
+                <div class="panel-header">Bay Status</div>
+                <template if:true={loadingBays}>
+                    <div class="loading-msg">Loading…</div>
+                </template>
+                <template if:false={loadingBays}>
+                    <template for:each={bays} for:item="b">
+                        <div key={b.bayId} class={b.cardClass}>
+                            <div class="bay-name-row">
+                                <span class="bay-name">{b.bayName}</span>
+                                <span class={b.statusBadgeClass}>{b.appointmentStatus}</span>
+                            </div>
+                            <div class="bay-meta">
+                                <span class="bay-monitor">{b.monitorType}</span>
+                                <template if:true={b.currentGolfer}>
+                                    <span class="bay-golfer">▶ {b.currentGolfer}</span>
+                                </template>
+                                <template if:false={b.currentGolfer}>
+                                    <template if:true={b.lastGolfer}>
+                                        <span class="bay-last">Last: {b.lastGolfer}</span>
+                                    </template>
+                                </template>
+                            </div>
+                            <div class="bay-footer">
+                                <span>{b.sessionsToday} sessions today</span>
+                                <span class={b.syncClass}>{b.syncLabel}</span>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+        </div>
+    </div>
+</template>

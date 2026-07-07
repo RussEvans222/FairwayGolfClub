@@ -8,3 +8,5 @@ node_modules/
 *.mov
 *.avi
 .claude/
+fairway-kiosk/dist/
+fairway-kiosk/.env
