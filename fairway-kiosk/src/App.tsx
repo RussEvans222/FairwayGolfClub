@@ -341,8 +341,8 @@ export default function App() {
     )
     if (!contacts.length) return null
     const c = contacts[0]
-    const profiles = await query<GolferProfile>(
-      `SELECT Id, Name, Skill_Segment__c FROM Golfer_Profile__c WHERE Contact__c = '${c.Id}' LIMIT 1`
+    const profiles = await query<{ Id: string; Name: string; Skill_Segment__c: string; Member_PIN__c: string | null }>(
+      `SELECT Id, Name, Skill_Segment__c, Member_PIN__c FROM Golfer_Profile__c WHERE Contact__c = '${c.Id}' LIMIT 1`
     )
     return {
       contactId: c.Id,
@@ -350,14 +350,46 @@ export default function App() {
       firstName: c.FirstName,
       lastName: c.LastName,
       email: c.Email,
+      pin: profiles[0]?.Member_PIN__c ?? null,
     }
   }, [query])
 
-  // Called when member is identified — route to payment screen then bay or queue
-  function handleMemberWalkInFound(data: { contactId: string; profileId: string | null; firstName: string; lastName: string; email: string }) {
+  // Called when member is identified — route to PIN screen first
+  function handleMemberWalkInFound(data: { contactId: string; profileId: string | null; firstName: string; lastName: string; email: string; pin?: string | null }) {
     setPendingMember(data)
-    setScreen('guest-payment')
+    setScreen('member-walkin-pin')
   }
+
+  // PIN verified (or no PIN set) → advance to payment
+  const handleMemberWalkInPin = useCallback(async (enteredPin: string) => {
+    if (!pendingMember) return
+    setLoading(true)
+    setError(null)
+    try {
+      // Fetch the stored PIN from the profile
+      if (pendingMember.profileId) {
+        const profiles = await query<{ Member_PIN__c: string | null }>(
+          `SELECT Member_PIN__c FROM Golfer_Profile__c WHERE Id = '${pendingMember.profileId}' LIMIT 1`
+        )
+        const storedPin = profiles[0]?.Member_PIN__c ?? null
+        if (storedPin && storedPin !== enteredPin) {
+          setError('Incorrect PIN. Try again.')
+          setLoading(false)
+          return
+        }
+        // If no PIN on file yet, accept any entry and save it
+        if (!storedPin && pendingMember.profileId) {
+          await patch('Golfer_Profile__c', pendingMember.profileId, { Member_PIN__c: enteredPin })
+        }
+      }
+      setError(null)
+      setScreen('guest-payment')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'PIN check failed.')
+    } finally {
+      setLoading(false)
+    }
+  }, [pendingMember, query, patch])
 
   // After payment, assign bay or add to queue
   const handleMemberWalkInComplete = useCallback(async () => {
@@ -704,6 +736,16 @@ export default function App() {
           loading={loading}
           error={error}
           onSearch={handleMemberSearch}
+        />
+      )}
+      {screen === 'member-walkin-pin' && pendingMember && (
+        <PinEntryScreen
+          player={{ displayName: `${pendingMember.firstName} ${pendingMember.lastName}` }}
+          onConfirm={handleMemberWalkInPin}
+          onBack={() => { setError(null); setScreen('member-walkin') }}
+          loading={loading}
+          error={error}
+          backLabel="← Back"
         />
       )}
       {screen === 'guest-registration' && (

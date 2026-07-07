@@ -69,6 +69,7 @@ export type Screen =
   | 'bay-direction'
   | 'player-type'
   | 'member-walkin'
+  | 'member-walkin-pin'
   | 'guest-registration'
   | 'guest-payment'
   | 'bay-queue'

@@ -4,15 +4,16 @@ import GoldButton from '../components/GoldButton'
 import type { ScheduledSession, ScheduledPlayer } from '../types'
 
 interface Props {
-  session: ScheduledSession
-  player: ScheduledPlayer
+  session?: ScheduledSession | null
+  player: ScheduledPlayer | { displayName: string; pin?: string | null }
   onConfirm: (pin: string) => void
   onBack: () => void
   loading?: boolean
   error?: string | null
+  backLabel?: string
 }
 
-export default function PinEntryScreen({ session, player, onConfirm, onBack, loading = false, error }: Props) {
+export default function PinEntryScreen({ session, player, onConfirm, onBack, loading = false, error, backLabel = '← Back to sessions' }: Props) {
   const [pin, setPin] = useState('')
 
   function handleChange(val: string) {
@@ -29,7 +30,9 @@ export default function PinEntryScreen({ session, player, onConfirm, onBack, loa
         </div>
         <div className="text-center">
           <p className="text-white text-2xl font-bold">{player.displayName}</p>
-          <p className="text-[#888] text-sm mt-1">{session.bayLabel} · {formatTime(session.startTime)}</p>
+          {session && (
+            <p className="text-[#888] text-sm mt-1">{session.bayLabel} · {formatTime(session.startTime)}</p>
+          )}
         </div>
       </div>
 
@@ -41,7 +44,7 @@ export default function PinEntryScreen({ session, player, onConfirm, onBack, loa
         {loading && <p className="text-[#C9A84C] text-sm mt-2">Verifying...</p>}
       </div>
 
-      <GoldButton variant="ghost" onClick={onBack}>← Back to sessions</GoldButton>
+      <GoldButton variant="ghost" onClick={onBack}>{backLabel}</GoldButton>
     </div>
   )
 }
