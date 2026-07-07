@@ -295,6 +295,32 @@ export default function App() {
     }
   }, [selectedSession, selectedPlayerIndex, patch])
 
+  // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
+  const createWalkInAppointment = useCallback(async (
+    contactId: string,
+    bayResourceId: string,
+    startIso: string,
+    endIso: string,
+  ): Promise<string> => {
+    const workOrderId = import.meta.env.VITE_SF_WALKIN_WORK_ORDER_ID as string
+    const workTypeId  = import.meta.env.VITE_SF_WALKIN_WORK_TYPE_ID  as string
+
+    const appt = await create<{ id: string }>('ServiceAppointment', {
+      ParentRecordId:  workOrderId,
+      ContactId:       contactId,
+      WorkTypeId:      workTypeId,
+      SchedStartTime:  startIso,
+      SchedEndTime:    endIso,
+      Status:          'Dispatched',
+      Description:     'Walk-in via kiosk',
+    })
+    await create('AssignedResource', {
+      ServiceAppointmentId: appt.id,
+      ServiceResourceId:    bayResourceId,
+    })
+    return appt.id
+  }, [create])
+
   // Find the next available (unoccupied) bay from current schedule
   function findAvailableBay(): { bayId: string; bayName: string; bayLabel: string } | null {
     const now = Date.now()
@@ -402,8 +428,11 @@ export default function App() {
       const endTime = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
       if (bay) {
+        const appointmentId = await createWalkInAppointment(
+          pendingMember.contactId, bay.bayId, now, endTime
+        )
         const syntheticSession: ScheduledSession = {
-          reservationId: 'walk-in',
+          reservationId: appointmentId,
           sessionId: null,
           bayId: bay.bayId,
           bayName: bay.bayName,
@@ -444,7 +473,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingMember, scheduledSessions])
+  }, [pendingMember, scheduledSessions, createWalkInAppointment])
 
   // Walk-in flow handlers
 
@@ -501,27 +530,28 @@ export default function App() {
       const now = new Date().toISOString()
       const endTime = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
-      // Build a synthetic session for BayDirectionScreen (no SF appointment created for walk-ins)
-      const syntheticSession: ScheduledSession = {
-        reservationId: 'walk-in',
-        sessionId: null,
-        bayId: bay?.bayId ?? 'walk-in',
-        bayName: bay?.bayName ?? 'Bay 1',
-        bayLabel: bay?.bayLabel ?? 'Bay 1',
-        startTime: now,
-        endTime,
-        status: 'Dispatched',
-        players: [{
-          profileId: profile.Id,
-          contactId: contact.Id,
-          displayName: `${data.firstName} ${data.lastName}`,
-          isGuest: true,
-          checkedIn: true,
-          pin: null,
-        }],
-      }
-
       if (bay) {
+        const appointmentId = await createWalkInAppointment(
+          contact.Id, bay.bayId, now, endTime
+        )
+        const syntheticSession: ScheduledSession = {
+          reservationId: appointmentId,
+          sessionId: null,
+          bayId: bay.bayId,
+          bayName: bay.bayName,
+          bayLabel: bay.bayLabel,
+          startTime: now,
+          endTime,
+          status: 'Dispatched',
+          players: [{
+            profileId: profile.Id,
+            contactId: contact.Id,
+            displayName: `${data.firstName} ${data.lastName}`,
+            isGuest: true,
+            checkedIn: true,
+            pin: null,
+          }],
+        }
         const syntheticPlayer: ScheduledPlayer = syntheticSession.players[0]
         setWalkInSession(syntheticSession)
         setWalkInPlayer(syntheticPlayer)
@@ -547,7 +577,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, create, session.players.length, addPlayer, scheduledSessions])
+  }, [query, create, session.players.length, addPlayer, scheduledSessions, createWalkInAppointment])
 
   const fetchGreeting = useCallback(async (appointmentId: string) => {
     type GreetingRow = {
