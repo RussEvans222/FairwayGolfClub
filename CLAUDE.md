@@ -58,6 +58,19 @@ Both forms POST directly to Salesforce Web-to-Lead. **Do not add `e.preventDefau
 ### Deployment
 Push to `main` → Cloudflare Pages auto-deploys. No build command needed — it's a pure static site. **Do not set a deploy command** in Cloudflare (it's a Pages project, not a Worker).
 
+### Homepage Survey Widget ("Does this sound cool?")
+A Yes/No pulse-check survey lives on the homepage between the Features and Showcase sections, backed by two Cloudflare Pages Functions in `fairway-website/functions/api/`:
+
+- **`vote.js`** — `GET` returns current `{ yes, no }` counts; `POST { vote: "yes"|"no" }` increments the count and logs a geo-tagged event (city/region/country pulled from Cloudflare's `request.cf`, no client-side geolocation prompt). Requires a KV namespace bound as **`VOTES_KV`** in the Pages project settings.
+- **`votes-log.js`** — internal viewer at `/api/votes-log?key=YOUR_ADMIN_KEY`, gated by an **`ADMIN_KEY`** environment variable (set your own value in Pages project settings — not committed to the repo). Lists recent votes with location, newest first.
+
+**⚠️ NOT YET WORKING as of 2026-07-07** — the code is committed but the Cloudflare Pages project has no `VOTES_KV` KV namespace or `ADMIN_KEY` variable configured yet (I don't have Cloudflare dashboard/API access from this environment). Until this is done, the vote buttons will fail silently (chart stays at 0, buttons re-enable) and `/api/votes-log` will 500. **To activate:**
+1. In the Cloudflare dashboard: Workers & Pages → your Pages project → Settings → Functions → KV namespace bindings → create/bind a namespace as `VOTES_KV`
+2. Settings → Environment variables → add `ADMIN_KEY` (any private string of your choosing) to both Production and Preview
+3. Redeploy (a new push to `main`, or "Retry deployment" in the dashboard, picks up the new bindings)
+
+Voting itself needs no reCAPTCHA (it just hits `VOTES_KV`), but the optional follow-up (email for a Yes vote, feedback text for a No vote) reuses the existing Web-to-Lead + reCAPTCHA pattern and lands in Salesforce as a Lead with `lead_source = "Website - Survey Vote"` — same picklist values as the other forms, so it won't affect the `Fairway_Investor_Leads` list view.
+
 ---
 
 ## Salesforce Project (`fairway-sf/`)
@@ -202,6 +215,7 @@ Create one record per object in dependency order (Bay → Reservation → Sessio
 - [ ] **Web-to-Lead on homepage** — Consider adding first/last name fields so leads don't come in as "Unknown"
 - [ ] **Experience Cloud member portal** — Design and build the member-facing portal (bookings, coaching data, session history) — separate from the marketing site
 - [ ] **Deploy the Golfer360 data model** — 9 new custom objects + permission set updates + `Fairway_Ops` app are committed to `fairway-sf/` but not yet deployed to the org (built on a machine without the Salesforce CLI). See "Golfer360 Data Model" section above for the deploy commands and verification steps.
+- [ ] **Activate the homepage survey widget** — `VOTES_KV` KV namespace binding + `ADMIN_KEY` environment variable need to be set up in the Cloudflare Pages dashboard before the "Does this sound cool?" Yes/No survey will work. See "Homepage Survey Widget" section above.
 
 ---
 
