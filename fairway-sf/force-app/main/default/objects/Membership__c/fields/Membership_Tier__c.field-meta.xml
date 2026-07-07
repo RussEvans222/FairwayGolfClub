@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Membership_Tier__c</fullName>
+    <label>Membership Tier</label>
+    <type>Picklist</type>
+    <required>true</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Guest</fullName><default>true</default><label>Guest</label></value>
+            <value><fullName>Member</fullName><default>false</default><label>Member</label></value>
+            <value><fullName>Founding Member</fullName><default>false</default><label>Founding Member</label></value>
+            <value><fullName>Staff</fullName><default>false</default><label>Staff</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
+

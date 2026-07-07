@@ -6,6 +6,6 @@
     <referenceTo>Session_Participant__c</referenceTo>
     <relationshipName>Game_Results</relationshipName>
     <relationshipLabel>Game Results</relationshipLabel>
-    <deleteConstraint>SetNull</deleteConstraint>
+    <deleteConstraint>Restrict</deleteConstraint>
     <required>true</required>
 </CustomField>

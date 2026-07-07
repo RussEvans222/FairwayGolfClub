@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Avg_Ball_Speed__c</fullName>
+    <label>Avg Ball Speed (mph)</label>
+    <description>Average ball speed across all shots in session. Populated by SessionAggregateHandler trigger.</description>
+    <type>Number</type>
+    <precision>5</precision>
+    <scale>1</scale>
+    <required>false</required>
+</CustomField>
+

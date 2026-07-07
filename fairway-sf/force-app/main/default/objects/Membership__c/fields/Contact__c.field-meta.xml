@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Booker__c</fullName>
-    <label>Booker</label>
+    <fullName>Contact__c</fullName>
+    <label>Member</label>
     <type>Lookup</type>
-    <referenceTo>Contact</referenceTo>
-    <relationshipName>Bay_Reservations</relationshipName>
-    <relationshipLabel>Bay Reservations</relationshipLabel>
-    <deleteConstraint>Restrict</deleteConstraint>
     <required>true</required>
+    <referenceTo>Contact</referenceTo>
+    <relationshipName>Memberships</relationshipName>
+    <relationshipLabel>Memberships</relationshipLabel>
+    <deleteConstraint>Restrict</deleteConstraint>
 </CustomField>
+

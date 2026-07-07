@@ -15,5 +15,6 @@
     <tabs>Golf_Shot__c</tabs>
     <tabs>Round_Hole_Result__c</tabs>
     <tabs>Practice_Insight__c</tabs>
+    <tabs>Membership__c</tabs>
     <uiType>Lightning</uiType>
 </CustomApplication>

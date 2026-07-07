@@ -6,6 +6,6 @@
     <referenceTo>Golfer_Profile__c</referenceTo>
     <relationshipName>Practice_Insights</relationshipName>
     <relationshipLabel>Practice Insights</relationshipLabel>
-    <deleteConstraint>SetNull</deleteConstraint>
+    <deleteConstraint>Restrict</deleteConstraint>
     <required>true</required>
 </CustomField>

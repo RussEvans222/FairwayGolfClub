@@ -6,7 +6,7 @@
     <referenceTo>Contact</referenceTo>
     <relationshipName>Golfer_Profiles</relationshipName>
     <relationshipLabel>Golfer Profiles</relationshipLabel>
-    <deleteConstraint>SetNull</deleteConstraint>
+    <deleteConstraint>Restrict</deleteConstraint>
     <required>true</required>
     <unique>false</unique>
     <description>One Golfer Profile per golfer Contact.</description>
