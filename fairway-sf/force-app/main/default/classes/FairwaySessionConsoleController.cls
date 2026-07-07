@@ -1,0 +1,123 @@
+public with sharing class FairwaySessionConsoleController {
+
+    // ── Data transfer object ──────────────────────────────────────────────────
+    public class BaySessionDTO {
+        @AuraEnabled public String appointmentId;
+        @AuraEnabled public String contactName;
+        @AuraEnabled public String bayName;
+        @AuraEnabled public String bayResourceId;
+        @AuraEnabled public String status;
+        @AuraEnabled public String statusLabel;
+        @AuraEnabled public String schedStart;
+        @AuraEnabled public String schedEnd;
+        @AuraEnabled public Integer minutesRemaining;
+        @AuraEnabled public Boolean isOvertime;
+    }
+
+    // ── Fetch all active + today's scheduled sessions ─────────────────────────
+    @AuraEnabled(cacheable=false)
+    public static List<BaySessionDTO> getActiveSessions() {
+        DateTime dayStart = DateTime.newInstance(Date.today(), Time.newInstance(0, 0, 0, 0));
+        DateTime dayEnd   = DateTime.newInstance(Date.today().addDays(1), Time.newInstance(0, 0, 0, 0));
+
+        List<ServiceAppointment> appts = [
+            SELECT Id, ContactId, Contact.Name, Status, SchedStartTime, SchedEndTime
+            FROM ServiceAppointment
+            WHERE SchedStartTime >= :dayStart
+              AND SchedStartTime <  :dayEnd
+              AND Status NOT IN ('Completed', 'Canceled')
+            ORDER BY SchedStartTime ASC
+        ];
+
+        Map<Id, AssignedResource> assignedMap = new Map<Id, AssignedResource>();
+        List<Id> apptIds = new List<Id>();
+        for (ServiceAppointment a : appts) apptIds.add(a.Id);
+
+        for (AssignedResource ar : [
+            SELECT Id, ServiceAppointmentId, ServiceResourceId, ServiceResource.Name
+            FROM AssignedResource
+            WHERE ServiceAppointmentId IN :apptIds
+        ]) {
+            assignedMap.put(ar.ServiceAppointmentId, ar);
+        }
+
+        DateTime now = DateTime.now();
+        List<BaySessionDTO> result = new List<BaySessionDTO>();
+
+        for (ServiceAppointment a : appts) {
+            BaySessionDTO dto = new BaySessionDTO();
+            dto.appointmentId = a.Id;
+            dto.contactName   = a.Contact != null ? a.Contact.Name : 'Unknown Golfer';
+            dto.status        = a.Status;
+            dto.statusLabel   = statusLabel(a.Status);
+            dto.schedStart    = a.SchedStartTime != null ? a.SchedStartTime.format() : null;
+            dto.schedEnd      = a.SchedEndTime   != null ? a.SchedEndTime.format()   : null;
+
+            AssignedResource ar = assignedMap.get(a.Id);
+            if (ar != null) {
+                dto.bayName       = ar.ServiceResource.Name;
+                dto.bayResourceId = ar.ServiceResourceId;
+            } else {
+                dto.bayName = 'Unassigned';
+            }
+
+            if (a.SchedEndTime != null) {
+                Long ms = a.SchedEndTime.getTime() - now.getTime();
+                dto.minutesRemaining = (Integer) Math.round(ms / 60000.0);
+                dto.isOvertime       = dto.minutesRemaining < 0;
+            }
+
+            result.add(dto);
+        }
+        return result;
+    }
+
+    // ── End session now ───────────────────────────────────────────────────────
+    @AuraEnabled
+    public static void endSession(String appointmentId) {
+        ServiceAppointment a = [SELECT Id, Status FROM ServiceAppointment WHERE Id = :appointmentId LIMIT 1];
+        a.Status       = 'Completed';
+        a.SchedEndTime = DateTime.now();
+        update a;
+    }
+
+    // ── Restart session: reset to Dispatched + extend end time ───────────────
+    @AuraEnabled
+    public static void restartSession(String appointmentId) {
+        ServiceAppointment a = [SELECT Id, SchedStartTime, SchedEndTime FROM ServiceAppointment WHERE Id = :appointmentId LIMIT 1];
+        DateTime now = DateTime.now();
+        Decimal originalDuration = a.SchedEndTime != null && a.SchedStartTime != null
+            ? (a.SchedEndTime.getTime() - a.SchedStartTime.getTime()) / 60000.0
+            : 60;
+        a.Status         = 'Dispatched';
+        a.SchedStartTime = now;
+        a.SchedEndTime   = now.addMinutes((Integer) originalDuration);
+        update a;
+    }
+
+    // ── Extend session by N minutes ───────────────────────────────────────────
+    @AuraEnabled
+    public static void extendSession(String appointmentId, Integer minutes) {
+        if (minutes == null || minutes <= 0) return;
+        ServiceAppointment a = [SELECT Id, SchedEndTime FROM ServiceAppointment WHERE Id = :appointmentId LIMIT 1];
+        a.SchedEndTime = (a.SchedEndTime != null ? a.SchedEndTime : DateTime.now()).addMinutes(minutes);
+        update a;
+    }
+
+    // ── Change status directly ────────────────────────────────────────────────
+    @AuraEnabled
+    public static void changeStatus(String appointmentId, String newStatus) {
+        ServiceAppointment a = [SELECT Id, Status FROM ServiceAppointment WHERE Id = :appointmentId LIMIT 1];
+        a.Status = newStatus;
+        update a;
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+    private static String statusLabel(String s) {
+        if (s == 'Dispatched')   return 'Checked In';
+        if (s == 'In Progress')  return 'Active';
+        if (s == 'Scheduled')    return 'Upcoming';
+        if (s == 'Completed')    return 'Done';
+        return s;
+    }
+}
