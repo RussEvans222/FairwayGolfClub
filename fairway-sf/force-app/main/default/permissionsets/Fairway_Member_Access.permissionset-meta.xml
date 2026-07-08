@@ -3,7 +3,6 @@
     <label>Fairway Member Access</label>
     <description>Standard paying member. Can view session history, coaching insights, manage own profile, and create reservations.</description>
     <hasActivationRequired>false</hasActivationRequired>
-    <license>Customer Community</license>
     <objectPermissions>
         <object>Golfer_Profile__c</object>
         <allowCreate>false</allowCreate>
