@@ -322,11 +322,9 @@ export default function App() {
     startIso: string,
     endIso: string,
   ): Promise<string> => {
-    const workOrderId = import.meta.env.VITE_SF_WALKIN_WORK_ORDER_ID as string
     const workTypeId  = import.meta.env.VITE_SF_WALKIN_WORK_TYPE_ID  as string
 
     const appt = await create<{ id: string }>('ServiceAppointment', {
-      ParentRecordId:  workOrderId,
       ContactId:       contactId,
       WorkTypeId:      workTypeId,
       SchedStartTime:  startIso,
