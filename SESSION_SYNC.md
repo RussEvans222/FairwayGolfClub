@@ -1,7 +1,7 @@
 # Fairway Golf Club — Session Sync
 
-**Last updated:** 2026-07-08 (by Claude, this session — no Salesforce CLI access from this environment, see "Known Issues" below)  
-**Last commit:** `bb9f3b9` on `main` (RussEvans222/FairwayGolfClub) — PR #4, "Fix kiosk bay assignment bug and show active sessions on check-in screen"
+**Last updated:** 2026-07-08 (by Claude)  
+**Last commit:** `5ec20e4` on `main` (RussEvans222/FairwayGolfClub)
 
 ---
 
@@ -40,23 +40,35 @@
 - Bay queue: in-memory React state (`bayQueue` array of `QueueEntry`); no SF record yet
 
 **Salesforce writes from kiosk:**
-- `createWalkInAppointment(contactId, bayResourceId, startIso, endIso)` — creates `ServiceAppointment` (Status=Dispatched) + `AssignedResource` record for walk-ins
-- Walk-in reservations now have real SF IDs (not the old `'walk-in'` placeholder)
+- `createWalkInAppointment(contactId, accountId, bayResourceId, startIso, endIso)` — creates `ServiceAppointment` (Status=Dispatched, `ParentRecordId` = member's Person Account Id) + `AssignedResource` record
+- Walk-in reservations have real SF IDs
 - Auth: OAuth 2.0 Implicit flow — token stored in `sessionStorage`
 
+**ParentRecordId strategy (important):**
+- `ServiceAppointment.ParentRecordId` must be a record the kiosk OAuth user can access — WorkOrders are blocked for community users
+- We use the member's **Person Account Id** (`Account.Id`) instead
+- `handleMemberSearch` fetches `Contact.AccountId` directly; if null (Contact created before Person Accounts were enabled), falls back to `SELECT Id FROM Account WHERE PersonEmail = '...'`
+- Guest flow: same fallback path — creates a Contact+Account first if none exists
+
+**Error logging (as of `10c5d21`):**
+- `useSalesforce.ts` — every failed `create`, `patch`, and `query` call now:
+  - Logs the full SF error response (including `errorCode`, `fields`, payload) to `console.error`
+  - Throws `[ObjectName] ERRORCODE: message` so the kiosk UI displays the exact SF error, not just a generic message
+- Use browser DevTools → Console to see the full raw SF response on any failure
+
 **Bay assignment (fixed in PR #4, `bb9f3b9`):**
-- `findAvailableBay()` in `App.tsx` used to infer "which bays exist" only from bays appearing in *today's* `ServiceAppointment` records, and fell back to a hardcoded `"Bay 1"` when it recognized none — regardless of whether Bay 1 was actually occupied. This is why a walk-in (Sally) was directed to an occupied bay.
-- Now it queries `ServiceResource` directly (`SELECT Id, Name FROM ServiceResource WHERE IsActive = true`, loaded once via a new `loadBays()` on auth) as the source of truth, same as `FairwayOpsDashboardController.getBayStatus()` already does. Picks the first bay not occupied by a Dispatched/In Progress/late-Scheduled session; returns `null` (→ queue) if none are free — never guesses.
-- `WelcomeScreen` now also shows a live per-bay status strip (Open, or golfer first name + minutes remaining), reading the same `allBays` + `scheduledSessions` state.
+- Queries `ServiceResource` directly as source of truth (not inferred from today's appointments)
+- Picks the first bay not occupied by a Dispatched/In Progress/late-Scheduled session
+- Returns `null` (→ queue) if none are free — never guesses
 
 **Env vars (`.env.production` baked at Cloudflare build):**
 ```
 VITE_SF_INSTANCE_URL=https://storm-bd727290084d27.my.salesforce.com
 VITE_SF_CLIENT_ID=3MVG9JJwBBbcN47LfOSqoMzg6MvSJkwE3fpNuaQzV7Yx3d8VU_zfm9uHa.hFqVLOObL7MybEf3JRJcpvq8Aox
 VITE_SF_LOGIN_URL=https://login.salesforce.com
-VITE_SF_WALKIN_WORK_ORDER_ID=0WOak0000055ODJGA2
 VITE_SF_WALKIN_WORK_TYPE_ID=08qak000000AwM5AAK   ← "Bay Session" (60 min)
 ```
+Note: `VITE_SF_WALKIN_WORK_ORDER_ID` has been **removed** — WorkOrders are no longer used as ParentRecordId.
 
 ### Salesforce (`fairway-sf/`)
 
@@ -82,38 +94,36 @@ VITE_SF_WALKIN_WORK_TYPE_ID=08qak000000AwM5AAK   ← "Bay Session" (60 min)
 - Service Resources: "Bay Number One" (`0Hnak000000IkQzCAK`), "Bay Number 2" (`0Hnak000000IkSbCAK`)
 - Work Type: "Bay Session" (`08qak000000AwM5AAK`, 60 min) — used for ALL bookings
 - Work Type Group: "Bay Booking" (`0VSak0000006L9pGAE`, active) — used in booking flow
-- Deactivated groups: Practice Session, Round of Golf, Game Mode (members pick mode on launch monitor, not at booking)
+- OWD External Access: WorkType, WorkTypeGroup, ServiceTerritory set to **Public Read Only** so community users can read them
+
+**Permission sets:**
+- `Fairway_Admin` — internal staff + Russell
+- `Fairway_Member_Plus_Access` (ID: `0PSak00000Wb6lZGAR`) — Customer Community Plus license; granted to test member; added to Experience Cloud site members. Has object permissions for ServiceAppointment, WorkType, WorkTypeGroup, OperatingHours, ServiceTerritory, Contact, Account.
+- `Fairway_Member_Access` — old perm set, locked to Customer Community license (incompatible with test user). Leave in place but do not assign to new users.
+
+**Test community user:**
+- Email: `russellevansdemo@gmail.com`
+- Username: (Community auto-generated — find via Setup → Users, filter by profile "Customer Community Plus User")
+- Cannot reset password via CLI (STORM org blocks outbound email to portal users)
+- Log in via: Contact record → "Log in to Experience as User" button in Salesforce
 
 **Custom objects:** `Golf_Session__c`, `Golfer_Profile__c`, and others — committed to `fairway-sf/` but **not yet deployed to org** (see Pending below)
 
 ---
 
-## Known Issues — needs `sf` CLI to finish (2026-07-08)
+## Known Issues
 
-**Symptom:** After confirming payment on a kiosk walk-in (tested with guest "Jim Richard"), the app threw:
-```
-insufficient access rights on cross-reference id: 0WOak0000055ODJ
-```
-That ID is (the truncated form of) `VITE_SF_WALKIN_WORK_ORDER_ID` — the `ParentRecordId` the kiosk sets when it creates the walk-in `ServiceAppointment` in `createWalkInAppointment()` (`App.tsx`). This is a **separate bug from the bay-assignment fix above** — it happens after a bay has already been chosen, while writing the appointment record.
+### Walk-in check-in: `ParentRecordId` null for test member
 
-**Root cause (diagnosed from the repo, not confirmed live — no SF access from this environment):** `Fairway_Staff.permissionset-meta.xml` had no `WorkOrder` object permission at all, and had `allowCreate=false` on both `ServiceAppointment` and `AssignedResource` — despite the kiosk code creating both for every walk-in. Whatever user/permission-set combo the kiosk's OAuth login actually runs as almost certainly doesn't have visibility into the WorkOrder record referenced by that env var.
+**Status:** Fix deployed (`5ec20e4`), pending Cloudflare deploy + re-test.
 
-**Fix committed** (this session, uncommitted as of this doc — see branch `claude/golf-simulator-seo-nova-bleka3` / PR once opened): in `Fairway_Staff.permissionset-meta.xml`:
-- `ServiceAppointment.allowCreate` → `true`
-- `AssignedResource.allowCreate` → `true`
-- Added a new `WorkOrder` object permission block (`allowRead=true`)
+**Symptom:** "required fields are missing: [ParentRecordId]" when kiosk tries to create a ServiceAppointment for the test member.
 
-**What needs to happen from a terminal with `sf` CLI access:**
-1. Pull this branch, then deploy the permission set:
-   ```bash
-   sf project deploy start --source-dir force-app/main/default/permissionsets/Fairway_Staff.permissionset-meta.xml --target-org FairwayGolfClub
-   ```
-2. Confirm which user the kiosk's OAuth login actually authenticates as, and confirm that user has `Fairway_Staff` assigned:
-   ```bash
-   sf org assign permset --name Fairway_Staff --target-org FairwayGolfClub --on-behalf-of <kiosk login username>
-   ```
-3. Re-test the walk-in flow. **If the same cross-reference error still happens**, this is not just an FLS/permission-set gap — check `WorkOrder`'s organization-wide default sharing setting (Setup → Sharing Settings) and who owns the specific WorkOrder record `0WOak0000055ODJGA2`. A Private OWD with no sharing rule will block this even with full object permissions, since permission sets grant CRUD/FLS but don't override record-level sharing.
-4. Once confirmed working end-to-end, it's also worth double-checking `Fairway_Admin` — it currently has **zero** Field Service object permissions (no ServiceAppointment/AssignedResource/WorkOrder/etc. at all), so if Russell tests as an Admin-profile user instead of via `Fairway_Staff`, results may differ from a real kiosk login.
+**Root cause:** The test member's Contact was created without a Person Account linked (`AccountId = null` on the Contact record). The kiosk was passing `''` as `ParentRecordId`.
+
+**Fix:** `handleMemberSearch` now falls back to `SELECT Id FROM Account WHERE PersonEmail = '...'` when `Contact.AccountId` is null. This covers Contacts created before Person Accounts were enabled on the org.
+
+**If it still fails after deploy:** Check whether a Person Account actually exists for `russellevansdemo@gmail.com` in the org. If not, create one manually or via the guest flow (which auto-creates one).
 
 ---
 
