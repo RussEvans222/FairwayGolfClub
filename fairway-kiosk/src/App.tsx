@@ -324,7 +324,13 @@ export default function App() {
   ): Promise<string> => {
     const workTypeId  = import.meta.env.VITE_SF_WALKIN_WORK_TYPE_ID  as string
 
+    // ParentRecordId is required on ServiceAppointment — use the member's Account
+    type ContactRow = { AccountId: string }
+    const contacts = await query<ContactRow>(`SELECT AccountId FROM Contact WHERE Id = '${contactId}' LIMIT 1`)
+    const accountId = contacts[0]?.AccountId
+
     const appt = await create<{ id: string }>('ServiceAppointment', {
+      ParentRecordId:  accountId,
       ContactId:       contactId,
       WorkTypeId:      workTypeId,
       SchedStartTime:  startIso,
