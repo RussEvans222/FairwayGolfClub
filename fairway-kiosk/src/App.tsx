@@ -57,7 +57,7 @@ export default function App() {
   // Pending guest data — held between registration and payment confirmation
   const [pendingGuest, setPendingGuest] = useState<{ firstName: string; lastName: string; email: string; skill: SkillLevel } | null>(null)
   // Member walk-in lookup result — held through payment screen
-  const [pendingMember, setPendingMember] = useState<{ contactId: string; profileId: string | null; firstName: string; lastName: string; email: string } | null>(null)
+  const [pendingMember, setPendingMember] = useState<{ contactId: string; accountId: string | null; profileId: string | null; firstName: string; lastName: string; email: string } | null>(null)
   // Bay queue
   const [bayQueue, setBayQueue] = useState<QueueEntry[]>([])
   const [queueEntry, setQueueEntry] = useState<QueueEntry | null>(null)
@@ -318,16 +318,12 @@ export default function App() {
   // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
   const createWalkInAppointment = useCallback(async (
     contactId: string,
+    accountId: string,
     bayResourceId: string,
     startIso: string,
     endIso: string,
   ): Promise<string> => {
     const workTypeId  = import.meta.env.VITE_SF_WALKIN_WORK_TYPE_ID  as string
-
-    // ParentRecordId is required on ServiceAppointment — use the member's Account
-    type ContactRow = { AccountId: string }
-    const contacts = await query<ContactRow>(`SELECT AccountId FROM Contact WHERE Id = '${contactId}' LIMIT 1`)
-    const accountId = contacts[0]?.AccountId
 
     const appt = await create<{ id: string }>('ServiceAppointment', {
       ParentRecordId:  accountId,
@@ -377,8 +373,8 @@ export default function App() {
 
   // ── Member walk-in: look up by email ─────────────────────────────────────
   const handleMemberSearch = useCallback(async (email: string) => {
-    const contacts = await query<Contact>(
-      `SELECT Id, FirstName, LastName, Email FROM Contact WHERE Email = '${email}' LIMIT 1`
+    const contacts = await query<Contact & { AccountId: string | null }>(
+      `SELECT Id, FirstName, LastName, Email, AccountId FROM Contact WHERE Email = '${email}' LIMIT 1`
     )
     if (!contacts.length) return null
     const c = contacts[0]
@@ -387,6 +383,7 @@ export default function App() {
     )
     return {
       contactId: c.Id,
+      accountId: c.AccountId ?? null,
       profileId: profiles.length ? profiles[0].Id : null,
       firstName: c.FirstName,
       lastName: c.LastName,
@@ -396,8 +393,8 @@ export default function App() {
   }, [query])
 
   // Called when member is identified — route to PIN screen first
-  function handleMemberWalkInFound(data: { contactId: string; profileId: string | null; firstName: string; lastName: string; email: string; pin?: string | null }) {
-    setPendingMember(data)
+  function handleMemberWalkInFound(data: { contactId: string; accountId?: string | null; profileId: string | null; firstName: string; lastName: string; email: string; pin?: string | null }) {
+    setPendingMember({ ...data, accountId: data.accountId ?? null })
     setScreen('member-walkin-pin')
   }
 
@@ -444,7 +441,7 @@ export default function App() {
 
       if (bay) {
         const appointmentId = await createWalkInAppointment(
-          pendingMember.contactId, bay.bayId, now, endTime
+          pendingMember.contactId, pendingMember.accountId ?? '', bay.bayId, now, endTime
         )
         const syntheticSession: ScheduledSession = {
           reservationId: appointmentId,
@@ -505,17 +502,17 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
-      const contacts = await query<Contact>(
-        `SELECT Id, FirstName, LastName, Email FROM Contact WHERE Email = '${data.email}' LIMIT 1`
+      const contacts = await query<Contact & { AccountId: string | null }>(
+        `SELECT Id, FirstName, LastName, Email, AccountId FROM Contact WHERE Email = '${data.email}' LIMIT 1`
       )
-      let contact: Contact
+      let contact: Contact & { AccountId: string | null }
       if (contacts.length > 0) {
         contact = contacts[0]
       } else {
         const r = await create<{ id: string }>('Contact', {
           FirstName: data.firstName, LastName: data.lastName, Email: data.email,
         })
-        contact = { Id: r.id, FirstName: data.firstName, LastName: data.lastName, Email: data.email, Phone: null }
+        contact = { Id: r.id, FirstName: data.firstName, LastName: data.lastName, Email: data.email, Phone: null, AccountId: null }
       }
 
       const profiles = await query<GolferProfile>(
@@ -547,7 +544,7 @@ export default function App() {
 
       if (bay) {
         const appointmentId = await createWalkInAppointment(
-          contact.Id, bay.bayId, now, endTime
+          contact.Id, contact.AccountId ?? '', bay.bayId, now, endTime
         )
         const syntheticSession: ScheduledSession = {
           reservationId: appointmentId,
