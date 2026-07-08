@@ -47,7 +47,12 @@ export function useSalesforce() {
       headers: { Authorization: `Bearer ${auth.accessToken}` },
     })
     if (res.status === 401) throw new Error('SESSION_EXPIRED')
-    if (!res.ok) throw new Error(`SOQL failed: ${res.status}`)
+    if (!res.ok) {
+      const err = await res.json().catch(() => null)
+      console.error(`[SF] SOQL failed (${res.status}):`, soql, JSON.stringify(err))
+      const msg = Array.isArray(err) ? err.map((e: {errorCode?: string; message?: string}) => `${e.errorCode}: ${e.message}`).join(' | ') : `HTTP ${res.status}`
+      throw new Error(`[SOQL] ${msg}`)
+    }
     const data = await res.json()
     return data.records as T[]
   }, [auth])
@@ -62,7 +67,9 @@ export function useSalesforce() {
     if (res.status === 401) throw new Error('SESSION_EXPIRED')
     if (!res.ok) {
       const err = await res.json()
-      throw new Error(err[0]?.message || `Create ${object} failed: ${res.status}`)
+      console.error(`[SF] Create ${object} failed`, JSON.stringify(err))
+      const msg = Array.isArray(err) ? err.map((e: {errorCode?: string; message?: string}) => `${e.errorCode}: ${e.message}`).join(' | ') : JSON.stringify(err)
+      throw new Error(`[${object}] ${msg}`)
     }
     return res.json() as Promise<T>
   }, [auth])
@@ -77,7 +84,9 @@ export function useSalesforce() {
     if (res.status === 401) throw new Error('SESSION_EXPIRED')
     if (!res.ok) {
       const err = await res.json()
-      throw new Error(err[0]?.message || `Patch ${object} failed: ${res.status}`)
+      console.error(`[SF] Patch ${object}/${id} failed`, JSON.stringify(err))
+      const msg = Array.isArray(err) ? err.map((e: {errorCode?: string; message?: string}) => `${e.errorCode}: ${e.message}`).join(' | ') : JSON.stringify(err)
+      throw new Error(`[${object}] ${msg}`)
     }
   }, [auth])
 
