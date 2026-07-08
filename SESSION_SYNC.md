@@ -1,7 +1,7 @@
 # Fairway Golf Club — Session Sync
 
-**Last updated:** 2026-07-04  
-**Last commit:** `922e335` on `main` (RussEvans222/FairwayGolfClub)
+**Last updated:** 2026-07-08 (by Claude, this session — no Salesforce CLI access from this environment, see "Known Issues" below)  
+**Last commit:** `bb9f3b9` on `main` (RussEvans222/FairwayGolfClub) — PR #4, "Fix kiosk bay assignment bug and show active sessions on check-in screen"
 
 ---
 
@@ -44,6 +44,11 @@
 - Walk-in reservations now have real SF IDs (not the old `'walk-in'` placeholder)
 - Auth: OAuth 2.0 Implicit flow — token stored in `sessionStorage`
 
+**Bay assignment (fixed in PR #4, `bb9f3b9`):**
+- `findAvailableBay()` in `App.tsx` used to infer "which bays exist" only from bays appearing in *today's* `ServiceAppointment` records, and fell back to a hardcoded `"Bay 1"` when it recognized none — regardless of whether Bay 1 was actually occupied. This is why a walk-in (Sally) was directed to an occupied bay.
+- Now it queries `ServiceResource` directly (`SELECT Id, Name FROM ServiceResource WHERE IsActive = true`, loaded once via a new `loadBays()` on auth) as the source of truth, same as `FairwayOpsDashboardController.getBayStatus()` already does. Picks the first bay not occupied by a Dispatched/In Progress/late-Scheduled session; returns `null` (→ queue) if none are free — never guesses.
+- `WelcomeScreen` now also shows a live per-bay status strip (Open, or golfer first name + minutes remaining), reading the same `allBays` + `scheduledSessions` state.
+
 **Env vars (`.env.production` baked at Cloudflare build):**
 ```
 VITE_SF_INSTANCE_URL=https://storm-bd727290084d27.my.salesforce.com
@@ -80,6 +85,35 @@ VITE_SF_WALKIN_WORK_TYPE_ID=08qak000000AwM5AAK   ← "Bay Session" (60 min)
 - Deactivated groups: Practice Session, Round of Golf, Game Mode (members pick mode on launch monitor, not at booking)
 
 **Custom objects:** `Golf_Session__c`, `Golfer_Profile__c`, and others — committed to `fairway-sf/` but **not yet deployed to org** (see Pending below)
+
+---
+
+## Known Issues — needs `sf` CLI to finish (2026-07-08)
+
+**Symptom:** After confirming payment on a kiosk walk-in (tested with guest "Jim Richard"), the app threw:
+```
+insufficient access rights on cross-reference id: 0WOak0000055ODJ
+```
+That ID is (the truncated form of) `VITE_SF_WALKIN_WORK_ORDER_ID` — the `ParentRecordId` the kiosk sets when it creates the walk-in `ServiceAppointment` in `createWalkInAppointment()` (`App.tsx`). This is a **separate bug from the bay-assignment fix above** — it happens after a bay has already been chosen, while writing the appointment record.
+
+**Root cause (diagnosed from the repo, not confirmed live — no SF access from this environment):** `Fairway_Staff.permissionset-meta.xml` had no `WorkOrder` object permission at all, and had `allowCreate=false` on both `ServiceAppointment` and `AssignedResource` — despite the kiosk code creating both for every walk-in. Whatever user/permission-set combo the kiosk's OAuth login actually runs as almost certainly doesn't have visibility into the WorkOrder record referenced by that env var.
+
+**Fix committed** (this session, uncommitted as of this doc — see branch `claude/golf-simulator-seo-nova-bleka3` / PR once opened): in `Fairway_Staff.permissionset-meta.xml`:
+- `ServiceAppointment.allowCreate` → `true`
+- `AssignedResource.allowCreate` → `true`
+- Added a new `WorkOrder` object permission block (`allowRead=true`)
+
+**What needs to happen from a terminal with `sf` CLI access:**
+1. Pull this branch, then deploy the permission set:
+   ```bash
+   sf project deploy start --source-dir force-app/main/default/permissionsets/Fairway_Staff.permissionset-meta.xml --target-org FairwayGolfClub
+   ```
+2. Confirm which user the kiosk's OAuth login actually authenticates as, and confirm that user has `Fairway_Staff` assigned:
+   ```bash
+   sf org assign permset --name Fairway_Staff --target-org FairwayGolfClub --on-behalf-of <kiosk login username>
+   ```
+3. Re-test the walk-in flow. **If the same cross-reference error still happens**, this is not just an FLS/permission-set gap — check `WorkOrder`'s organization-wide default sharing setting (Setup → Sharing Settings) and who owns the specific WorkOrder record `0WOak0000055ODJGA2`. A Private OWD with no sharing rule will block this even with full object permissions, since permission sets grant CRUD/FLS but don't override record-level sharing.
+4. Once confirmed working end-to-end, it's also worth double-checking `Fairway_Admin` — it currently has **zero** Field Service object permissions (no ServiceAppointment/AssignedResource/WorkOrder/etc. at all), so if Russell tests as an Admin-profile user instead of via `Fairway_Staff`, results may differ from a real kiosk login.
 
 ---
 
