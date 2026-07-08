@@ -378,12 +378,23 @@ export default function App() {
     )
     if (!contacts.length) return null
     const c = contacts[0]
+
+    // Person Accounts store the AccountId on the Contact. If it's missing, query
+    // the Account directly (handles contacts created before Person Accounts were enabled).
+    let accountId = c.AccountId ?? null
+    if (!accountId) {
+      const accounts = await query<{ Id: string }>(
+        `SELECT Id FROM Account WHERE PersonEmail = '${email}' LIMIT 1`
+      )
+      if (accounts.length) accountId = accounts[0].Id
+    }
+
     const profiles = await query<{ Id: string; Name: string; Skill_Segment__c: string; Member_PIN__c: string | null }>(
       `SELECT Id, Name, Skill_Segment__c, Member_PIN__c FROM Golfer_Profile__c WHERE Contact__c = '${c.Id}' LIMIT 1`
     )
     return {
       contactId: c.Id,
-      accountId: c.AccountId ?? null,
+      accountId,
       profileId: profiles.length ? profiles[0].Id : null,
       firstName: c.FirstName,
       lastName: c.LastName,
