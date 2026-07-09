@@ -379,9 +379,16 @@ export default function App() {
     if (!contacts.length) return null
     const c = contacts[0]
 
-    // Person Accounts store the AccountId on the Contact. If it's missing, query
-    // the Account directly (handles contacts created before Person Accounts were enabled).
-    let accountId = c.AccountId ?? null
+    // ParentRecordId must be a Person Account. Verify the Contact's AccountId points
+    // to one — a Contact linked to a business account (e.g. "Fairway Golf Club") will
+    // cause a 400. Fall back to querying by PersonEmail if missing or not a person account.
+    let accountId: string | null = null
+    if (c.AccountId) {
+      const accts = await query<{ Id: string; IsPersonAccount: boolean }>(
+        `SELECT Id, IsPersonAccount FROM Account WHERE Id = '${c.AccountId}' LIMIT 1`
+      )
+      if (accts.length && accts[0].IsPersonAccount) accountId = accts[0].Id
+    }
     if (!accountId) {
       const accounts = await query<{ Id: string }>(
         `SELECT Id FROM Account WHERE PersonEmail = '${email}' LIMIT 1`
