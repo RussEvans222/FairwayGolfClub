@@ -41,12 +41,22 @@ export function useSalesforce() {
     return `/sfapi${path}`
   }
 
+  // SF sometimes returns 200 with an XML fault body for expired tokens instead of 401.
+  async function checkForSessionError(res: Response): Promise<void> {
+    if (res.status === 401) throw new Error('SESSION_EXPIRED')
+    if (res.headers.get('content-type')?.includes('xml')) {
+      const text = await res.text()
+      if (text.includes('InvalidSessionId')) throw new Error('SESSION_EXPIRED')
+      throw new Error(`SF XML error: ${text.slice(0, 200)}`)
+    }
+  }
+
   const query = useCallback(async <T>(soql: string): Promise<T[]> => {
     if (!auth) throw new Error('Not authenticated')
     const res = await fetch(apiUrl(`/services/data/v67.0/query?q=${encodeURIComponent(soql)}`), {
       headers: { Authorization: `Bearer ${auth.accessToken}` },
     })
-    if (res.status === 401) throw new Error('SESSION_EXPIRED')
+    await checkForSessionError(res)
     if (!res.ok) {
       const err = await res.json().catch(() => null)
       console.error(`[SF] SOQL failed (${res.status}):`, soql, JSON.stringify(err))
@@ -64,7 +74,7 @@ export function useSalesforce() {
       headers: { Authorization: `Bearer ${auth.accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-    if (res.status === 401) throw new Error('SESSION_EXPIRED')
+    await checkForSessionError(res)
     if (!res.ok) {
       const err = await res.json()
       console.error(`[SF] Create ${object} failed`, JSON.stringify(err))
@@ -81,7 +91,7 @@ export function useSalesforce() {
       headers: { Authorization: `Bearer ${auth.accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
-    if (res.status === 401) throw new Error('SESSION_EXPIRED')
+    await checkForSessionError(res)
     if (!res.ok) {
       const err = await res.json()
       console.error(`[SF] Patch ${object}/${id} failed`, JSON.stringify(err))
