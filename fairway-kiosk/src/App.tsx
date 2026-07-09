@@ -557,7 +557,7 @@ export default function App() {
         profile = profiles[0]
       } else {
         const pr = await create<{ id: string }>('Golfer_Profile__c', {
-          Contact__c: contact.Id, Skill_Segment__c: data.skill, Profile_Tier__c: 'Free',
+          Contact__c: contact.Id, Skill_Segment__c: data.skill,
         })
         profile = {
           Id: pr.id, Name: `${data.firstName} ${data.lastName}`, Skill_Segment__c: data.skill,
