@@ -372,6 +372,31 @@ export default function App() {
   }
 
   // ── Member walk-in: look up by email ─────────────────────────────────────
+  // Returns the Person Account ID for a given email, creating one if none exists.
+  // ServiceAppointment.ParentRecordId must be a Person Account — business accounts are rejected.
+  const resolvePersonAccount = useCallback(async (
+    email: string, firstName: string, lastName: string
+  ): Promise<string> => {
+    // 1. Look for an existing Person Account by email
+    const existing = await query<{ Id: string }>(
+      `SELECT Id FROM Account WHERE PersonEmail = '${email}' AND IsPersonAccount = true LIMIT 1`
+    )
+    if (existing.length) return existing[0].Id
+
+    // 2. None found — create one using the Person Account record type
+    const rtResult = await query<{ Id: string }>(
+      `SELECT Id FROM RecordType WHERE SObjectType = 'Account' AND IsPersonType = true LIMIT 1`
+    )
+    if (!rtResult.length) throw new Error('Person Account record type not found in org')
+    const acct = await create<{ id: string }>('Account', {
+      FirstName: firstName,
+      LastName: lastName,
+      PersonEmail: email,
+      RecordTypeId: rtResult[0].Id,
+    })
+    return acct.id
+  }, [query, create])
+
   const handleMemberSearch = useCallback(async (email: string) => {
     const contacts = await query<Contact & { AccountId: string | null }>(
       `SELECT Id, FirstName, LastName, Email, AccountId FROM Contact WHERE Email = '${email}' LIMIT 1`
@@ -379,22 +404,7 @@ export default function App() {
     if (!contacts.length) return null
     const c = contacts[0]
 
-    // ParentRecordId must be a Person Account. Verify the Contact's AccountId points
-    // to one — a Contact linked to a business account (e.g. "Fairway Golf Club") will
-    // cause a 400. Fall back to querying by PersonEmail if missing or not a person account.
-    let accountId: string | null = null
-    if (c.AccountId) {
-      const accts = await query<{ Id: string; IsPersonAccount: boolean }>(
-        `SELECT Id, IsPersonAccount FROM Account WHERE Id = '${c.AccountId}' LIMIT 1`
-      )
-      if (accts.length && accts[0].IsPersonAccount) accountId = accts[0].Id
-    }
-    if (!accountId) {
-      const accounts = await query<{ Id: string }>(
-        `SELECT Id FROM Account WHERE PersonEmail = '${email}' LIMIT 1`
-      )
-      if (accounts.length) accountId = accounts[0].Id
-    }
+    const accountId = await resolvePersonAccount(email, c.FirstName ?? '', c.LastName ?? '')
 
     const profiles = await query<{ Id: string; Name: string; Skill_Segment__c: string; Member_PIN__c: string | null }>(
       `SELECT Id, Name, Skill_Segment__c, Member_PIN__c FROM Golfer_Profile__c WHERE Contact__c = '${c.Id}' LIMIT 1`
@@ -458,8 +468,10 @@ export default function App() {
       const endTime = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
       if (bay) {
+        const personAccountId = pendingMember.accountId
+          ?? await resolvePersonAccount(pendingMember.email, pendingMember.firstName, pendingMember.lastName)
         const appointmentId = await createWalkInAppointment(
-          pendingMember.contactId, pendingMember.accountId ?? '', bay.bayId, now, endTime
+          pendingMember.contactId, personAccountId, bay.bayId, now, endTime
         )
         const syntheticSession: ScheduledSession = {
           reservationId: appointmentId,
@@ -527,10 +539,14 @@ export default function App() {
       if (contacts.length > 0) {
         contact = contacts[0]
       } else {
-        const r = await create<{ id: string }>('Contact', {
-          FirstName: data.firstName, LastName: data.lastName, Email: data.email,
-        })
-        contact = { Id: r.id, FirstName: data.firstName, LastName: data.lastName, Email: data.email, Phone: null, AccountId: null }
+        // Create a Person Account — this auto-creates the linked Contact in SF.
+        // We then re-query to get the shadow Contact ID so we have a ContactId for the appointment.
+        await resolvePersonAccount(data.email, data.firstName, data.lastName)
+        const newContacts = await query<Contact & { AccountId: string | null }>(
+          `SELECT Id, FirstName, LastName, Email, AccountId FROM Contact WHERE Email = '${data.email}' AND AccountId != null LIMIT 1`
+        )
+        if (!newContacts.length) throw new Error('Contact not found after Person Account creation')
+        contact = newContacts[0]
       }
 
       const profiles = await query<GolferProfile>(
@@ -561,8 +577,9 @@ export default function App() {
       const endTime = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
       if (bay) {
+        const personAccountId = await resolvePersonAccount(data.email, data.firstName, data.lastName)
         const appointmentId = await createWalkInAppointment(
-          contact.Id, contact.AccountId ?? '', bay.bayId, now, endTime
+          contact.Id, personAccountId, bay.bayId, now, endTime
         )
         const syntheticSession: ScheduledSession = {
           reservationId: appointmentId,
