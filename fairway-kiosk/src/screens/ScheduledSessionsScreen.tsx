@@ -110,7 +110,7 @@ function StatusBadge({ status, isLate }: { status: string; isLate: boolean }) {
 
 export default function ScheduledSessionsScreen({ sessions, loading, onSelectPlayer, onWalkIn, onQrCheckIn, onAddGuest }: Props) {
   const now = Date.now()
-  const [qrFor, setQrFor] = useState<{ reservationId: string; displayName: string } | null>(null)
+  const [qrFor, setQrFor] = useState<{ contactId: string; displayName: string } | null>(null)
 
   const upcoming = useMemo(() => upcomingSessions(sessions), [sessions])
   const waitMinutes = useMemo(() => estimateWaitMinutes(sessions), [sessions])
@@ -216,10 +216,10 @@ export default function ScheduledSessionsScreen({ sessions, loading, onSelectPla
                               </p>
                             </div>
                           </button>
-                          {!p.checkedIn && (
+                          {!p.checkedIn && p.contactId && (
                             <button
-                              onClick={() => setQrFor({ reservationId: s.reservationId, displayName: p.displayName ?? `Player ${pi + 1}` })}
-                              title="Show check-in QR code"
+                              onClick={() => setQrFor({ contactId: p.contactId!, displayName: p.displayName ?? `Player ${pi + 1}` })}
+                              title="Show their permanent Fairway QR code"
                               className="px-3 flex items-center justify-center text-[#555] hover:text-[#C9A84C] transition-colors flex-shrink-0"
                             >
                               <span className="text-lg">▦</span>
@@ -278,9 +278,9 @@ export default function ScheduledSessionsScreen({ sessions, loading, onSelectPla
 
       {qrFor && (
         <QrCodeModal
-          value={qrFor.reservationId}
+          value={qrFor.contactId}
           title={qrFor.displayName}
-          subtitle="Your check-in code"
+          subtitle="Your permanent Fairway QR code"
           onClose={() => setQrFor(null)}
         />
       )}

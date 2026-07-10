@@ -4,7 +4,7 @@ import GoldButton from '../components/GoldButton'
 
 interface Props {
   // Returns an error message to display, or null on a successful check-in.
-  onScan: (appointmentId: string) => Promise<string | null>
+  onScan: (contactId: string) => Promise<string | null>
   onBack: () => void
 }
 
@@ -28,10 +28,10 @@ export default function QrCheckInScreen({ onScan, onBack }: Props) {
         setScanError(null)
         try {
           const raw = result.data.trim()
-          // QR may encode either the bare 18-char ServiceAppointment Id or a
-          // check-in URL ending in the Id — take whatever's after the last slash.
-          const appointmentId = raw.includes('/') ? raw.split('/').pop()!.trim() : raw
-          const err = await onScan(appointmentId)
+          // QR may encode either the bare 18-char Contact Id or a check-in
+          // URL ending in the Id — take whatever's after the last slash.
+          const contactId = raw.includes('/') ? raw.split('/').pop()!.trim() : raw
+          const err = await onScan(contactId)
           if (err) {
             setScanError(err)
             processingRef.current = false
@@ -63,8 +63,8 @@ export default function QrCheckInScreen({ onScan, onBack }: Props) {
     <div className="w-full h-full flex flex-col items-center justify-center gap-8 px-16">
       <div className="text-center">
         <p className="text-[#C9A84C] text-xs uppercase tracking-[0.4em] font-medium mb-2">QR Check-In</p>
-        <h2 className="text-4xl font-bold text-white">Scan your confirmation code</h2>
-        <p className="text-[#666] text-sm mt-2">Hold your reservation QR code up to the camera.</p>
+        <h2 className="text-4xl font-bold text-white">Scan your Fairway code</h2>
+        <p className="text-[#666] text-sm mt-2">Hold your check-in QR code up to the camera.</p>
       </div>
 
       <div className="relative w-full max-w-sm aspect-square rounded-2xl overflow-hidden border border-[#2A2A2A] bg-black">

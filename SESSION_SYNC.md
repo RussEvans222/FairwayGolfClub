@@ -1,7 +1,7 @@
 # Fairway Golf Club — Session Sync
 
 **Last updated:** 2026-07-10 (by Claude — no Salesforce CLI access from this environment, see "QR Check-In" below)  
-**Last commit:** `5461c7e` on `main` (RussEvans222/FairwayGolfClub)
+**Last commit:** `679cfe2` on `main` (RussEvans222/FairwayGolfClub) — PR #6, then reworked again same day (not yet merged) to fix the QR design — see below
 
 ---
 
@@ -105,14 +105,21 @@ VITE_SF_WALKIN_WORK_TYPE_ID=08qak000000AwM5AAK   ← "Bay Session" (60 min)
 ```
 Note: `VITE_SF_WALKIN_WORK_ORDER_ID` has been **removed** — WorkOrders are no longer used as ParentRecordId.
 
-**QR check-in (built 2026-07-10, untested live — no SF access from this environment):**
-- New screen `QrCheckInScreen.tsx` — uses the `qr-scanner` npm package (camera access via `getUserMedia`, decodes in a WebWorker, no manual worker-path config needed with Vite) to scan a code and read a `ServiceAppointment` Id
+**QR check-in — reworked 2026-07-10 to be identity-based, untested live (no SF access from this environment):**
+
+PR #6's first version encoded a `ServiceAppointment` Id — a one-time code per booking. Russell's actual intent: a **permanent, per-person code**, generated once, reused forever (like a membership card), that works whether or not they have a same-day reservation. Reworked same day, on top of #6, before/without re-merging the appointment-Id version anywhere else.
+
+- `QrCheckInScreen.tsx` — uses the `qr-scanner` npm package (camera access via `getUserMedia`, decodes in a WebWorker, no manual worker-path config needed with Vite) to scan a code and read a **Contact Id**
 - Entry point: "Scan QR" button on `ScheduledSessionsScreen` footer, next to "Walk-In Check-In"
-- `handleQrCheckIn(appointmentId)` in `App.tsx` — looks up the Id in the already-loaded `scheduledSessions`, finds the first not-yet-checked-in player, and runs the **same** `Scheduled → Dispatched` transition as PIN entry (`handlePinConfirm`), just without a PIN. Returns an error string (shown on screen) if the Id isn't found in today's schedule or is already checked in.
-- New reusable `QrCodeModal.tsx` component (uses `qrcode` package) — shown via a small QR icon button next to each not-yet-checked-in player row on `ScheduledSessionsScreen`. Encodes the raw `ServiceAppointment` Id (18-char SF Id) as the QR payload. Lets you generate a real testable code for any of today's reservations without needing an email/SMS pipeline yet.
-- **QR payload format:** currently just the bare `ServiceAppointment` Id. `QrCheckInScreen` also accepts a URL ending in `/{id}` (splits on `/` and takes the last segment) so this doesn't need to change if a check-in URL scheme is added later for phone-camera scanning.
+- `handleQrCheckIn(contactId)` in `App.tsx` — two paths:
+  1. **Has a not-yet-checked-in reservation today** → same `Scheduled → Dispatched` transition PIN entry uses, just without a PIN
+  2. **No reservation today** → looks up the Contact by Id, resolves their Person Account (`resolvePersonAccount`, same helper the regular member walk-in uses), sets `pendingMember`, and jumps straight to the `guest-payment` screen — fast-tracked past the email search and PIN screen since scanning the badge already proves identity. Payment/bay-assignment then proceeds exactly like any other walk-in (`handleMemberWalkInComplete`).
+- **Where the code is generated (no email/SMS pipeline yet — on-screen only):**
+  - `QrCodeModal.tsx` (uses `qrcode` package) — a ▦ icon next to each not-yet-checked-in player on `ScheduledSessionsScreen` shows their permanent code (encodes `p.contactId`, guarded — hidden if null)
+  - `SessionSummaryScreen.tsx` — "Save your check-in code" section at the end of every session, one button per player with a known Contact, so first-timers get their permanent code automatically right when their profile is created
+- **QR payload:** bare 18-char Contact Id (or a URL ending in `/{id}` — `QrCheckInScreen` splits on `/` and takes the last segment, so a future check-in URL scheme doesn't require changing this)
 - **Deliberately skips the `Checked In` status** — jumps straight to `Dispatched`, identical to what PIN entry does today. See "Checked In status prerequisite" below for why, and how to upgrade once that picklist value exists in the org.
-- **Not yet tested against the live org** — I have no Salesforce or Cloudflare network access from this environment. `tsc -b` and `vite build` both pass; the `qr-scanner-worker` chunk bundles correctly. Needs an actual camera + a real reservation to verify end to end.
+- **Not yet tested against the live org** — no Salesforce or Cloudflare network access from this environment. `tsc -b` and `vite build` both pass; the `qr-scanner-worker` chunk bundles correctly. Needs an actual camera + a real contact to verify end to end, both the has-reservation and fast-track-walk-in paths.
 
 **Checked In status prerequisite (for the fuller status ladder from `SCHEDULER_RESEARCH.md`):**
 - `ServiceAppointment.Status` is a **restricted picklist** — writing `"Checked In"` will fail with `INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST` unless that exact value already exists as an active option in the org.
@@ -272,11 +279,14 @@ Full research notes in [`SCHEDULER_RESEARCH.md`](./SCHEDULER_RESEARCH.md). Key f
 3. **Membership upsell price**
    - `SessionSummaryScreen` upsell card says `"$X/month"` — fill in real price once decided
 
-4. **QR code check-in — BUILT 2026-07-10, needs live testing**
-   - `QrCheckInScreen` scans via the kiosk iPad's own camera (`qr-scanner` package); `QrCodeModal` generates a testable code per reservation (`qrcode` package) on `ScheduledSessionsScreen`
+4. **QR code check-in — BUILT 2026-07-10 (identity-based), needs live testing**
+   - Permanent per-person code (Contact Id), not per-booking — see "QR check-in — reworked" above for the full design
+   - `QrCheckInScreen` scans via the kiosk iPad's own camera (`qr-scanner` package); `QrCodeModal` generates a real code per person (`qrcode` package) — shown on `ScheduledSessionsScreen` (▦ icon per player) and automatically at the end of every session on `SessionSummaryScreen`
    - Currently patches straight to `Dispatched` (same as PIN entry) rather than `Checked In` — see "Checked In status prerequisite" above for why and how to upgrade
-   - **To verify:** deploy the kiosk, generate a QR for a real reservation via the new QR icon button, scan it with the iPad camera, confirm it reaches `bay-direction` without a PIN
-   - Not yet wired to email/SMS delivery of the code — today it only exists as an on-screen QR staff can generate at the kiosk itself
+   - **To verify (two paths):**
+     - Has a reservation: generate a QR for a real reservation via the QR icon, scan it, confirm it reaches `bay-direction` without a PIN
+     - No reservation: generate/reuse a known member's QR (e.g. from a past `SessionSummaryScreen` visit), scan it with no booking on the calendar, confirm it fast-tracks straight to the payment screen and then bay assignment
+   - Not yet wired to email/SMS delivery of the code — today it only exists as an on-screen QR generated at the kiosk itself
 
 5. **Add `Checked In` status step to kiosk + session console**
    - Add `Checked In` as a custom status value in SF Scheduler setup (Status Category: `Checked In`)
