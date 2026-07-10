@@ -1,12 +1,14 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { ScheduledSession } from '../types'
 import { getEasternHour } from '../utils/time'
+import QrCodeModal from '../components/QrCodeModal'
 
 interface Props {
   sessions: ScheduledSession[]
   loading: boolean
   onSelectPlayer: (session: ScheduledSession, playerIndex: number) => void
   onWalkIn: () => void
+  onQrCheckIn: () => void
   onAddGuest: (session: ScheduledSession) => void
 }
 
@@ -106,8 +108,9 @@ function StatusBadge({ status, isLate }: { status: string; isLate: boolean }) {
   )
 }
 
-export default function ScheduledSessionsScreen({ sessions, loading, onSelectPlayer, onWalkIn, onAddGuest }: Props) {
+export default function ScheduledSessionsScreen({ sessions, loading, onSelectPlayer, onWalkIn, onQrCheckIn, onAddGuest }: Props) {
   const now = Date.now()
+  const [qrFor, setQrFor] = useState<{ reservationId: string; displayName: string } | null>(null)
 
   const upcoming = useMemo(() => upcomingSessions(sessions), [sessions])
   const waitMinutes = useMemo(() => estimateWaitMinutes(sessions), [sessions])
@@ -187,32 +190,42 @@ export default function ScheduledSessionsScreen({ sessions, loading, onSelectPla
                     {s.players.map((p, pi) => {
                       const initial = p.displayName?.[0]?.toUpperCase() ?? '?'
                       return (
-                        <button
-                          key={pi}
-                          onClick={() => !p.checkedIn && onSelectPlayer(s, pi)}
-                          disabled={p.checkedIn}
-                          className={`flex-1 flex items-center gap-3 px-5 py-4 transition-all text-left
-                            ${p.checkedIn
-                              ? 'cursor-default opacity-40'
-                              : 'hover:bg-[#C9A84C]/5 active:bg-[#C9A84C]/10 active:scale-[0.98] cursor-pointer'
-                            }`}
-                        >
-                          <div className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0
-                            ${p.checkedIn
-                              ? 'bg-green-500/15 text-green-400'
-                              : 'bg-[#1A1A1A] text-[#C9A84C] border border-[#2A2A2A]'
-                            }`}>
-                            {p.checkedIn ? '✓' : initial}
-                          </div>
-                          <div>
-                            <p className={`font-medium text-sm ${p.checkedIn ? 'text-[#555]' : 'text-white'}`}>
-                              {p.displayName ?? `Player ${pi + 1}`}
-                            </p>
-                            <p className="text-[#555] text-xs">
-                              {p.checkedIn ? 'Checked in' : p.isGuest ? 'Guest' : 'Tap to check in →'}
-                            </p>
-                          </div>
-                        </button>
+                        <div key={pi} className="flex-1 flex items-stretch">
+                          <button
+                            onClick={() => !p.checkedIn && onSelectPlayer(s, pi)}
+                            disabled={p.checkedIn}
+                            className={`flex-1 flex items-center gap-3 px-5 py-4 transition-all text-left
+                              ${p.checkedIn
+                                ? 'cursor-default opacity-40'
+                                : 'hover:bg-[#C9A84C]/5 active:bg-[#C9A84C]/10 active:scale-[0.98] cursor-pointer'
+                              }`}
+                          >
+                            <div className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0
+                              ${p.checkedIn
+                                ? 'bg-green-500/15 text-green-400'
+                                : 'bg-[#1A1A1A] text-[#C9A84C] border border-[#2A2A2A]'
+                              }`}>
+                              {p.checkedIn ? '✓' : initial}
+                            </div>
+                            <div>
+                              <p className={`font-medium text-sm ${p.checkedIn ? 'text-[#555]' : 'text-white'}`}>
+                                {p.displayName ?? `Player ${pi + 1}`}
+                              </p>
+                              <p className="text-[#555] text-xs">
+                                {p.checkedIn ? 'Checked in' : p.isGuest ? 'Guest' : 'Tap to check in →'}
+                              </p>
+                            </div>
+                          </button>
+                          {!p.checkedIn && (
+                            <button
+                              onClick={() => setQrFor({ reservationId: s.reservationId, displayName: p.displayName ?? `Player ${pi + 1}` })}
+                              title="Show check-in QR code"
+                              className="px-3 flex items-center justify-center text-[#555] hover:text-[#C9A84C] transition-colors flex-shrink-0"
+                            >
+                              <span className="text-lg">▦</span>
+                            </button>
+                          )}
+                        </div>
                       )
                     })}
                   </div>
@@ -240,20 +253,37 @@ export default function ScheduledSessionsScreen({ sessions, loading, onSelectPla
       </div>
 
       {/* Walk-in footer */}
-      <div className="flex items-center justify-between border-t border-[#1E1E1E] pt-5 flex-shrink-0">
+      <div className="flex items-center justify-between border-t border-[#1E1E1E] pt-5 flex-shrink-0 gap-3">
         <div>
           <p className="text-white text-sm font-medium">Walk-in today?</p>
           <p className="text-[#555] text-xs">
             {waitMinutes > 0 ? `Next bay available in ~${waitMinutes} min` : 'Bays available now'}
           </p>
         </div>
-        <button
-          onClick={onWalkIn}
-          className="bg-[#C9A84C] text-black font-semibold text-sm px-6 py-3 rounded-xl hover:bg-[#E8C96A] active:scale-95 transition-all"
-        >
-          Walk-In Check-In
-        </button>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button
+            onClick={onQrCheckIn}
+            className="border border-[#2A2A2A] text-[#888] font-semibold text-sm px-5 py-3 rounded-xl hover:border-[#C9A84C]/40 hover:text-[#C9A84C] active:scale-95 transition-all"
+          >
+            Scan QR
+          </button>
+          <button
+            onClick={onWalkIn}
+            className="bg-[#C9A84C] text-black font-semibold text-sm px-6 py-3 rounded-xl hover:bg-[#E8C96A] active:scale-95 transition-all"
+          >
+            Walk-In Check-In
+          </button>
+        </div>
       </div>
+
+      {qrFor && (
+        <QrCodeModal
+          value={qrFor.reservationId}
+          title={qrFor.displayName}
+          subtitle="Your check-in code"
+          onClose={() => setQrFor(null)}
+        />
+      )}
     </div>
   )
 }

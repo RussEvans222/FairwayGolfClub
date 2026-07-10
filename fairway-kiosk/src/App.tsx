@@ -9,6 +9,7 @@ import type {
 import WelcomeScreen from './screens/WelcomeScreen'
 import ScheduledSessionsScreen from './screens/ScheduledSessionsScreen'
 import PinEntryScreen from './screens/PinEntryScreen'
+import QrCheckInScreen from './screens/QrCheckInScreen'
 import BayDirectionScreen from './screens/BayDirectionScreen'
 import PlayerTypeScreen from './screens/PlayerTypeScreen'
 import MemberWalkInScreen from './screens/MemberWalkInScreen'
@@ -314,6 +315,38 @@ export default function App() {
       setLoading(false)
     }
   }, [selectedSession, selectedPlayerIndex, patch])
+
+  // QR check-in: skips PIN entirely — possession of the code is the credential.
+  // Same "Scheduled" → "Dispatched" transition as handlePinConfirm, just triggered by a scan.
+  const handleQrCheckIn = useCallback(async (appointmentId: string): Promise<string | null> => {
+    const match = scheduledSessions.find(s => s.reservationId === appointmentId)
+    if (!match) return "We couldn't find that reservation for today."
+
+    const playerIndex = match.players.findIndex(p => !p.checkedIn)
+    if (playerIndex === -1) return 'That reservation is already checked in.'
+
+    try {
+      setSelectedSession(match)
+      setSelectedPlayerIndex(playerIndex)
+
+      setScheduledSessions(prev => prev.map(s =>
+        s.reservationId !== match.reservationId ? s : {
+          ...s,
+          players: s.players.map((p, i) => i === playerIndex ? { ...p, checkedIn: true } : p),
+        }
+      ))
+
+      if (match.status === 'Scheduled') {
+        await patch('ServiceAppointment', match.reservationId, { Status: 'Dispatched' })
+        setSelectedSession(s => s ? { ...s, status: 'Dispatched' } : s)
+      }
+
+      setScreen('bay-direction')
+      return null
+    } catch (e) {
+      return e instanceof Error ? e.message : 'Check-in failed.'
+    }
+  }, [scheduledSessions, patch])
 
   // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
   const createWalkInAppointment = useCallback(async (
@@ -759,6 +792,7 @@ export default function App() {
           loading={sessionsLoading}
           onSelectPlayer={handleSelectPlayer}
           onWalkIn={() => setScreen('player-type')}
+          onQrCheckIn={() => setScreen('qr-checkin')}
           onAddGuest={(s) => {
             setSelectedSession(s)
             setScreen('guest-registration')
@@ -783,6 +817,12 @@ export default function App() {
           onBack={() => setScreen('scheduled-sessions')}
           loading={loading}
           error={error}
+        />
+      )}
+      {screen === 'qr-checkin' && (
+        <QrCheckInScreen
+          onScan={handleQrCheckIn}
+          onBack={() => setScreen('scheduled-sessions')}
         />
       )}
       {screen === 'bay-direction' && (() => {
