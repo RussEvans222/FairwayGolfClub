@@ -166,17 +166,32 @@ First pass used a single `Amount_Charged__c` currency field on `ServiceAppointme
 **How it works:**
 - One `Order` per walk-in visit — the running tab. Created when the walk-in check-in flow (kiosk) creates the `ServiceAppointment`, with a new lookup `Order.Service_Appointment__c` tying it back to the visit.
 - One `OrderItem` per charge on that Order — the base session fee when the Order opens, plus one more each time staff extends the session via the `fairwaySessionConsole` LWC's +15/+30 buttons.
-- **Pricing lives in data, not code** — a `Product2` + `PricebookEntry` on the org's **Standard Pricebook** for each charge type ("Walk-In Session Fee", "30-Minute Extension"). Both the kiosk and Apex look up the current `UnitPrice` by product name at charge time; nothing hardcodes `$35` or `$17.50` anywhere in TypeScript or Apex. Change the rate in Setup and it takes effect immediately, no deploy needed.
-- **Products/PricebookEntries are DATA, not metadata** — can't be deployed via `sf project deploy`. Run once: `fairway-sf/force-app/main/default/scripts/seed-payment-products.apex`. Seeds "Walk-In Session Fee" ($35 placeholder) and "30-Minute Extension" ($17.50 placeholder — half the base rate, my guess, not confirmed with Russell). Safe to re-run.
-- **Extension quantity scales with minutes**, not a fixed unit: `Quantity = minutes / 30.0`, so a +15 charges half of a +30 against the same per-30-min rate — one product covers both buttons.
-- `createWalkInAppointment` in `App.tsx`: after creating the `ServiceAppointment` + `AssignedResource`, looks up the "Walk-In Session Fee" `PricebookEntry` (`Product2.Name = 'Walk-In Session Fee' AND Pricebook2.IsStandard = true`), creates the `Order` (`AccountId`, `EffectiveDate`, `Status = 'Draft'`, `Pricebook2Id`, `Service_Appointment__c`), then the `OrderItem`. If the pricebook entry isn't seeded yet, the appointment still gets created — just without a revenue record — rather than failing the whole check-in.
-- `FairwaySessionConsoleController.extendSession` (Apex): after extending `SchedEndTime`, calls a new private `chargeExtension(appointmentId, minutes)` — finds the visit's `Order` via `Service_Appointment__c`, looks up the "30-Minute Extension" `PricebookEntry` on that Order's `Pricebook2Id`, inserts the scaled `OrderItem`. No-ops silently if there's no Order (e.g. extending a reservation-based check-in, which doesn't open one) or the product isn't seeded.
-- `FairwayOpsDashboardController.cls` — `getBayStatus()` and `getDailyStats()` now sum `OrderItem.TotalPrice` (traversing `Order.Service_Appointment__c`) instead of reading a static field. `BayRow.revenueToday` and `DailyStats.totalRevenue`.
-- `fairwayOpsDashboard` LWC — unchanged from the first pass: a stat tile in the header ("Revenue Today · Walk-Ins") and a revenue figure in each bay card's footer.
+- **Tiered pricing via two Pricebooks, not tiered products.** Both charge types ("Bay Session", "30-Minute Extension") exist as a single `Product2` each, priced differently per `Pricebook2`:
+  - **Standard Pricebook** (built-in) = walk-in/non-member rate — the premium tier, no membership required
+  - **Member Pricing** (new custom Pricebook2) = discounted rate for golfers with an Active or Complimentary `Membership__c` record
+  - `resolvePricebookId(contactId)` in `App.tsx` checks `Membership__c` for that contact (`Status__c IN ('Active','Complimentary')`) and picks the Pricebook before opening the Order. Falls back to Standard on any lookup failure.
+  - Adding more tiers later (Bronze/Silver/Gold, matching the business plan's membership tiers) is just another `Pricebook2` + two more `PricebookEntry` rows — no code changes needed anywhere in the kiosk or Apex.
+- **Current rates (Russell, 2026-07-10):**
+
+  | | Bay Session | 30-Min Extension |
+  |---|---|---|
+  | Member Pricing | $35.00 | $26.25 |
+  | Standard (walk-in) | $45.00 | $28.75 |
+
+  Extension rate is deliberately **more than half** the base rate, not a straight 50/50 split — an unplanned extension costs $17.50 + 25% of that tier's base session rate (member: 17.50 + 0.25×35 = 26.25; walk-in: 17.50 + 0.25×45 = 28.75).
+- **Pricing lives in data, not code** — nothing hardcodes these numbers in TypeScript or Apex; both the kiosk and Apex look up the current `UnitPrice` by product name + resolved Pricebook at charge time. Change a rate in Setup and it takes effect immediately, no deploy needed.
+- **Products/Pricebooks/PricebookEntries are DATA, not metadata** — can't be deployed via `sf project deploy`. Run once: `fairway-sf/force-app/main/default/scripts/seed-payment-products.apex`. Creates the "Member Pricing" Pricebook2 and both products' entries on both Pricebooks at the rates above. Safe to re-run — if a `PricebookEntry` already exists at a *different* rate than the script has, it logs a warning instead of silently overwriting (so a manual rate change in Setup doesn't get clobbered by a stale script re-run).
+- **Extension quantity scales with minutes**, not a fixed unit: `Quantity = minutes / 30.0`, so a +15 charges half of a +30 against the same per-30-min rate — one product covers both buttons, for both tiers.
+- `createWalkInAppointment` in `App.tsx`: after creating the `ServiceAppointment` + `AssignedResource`, resolves the Pricebook via `resolvePricebookId`, looks up the "Bay Session" `PricebookEntry` on it, creates the `Order` (`AccountId`, `EffectiveDate`, `Status = 'Draft'`, `Pricebook2Id`, `Service_Appointment__c`), then the `OrderItem`. If no pricebook entry is found (not seeded yet), the appointment still gets created — just without a revenue record — rather than failing the whole check-in.
+- `FairwaySessionConsoleController.extendSession` (Apex): after extending `SchedEndTime`, calls a new private `chargeExtension(appointmentId, minutes)` — finds the visit's `Order` via `Service_Appointment__c`, looks up the "30-Minute Extension" `PricebookEntry` on **that Order's own `Pricebook2Id`** (so a member's extensions stay at the member rate, a walk-in's stay at the walk-in rate — the tier was already locked in when the Order opened), inserts the scaled `OrderItem`. No-ops silently if there's no Order (e.g. extending a reservation-based check-in, which doesn't open one) or the product isn't seeded.
+- `FairwayOpsDashboardController.cls` — `getBayStatus()` and `getDailyStats()` sum `OrderItem.TotalPrice` (traversing `Order.Service_Appointment__c`) instead of reading a static field. `BayRow.revenueToday` and `DailyStats.totalRevenue` — these totals blend both tiers together; not broken out by member vs. walk-in yet.
+- `fairwayOpsDashboard` LWC — a stat tile in the header ("Revenue Today · Walk-Ins") and a revenue figure in each bay card's footer.
+
+**Note on the business plan's pricing:** `Fairway_Golf_Club_Business_Plan.docx` and the financial model scripts (`build_financials_v2.py` etc.) model walk-in bay rentals at **$55–70/hr** and member rate at **$40–55/hr** (blended assumption: walk-in $65, member $40), with monthly membership tiers Bronze $99 / Silver $199 / Gold $299. The $35/$45 per-session rates above are Russell's current direction for the kiosk specifically and are lower than those hourly figures — worth reconciling with the business plan/investor materials at some point, but not something I resolved here since it wasn't asked.
 
 **Scope: walk-ins only, deliberately.** Reservation check-ins (PIN entry) skip the payment screen entirely and never open an Order — unclear whether reservations are pre-paid, membership-included, or genuinely unbilled today. Revenue numbers are real but partial; labeled "Revenue Today · Walk-Ins" everywhere, not just "Revenue."
 
-**Permissions (`Fairway_Staff`):** added object CRUD for `Order`/`OrderItem` (create+read) and read-only for `Pricebook2`/`PricebookEntry`/`Product2`, plus FLS on the one new custom field `Order.Service_Appointment__c`. **Not verified:** standard `Order` sometimes needs an org-level "Order Management" feature/permission beyond normal object CRUD (separate from what a permission set can grant) — if Order creation fails with a permission error even after deploying this, check Setup → Order Settings / the user's permission for "Manage Orders" specifically, not just the permission set.
+**Permissions (`Fairway_Staff`):** added object CRUD for `Order`/`OrderItem` (create+read) and read-only for `Pricebook2`/`PricebookEntry`/`Product2`, FLS on `Order.Service_Appointment__c`, and filled in two missing FLS grants on `Membership__c` (`Contact__c`, `Status__c` — needed for the new membership-tier lookup, but were gaps even before this change since `Membership__c` object access existed without them). **Not verified:** standard `Order` sometimes needs an org-level "Order Management" feature/permission beyond normal object CRUD (separate from what a permission set can grant) — if Order creation fails with a permission error even after deploying this, check Setup → Order Settings / the user's permission for "Manage Orders" specifically, not just the permission set.
 
 **Deploy commands (in order):**
 ```bash
@@ -187,7 +202,11 @@ sf project deploy start --source-dir force-app/main/default/permissionsets/Fairw
 sf apex run --file force-app/main/default/scripts/seed-payment-products.apex --target-org FairwayGolfClub
 ```
 
-**Not yet tested** — no Salesforce access from this environment. Verify: complete a walk-in check-in, confirm an `Order` + `OrderItem` ($35) exist for the resulting `ServiceAppointment`; extend that session +15 or +30 from the session console, confirm a second `OrderItem` appears on the same Order at the scaled amount; confirm the ops dashboard totals both under the correct bay.
+**Not yet tested** — no Salesforce access from this environment. Verify:
+- A walk-in with **no** `Membership__c` record checks in → `Order` opens on the **Standard** Pricebook, `OrderItem` at **$45**
+- A contact **with an Active/Complimentary** `Membership__c` record checks in as a walk-in (e.g. via QR fast-track) → `Order` opens on **Member Pricing**, `OrderItem` at **$35**
+- Extend either session +15 or +30 from the session console → second `OrderItem` lands on the *same* Order at the tier-correct scaled rate ($26.25 or $28.75 for a full 30, half that for a 15)
+- Ops dashboard totals both under the correct bay
 
 **Salesforce Scheduler setup (manual, already done in org):**
 - Service Territory: "Fairway Golf Club" (active)

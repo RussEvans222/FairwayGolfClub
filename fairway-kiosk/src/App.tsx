@@ -316,6 +316,30 @@ export default function App() {
     }
   }, [selectedSession, selectedPlayerIndex, patch])
 
+  // Tiered pricing: golfers with an Active/Complimentary Membership__c record
+  // get the "Member Pricing" Pricebook; everyone else gets the org's Standard
+  // Pricebook (walk-in/non-member rate — a premium over the member rate,
+  // deliberately, since no membership is required). Falls back to Standard
+  // if the membership lookup itself fails for any reason.
+  const resolvePricebookId = useCallback(async (contactId: string): Promise<string | null> => {
+    let pricebookName: string | null = null
+    try {
+      const memberships = await query<{ Id: string }>(
+        `SELECT Id FROM Membership__c WHERE Contact__c = '${contactId}' AND Status__c IN ('Active','Complimentary') LIMIT 1`
+      )
+      if (memberships.length) pricebookName = 'Member Pricing'
+    } catch (e) {
+      console.error('Membership lookup failed, defaulting to walk-in pricing', e)
+    }
+
+    const pbs = await query<{ Id: string }>(
+      pricebookName
+        ? `SELECT Id FROM Pricebook2 WHERE Name = '${pricebookName}' AND IsActive = true LIMIT 1`
+        : `SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1`
+    )
+    return pbs.length ? pbs[0].Id : null
+  }, [query])
+
   // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
   // Also opens an Order + OrderItem for the base session fee — a visit can
   // rack up multiple charges (base fee + N extensions), so a single static
@@ -345,18 +369,21 @@ export default function App() {
       ServiceResourceId:    bayResourceId,
     })
 
-    const priceEntries = await query<{ Id: string; UnitPrice: number; Pricebook2Id: string }>(
-      `SELECT Id, UnitPrice, Pricebook2Id FROM PricebookEntry
-       WHERE Product2.Name = 'Walk-In Session Fee' AND Pricebook2.IsStandard = true AND IsActive = true
-       LIMIT 1`
-    )
-    if (priceEntries.length) {
+    const pricebookId = await resolvePricebookId(contactId)
+    const priceEntries = pricebookId
+      ? await query<{ Id: string; UnitPrice: number }>(
+          `SELECT Id, UnitPrice FROM PricebookEntry
+           WHERE Product2.Name = 'Bay Session' AND Pricebook2Id = '${pricebookId}' AND IsActive = true
+           LIMIT 1`
+        )
+      : []
+    if (priceEntries.length && pricebookId) {
       const pe = priceEntries[0]
       const order = await create<{ id: string }>('Order', {
         AccountId:              accountId,
         EffectiveDate:          startIso.slice(0, 10),
         Status:                 'Draft',
-        Pricebook2Id:           pe.Pricebook2Id,
+        Pricebook2Id:           pricebookId,
         Service_Appointment__c: appt.id,
       })
       await create('OrderItem', {
@@ -366,12 +393,12 @@ export default function App() {
         UnitPrice:        pe.UnitPrice,
       })
     }
-    // If the "Walk-In Session Fee" product/pricebook entry isn't seeded yet,
-    // the appointment still gets created — just without a revenue record.
-    // See SESSION_SYNC.md "Revenue tracking" for the seed script.
+    // If the "Bay Session" product/pricebook entry isn't seeded yet, the
+    // appointment still gets created — just without a revenue record. See
+    // SESSION_SYNC.md "Revenue tracking" for the seed script.
 
     return appt.id
-  }, [create])
+  }, [create, query, resolvePricebookId])
 
   // Find the next available (unoccupied) bay, checked against the real bay list —
   // never inferred from today's schedule, and never a hardcoded guess. A bay with
