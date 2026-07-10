@@ -3,8 +3,14 @@ import type { ScheduledSession } from '../types'
 import { getEasternHour } from '../utils/time'
 import QrCodeModal from '../components/QrCodeModal'
 
+interface BaySummary {
+  bayId: string
+  bayName: string
+}
+
 interface Props {
   sessions: ScheduledSession[]
+  bays: BaySummary[]
   loading: boolean
   onSelectPlayer: (session: ScheduledSession, playerIndex: number) => void
   onWalkIn: () => void
@@ -32,16 +38,22 @@ function upcomingSessions(sessions: ScheduledSession[]) {
   })
 }
 
-// Estimate next available bay in minutes based on upcoming sessions
-function estimateWaitMinutes(sessions: ScheduledSession[]) {
+// Estimate next available bay in minutes — only meaningful when EVERY bay is
+// occupied right now (checked per bay, not "is anything active anywhere");
+// otherwise there's an open bay and the wait is zero.
+function estimateWaitMinutes(bays: BaySummary[], sessions: ScheduledSession[]) {
+  if (bays.length === 0) return 0
   const now = Date.now()
-  const activeSessions = sessions.filter(s => {
-    const start = new Date(s.startTime).getTime()
-    const end = new Date(s.endTime).getTime()
-    return start <= now && end >= now
+  const endTimes = bays.map(bay => {
+    const s = sessions.find(s =>
+      s.bayId === bay.bayId &&
+      (s.status === 'Dispatched' || s.status === 'In Progress') &&
+      new Date(s.endTime).getTime() > now
+    )
+    return s ? new Date(s.endTime).getTime() : null
   })
-  if (activeSessions.length === 0) return 0
-  const soonestEnd = Math.min(...activeSessions.map(s => new Date(s.endTime).getTime()))
+  if (endTimes.some(t => t === null)) return 0 // at least one bay is open
+  const soonestEnd = Math.min(...(endTimes as number[]))
   return Math.max(0, Math.round((soonestEnd - now) / 60000))
 }
 
@@ -108,17 +120,13 @@ function StatusBadge({ status, isLate }: { status: string; isLate: boolean }) {
   )
 }
 
-export default function ScheduledSessionsScreen({ sessions, loading, onSelectPlayer, onWalkIn, onQrCheckIn, onAddGuest }: Props) {
+export default function ScheduledSessionsScreen({ sessions, bays, loading, onSelectPlayer, onWalkIn, onQrCheckIn, onAddGuest }: Props) {
   const now = Date.now()
   const [qrFor, setQrFor] = useState<{ contactId: string; displayName: string } | null>(null)
 
   const upcoming = useMemo(() => upcomingSessions(sessions), [sessions])
-  const waitMinutes = useMemo(() => estimateWaitMinutes(sessions), [sessions])
-  const allBaysBusy = waitMinutes > 0 && upcoming.every(s => {
-    const start = new Date(s.startTime).getTime()
-    const end = new Date(s.endTime).getTime()
-    return start <= now && end >= now
-  })
+  const waitMinutes = useMemo(() => estimateWaitMinutes(bays, sessions), [bays, sessions])
+  const allBaysBusy = waitMinutes > 0
 
   const hour = getHour()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'

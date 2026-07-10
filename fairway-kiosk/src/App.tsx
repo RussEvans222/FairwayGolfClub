@@ -892,6 +892,7 @@ export default function App() {
       {screen === 'scheduled-sessions' && (
         <ScheduledSessionsScreen
           sessions={scheduledSessions}
+          bays={allBays}
           loading={sessionsLoading}
           onSelectPlayer={handleSelectPlayer}
           onWalkIn={() => setScreen('player-type')}
@@ -995,6 +996,7 @@ export default function App() {
             isMember: queueEntry.isMember,
           }}
           sessions={scheduledSessions}
+          bays={allBays}
           onDone={handleReset}
         />
       )}
