@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import GoldButton from '../components/GoldButton'
 import StatCard from '../components/StatCard'
 import CoachTip from '../components/CoachTip'
+import QrCodeModal from '../components/QrCodeModal'
 import type { SessionState } from '../hooks/useSession'
 
 interface SummaryStats {
@@ -27,6 +29,9 @@ interface Props {
 }
 
 export default function SessionSummaryScreen({ session, stats, coachTip, isGuest = false, onDone }: Props) {
+  const [qrFor, setQrFor] = useState<{ contactId: string; displayName: string } | null>(null)
+  const playersWithContact = session.players.filter(p => p.contact?.Id)
+
   return (
     <div className="w-full h-full flex flex-col items-center justify-start gap-8 px-16 pt-16 pb-10 overflow-y-auto">
       {/* Header */}
@@ -76,6 +81,36 @@ export default function SessionSummaryScreen({ session, stats, coachTip, isGuest
             ))}
         </div>
       </div>
+
+      {/* Permanent check-in QR codes */}
+      {playersWithContact.length > 0 && (
+        <div className="w-full max-w-2xl rounded-2xl border border-[#2A2A2A] bg-[#111] px-6 py-5">
+          <p className="text-white font-semibold text-sm">Save your check-in code</p>
+          <p className="text-[#888] text-xs mt-1 leading-relaxed">
+            This code is yours to keep — scan it next visit to skip the line, with or without a reservation.
+          </p>
+          <div className="flex flex-wrap gap-3 mt-3">
+            {playersWithContact.map((p, i) => (
+              <button
+                key={i}
+                onClick={() => setQrFor({ contactId: p.contact!.Id, displayName: p.displayName })}
+                className="border border-[#C9A84C]/30 text-[#C9A84C] text-sm font-medium px-4 py-2 rounded-xl hover:bg-[#C9A84C]/10 active:scale-95 transition-all"
+              >
+                ▦ {p.displayName}'s code
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {qrFor && (
+        <QrCodeModal
+          value={qrFor.contactId}
+          title={qrFor.displayName}
+          subtitle="Your permanent Fairway QR code"
+          onClose={() => setQrFor(null)}
+        />
+      )}
 
       {/* Guest upsell */}
       {isGuest && (

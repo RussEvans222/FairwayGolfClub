@@ -318,36 +318,6 @@ export default function App() {
 
   // QR check-in: skips PIN entirely — possession of the code is the credential.
   // Same "Scheduled" → "Dispatched" transition as handlePinConfirm, just triggered by a scan.
-  const handleQrCheckIn = useCallback(async (appointmentId: string): Promise<string | null> => {
-    const match = scheduledSessions.find(s => s.reservationId === appointmentId)
-    if (!match) return "We couldn't find that reservation for today."
-
-    const playerIndex = match.players.findIndex(p => !p.checkedIn)
-    if (playerIndex === -1) return 'That reservation is already checked in.'
-
-    try {
-      setSelectedSession(match)
-      setSelectedPlayerIndex(playerIndex)
-
-      setScheduledSessions(prev => prev.map(s =>
-        s.reservationId !== match.reservationId ? s : {
-          ...s,
-          players: s.players.map((p, i) => i === playerIndex ? { ...p, checkedIn: true } : p),
-        }
-      ))
-
-      if (match.status === 'Scheduled') {
-        await patch('ServiceAppointment', match.reservationId, { Status: 'Dispatched' })
-        setSelectedSession(s => s ? { ...s, status: 'Dispatched' } : s)
-      }
-
-      setScreen('bay-direction')
-      return null
-    } catch (e) {
-      return e instanceof Error ? e.message : 'Check-in failed.'
-    }
-  }, [scheduledSessions, patch])
-
   // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
   const createWalkInAppointment = useCallback(async (
     contactId: string,
@@ -452,6 +422,63 @@ export default function App() {
       pin: profiles[0]?.Member_PIN__c ?? null,
     }
   }, [query])
+
+  // QR check-in: scans a permanent, per-person code (their Contact Id) — not tied
+  // to any one booking. If they have a not-yet-checked-in reservation today, check
+  // them in the same way PIN entry does. Otherwise fast-track them straight into
+  // the walk-in flow using their already-known identity — skips the email search
+  // and PIN screen, but still goes through payment/bay-assignment like any walk-in.
+  const handleQrCheckIn = useCallback(async (contactId: string): Promise<string | null> => {
+    for (const s of scheduledSessions) {
+      const playerIndex = s.players.findIndex(p => p.contactId === contactId && !p.checkedIn)
+      if (playerIndex === -1) continue
+      try {
+        setSelectedSession(s)
+        setSelectedPlayerIndex(playerIndex)
+        setScheduledSessions(prev => prev.map(sess =>
+          sess.reservationId !== s.reservationId ? sess : {
+            ...sess,
+            players: sess.players.map((p, i) => i === playerIndex ? { ...p, checkedIn: true } : p),
+          }
+        ))
+        if (s.status === 'Scheduled') {
+          await patch('ServiceAppointment', s.reservationId, { Status: 'Dispatched' })
+          setSelectedSession(sel => sel ? { ...sel, status: 'Dispatched' } : sel)
+        }
+        setScreen('bay-direction')
+        return null
+      } catch (e) {
+        return e instanceof Error ? e.message : 'Check-in failed.'
+      }
+    }
+
+    // No reservation today — look them up and fast-track as a walk-in.
+    try {
+      const contacts = await query<Contact & { AccountId: string | null }>(
+        `SELECT Id, FirstName, LastName, Email, AccountId FROM Contact WHERE Id = '${contactId}' LIMIT 1`
+      )
+      if (!contacts.length) return "We don't recognize that code. Try Reservation or Walk-In check-in instead."
+      const c = contacts[0]
+
+      const accountId = await resolvePersonAccount(c.Email, c.FirstName ?? '', c.LastName ?? '')
+      const profiles = await query<{ Id: string; Member_PIN__c: string | null }>(
+        `SELECT Id, Member_PIN__c FROM Golfer_Profile__c WHERE Contact__c = '${c.Id}' LIMIT 1`
+      )
+
+      setPendingMember({
+        contactId: c.Id,
+        accountId,
+        profileId: profiles.length ? profiles[0].Id : null,
+        firstName: c.FirstName,
+        lastName: c.LastName,
+        email: c.Email,
+      })
+      setScreen('guest-payment')
+      return null
+    } catch (e) {
+      return e instanceof Error ? e.message : "We couldn't look up that code."
+    }
+  }, [scheduledSessions, patch, query, resolvePersonAccount])
 
   // Called when member is identified — route to PIN screen first
   function handleMemberWalkInFound(data: { contactId: string; accountId?: string | null; profileId: string | null; firstName: string; lastName: string; email: string; pin?: string | null }) {
