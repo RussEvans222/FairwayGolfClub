@@ -70,6 +70,19 @@ export default function App() {
 
   const { auth, refreshAuth, query, create, patch } = useSalesforce()
 
+  // Writes ServiceAppointment.Status through the full check-in ladder —
+  // "Checked In" (identity confirmed) immediately followed by "Dispatched"
+  // (bay known) — instead of jumping straight to Dispatched. Every check-in
+  // path resolves the bay in the same action today, so the gap between the
+  // two writes is milliseconds, but this keeps a real Checked In entry in
+  // the record's history rather than skipping it. Requires "Checked In" to
+  // exist as an active value on ServiceAppointment.Status in the org first
+  // — see "Checked In status prerequisite" in SESSION_SYNC.md.
+  const markCheckedIn = useCallback(async (appointmentId: string) => {
+    await patch('ServiceAppointment', appointmentId, { Status: 'Checked In' })
+    await patch('ServiceAppointment', appointmentId, { Status: 'Dispatched' })
+  }, [patch])
+
   // ── Handle OAuth implicit callback (token in URL hash) ──────────────────
   useEffect(() => {
     const hash = window.location.hash
@@ -273,11 +286,9 @@ export default function App() {
         }
       ))
 
-      // Update appointment status to Dispatched (checked in, bay assigned)
+      // Checked in, bay assigned
       if (selectedSession.status === 'Scheduled') {
-        await patch('ServiceAppointment', selectedSession.reservationId, {
-          Status: 'Dispatched',
-        })
+        await markCheckedIn(selectedSession.reservationId)
         setSelectedSession(s => s ? { ...s, status: 'Dispatched' } : s)
       }
 
@@ -287,7 +298,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [selectedSession, selectedPlayerIndex, patch])
+  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn])
 
   const handlePinSetup = useCallback(async (pin: string) => {
     if (!selectedSession) return
@@ -305,7 +316,7 @@ export default function App() {
         }
       ))
       if (selectedSession.status === 'Scheduled') {
-        await patch('ServiceAppointment', selectedSession.reservationId, { Status: 'Dispatched' })
+        await markCheckedIn(selectedSession.reservationId)
         setSelectedSession(s => s ? { ...s, status: 'Dispatched' } : s)
       }
       setScreen('bay-direction')
@@ -314,7 +325,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [selectedSession, selectedPlayerIndex, patch])
+  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn])
 
   // Tiered pricing: golfers with an Active/Complimentary Membership__c record
   // get the "Member Pricing" Pricebook; everyone else gets the org's Standard
@@ -377,13 +388,14 @@ export default function App() {
       ServiceTerritoryId: territoryId,
       SchedStartTime:     startIso,
       SchedEndTime:       endIso,
-      Status:             'Dispatched',
+      Status:             'Checked In', // immediately followed by Dispatched below, once the bay is assigned
       Description:        'Walk-in via kiosk',
     })
     await create('AssignedResource', {
       ServiceAppointmentId: appt.id,
       ServiceResourceId:    bayResourceId,
     })
+    await patch('ServiceAppointment', appt.id, { Status: 'Dispatched' })
 
     const pricebookId = await resolvePricebookId(contactId)
     const priceEntries = pricebookId
@@ -414,7 +426,7 @@ export default function App() {
     // SESSION_SYNC.md "Revenue tracking" for the seed script.
 
     return appt.id
-  }, [create, query, resolvePricebookId, resolveServiceTerritoryId])
+  }, [create, patch, query, resolvePricebookId, resolveServiceTerritoryId])
 
   // Find the next available (unoccupied) bay, checked against the real bay list —
   // never inferred from today's schedule, and never a hardcoded guess. A bay with
@@ -518,7 +530,7 @@ export default function App() {
           }
         ))
         if (s.status === 'Scheduled') {
-          await patch('ServiceAppointment', s.reservationId, { Status: 'Dispatched' })
+          await markCheckedIn(s.reservationId)
           setSelectedSession(sel => sel ? { ...sel, status: 'Dispatched' } : sel)
         }
         setScreen('bay-direction')
@@ -554,7 +566,7 @@ export default function App() {
     } catch (e) {
       return e instanceof Error ? e.message : "We couldn't look up that code."
     }
-  }, [scheduledSessions, patch, query, resolvePersonAccount])
+  }, [scheduledSessions, patch, query, resolvePersonAccount, markCheckedIn])
 
   // Called when member is identified — route to PIN screen first
   function handleMemberWalkInFound(data: { contactId: string; accountId?: string | null; profileId: string | null; firstName: string; lastName: string; email: string; pin?: string | null }) {

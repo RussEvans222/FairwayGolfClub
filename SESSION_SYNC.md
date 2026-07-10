@@ -122,24 +122,29 @@ PR #6's first version encoded a `ServiceAppointment` Id — a one-time code per 
   - `SessionSummaryScreen.tsx` — "Save your check-in code" section at the end of every session too, as a second reminder — harmless redundancy since it's the same permanent code every time
   - Both `QrCodeModal` and the inline display on `BayDirectionScreen` share a `useQrCode(value)` hook (`src/hooks/useQrCode.ts`) instead of duplicating the async QR-generation boilerplate
 - **QR payload:** bare 18-char Contact Id (or a URL ending in `/{id}` — `QrCheckInScreen` splits on `/` and takes the last segment, so a future check-in URL scheme doesn't require changing this)
-- **Deliberately skips the `Checked In` status** — jumps straight to `Dispatched`, identical to what PIN entry does today. See "Checked In status prerequisite" below for why, and how to upgrade once that picklist value exists in the org.
+- **Now writes the `Checked In` status** — see "Checked In status ladder — BUILT 2026-07-10" below.
 - **Not yet tested against the live org** — no Salesforce or Cloudflare network access from this environment. `tsc -b` and `vite build` both pass; the `qr-scanner-worker` chunk bundles correctly. Needs an actual camera + a real contact to verify end to end, both the has-reservation and fast-track-walk-in paths.
 
-**Checked In status prerequisite (for the fuller status ladder from `SCHEDULER_RESEARCH.md`):**
-- `ServiceAppointment.Status` is a **restricted picklist** — writing `"Checked In"` will fail with `INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST` unless that exact value already exists as an active option in the org.
-- I did not create this value from this environment because a `StandardValueSet` metadata file (`ServiceAppointmentStatus`) written from scratch, without seeing the org's actual current value set, risks silently deactivating values that are still referenced by existing records on deploy.
-- **Safe path once you have `sf` CLI access:**
-  ```bash
-  # 1. Pull the current live value set into the repo first — don't hand-write it
-  sf project retrieve start --metadata "StandardValueSet:ServiceAppointmentStatus" --target-org FairwayGolfClub
-  # 2. Open the retrieved file, add a new <standardValue> entry for "Checked In"
-  #    with statusCategory = CheckedIn (confirm the exact category API name in
-  #    Setup → Object Manager → Service Appointment → Fields → Status first)
-  # 3. Deploy it back
-  sf project deploy start --source-dir force-app/main/default/standardValueSets --target-org FairwayGolfClub
-  ```
-  Or do it entirely in Setup UI: Object Manager → Service Appointment → Fields & Relationships → Status → New Value → label "Checked In", map Status Category to "Checked In".
-- **Once that value exists**, upgrading the kiosk is a one-line change: in `handleQrCheckIn` (and eventually a real bay-entrance scanner), patch `Status: 'Checked In'` on scan instead of `'Dispatched'`, then patch to `'Dispatched'` separately when a bay is actually assigned.
+**Checked In status ladder — BUILT 2026-07-10 (kiosk code), NOT YET TESTED against the live org**
+
+Russell: *"The status on the session needs to be set to checked in automatically once they check in."* Every check-in path in the kiosk now writes `Status: 'Checked In'` before `'Dispatched'`, instead of skipping straight to `Dispatched` as before.
+
+- New `markCheckedIn(appointmentId)` helper in `App.tsx` — two sequential `patch()` calls, `'Checked In'` then `'Dispatched'`. Used by both PIN-entry check-in paths (with and without PIN setup) and the QR-reservation-match path in `handleQrCheckIn`.
+- `createWalkInAppointment` now **creates** the `ServiceAppointment` with `Status: 'Checked In'` directly, then patches to `'Dispatched'` once the `AssignedResource` (bay) is created — covers both plain walk-ins and the QR fast-track-as-walk-in path, since both call this same function.
+- All four check-in paths resolve the bay in the same action today, so the gap between the two writes is milliseconds — this is about leaving a real `Checked In` entry in the record's history, not adding a UX step. Local React state (`selectedSession.status`, etc.) is only ever set to the final `'Dispatched'` value, matching what settles in Salesforce.
+- **Deliberately did not touch** any of the `Status IN ('Dispatched', 'In Progress')` occupancy filters elsewhere in the codebase (fairway-bay's `pollBay`, `FairwaySessionConsoleController.getActiveSessions`, `FairwaySessionAutoEnd`, the kiosk's own wait-time calculations) — since `Checked In` is only ever held for the instant between the two patches, no session should ever be observed sitting in that state by a poll, so those filters don't need `'Checked In'` added. If a partial-failure edge case ever leaves a session stuck on `Checked In` (e.g. the second patch throws), it would currently look "available" to those filters — not yet a known issue, just worth knowing if a bay ever seems to double-book.
+
+**Hard prerequisite: `Checked In` must exist as an active value on `ServiceAppointment.Status` in the org before deploying this kiosk build.** It's a restricted picklist — writing an unrecognized value fails with `INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST`, which would break every check-in path at once (regression, not a no-op). Per Russell (2026-07-10): the org has some picklist values already but "not great," and he's adding it himself. Safe way to add it without touching other live values:
+```bash
+# 1. Pull the current live value set into the repo first — don't hand-write it
+sf project retrieve start --metadata "StandardValueSet:ServiceAppointmentStatus" --target-org FairwayGolfClub
+# 2. Open the retrieved file, add a new <standardValue> entry for "Checked In"
+#    with statusCategory = CheckedIn (confirm the exact category API name in
+#    Setup → Object Manager → Service Appointment → Fields → Status first)
+# 3. Deploy it back
+sf project deploy start --source-dir force-app/main/default/standardValueSets --target-org FairwayGolfClub
+```
+Or do it entirely in Setup UI: Object Manager → Service Appointment → Fields & Relationships → Status → New Value → label "Checked In", map Status Category to "Checked In". **Verify this exists before deploying the kiosk build above** — test one check-in of each type (PIN with existing PIN, PIN setup flow, QR-matches-reservation, walk-in, QR-fast-track-as-walk-in) and confirm the appointment ends up `Dispatched` with no error toast on the kiosk.
 
 ### Salesforce (`fairway-sf/`)
 
