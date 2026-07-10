@@ -1,7 +1,7 @@
 # Fairway Golf Club — Session Sync
 
-**Last updated:** 2026-07-08 (by Claude)  
-**Last commit:** `5ec20e4` on `main` (RussEvans222/FairwayGolfClub)
+**Last updated:** 2026-07-09 (by Claude)  
+**Last commit:** `966ac74` on `main` (RussEvans222/FairwayGolfClub)
 
 ---
 
@@ -10,11 +10,46 @@
 | Repo | Purpose | Deployed to |
 |---|---|---|
 | `fairway-kiosk/` | React + Vite + TypeScript + Tailwind CSS PWA — the physical bay check-in kiosk | Cloudflare Pages → `kiosk.fairwaygolfclub.co` |
+| `fairway-bay/` | React + Vite + TypeScript + Tailwind CSS PWA — wall-mounted bay display screen | Cloudflare Pages → `bay.fairwaygolfclub.co` (**not yet deployed — needs new CF Pages project**) |
 | `fairway-sf/` | Salesforce metadata (Apex, LWC, custom objects, permission sets) | Salesforce org: `storm-bd727290084d27.my.salesforce.com` |
 
 ---
 
 ## What's Built and Deployed
+
+### Bay Display (`fairway-bay/`)
+
+**Status:** Code complete, committed to `main`. **NOT YET deployed to Cloudflare** — needs a new Pages project.
+
+**Screens:**
+- `login` — SF OAuth implicit flow (same connected app as kiosk)
+- `bay-select` — picks Bay 1 or Bay 2 (persists until changed)
+- `idle` — "READY" screen + last session recap (player name, date, top 5 club averages, best carry)
+- `active` — live session stats, polls SF every 20s:
+  - Last shot card: carry, total, ball speed, launch angle, spin, shot shape (color coded)
+  - Club averages table with progress bars, max carry, shot count
+  - Multi-player arrow nav (← →) with dot indicators in header
+  - New player added mid-session silently inserts a new tab without disrupting current view
+
+**Key behavior — silent player add:**
+When poll finds more `Session_Participant__c` records than previously, the new player is appended to the array without resetting `activeIndex`. The current player on screen is undisturbed; the new player becomes reachable via the → arrow.
+
+**Env vars needed in Cloudflare Pages project:**
+```
+VITE_SF_INSTANCE_URL=https://storm-bd727290084d27.my.salesforce.com
+VITE_SF_CLIENT_ID=3MVG9JJwBBbcN47LfOSqoMzg6MvSJkwE3fpNuaQzV7Yx3d8VU_zfm9uHa.hFqVLOObL7MybEf3JRJcpvq8Aox
+VITE_SF_LOGIN_URL=https://login.salesforce.com
+```
+
+**To deploy:**
+1. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git
+2. Repo: `RussEvans222/FairwayGolfClub`, root directory: `fairway-bay`
+3. Build command: `npm run build`, output directory: `dist`
+4. Add the three env vars above (Production + Preview)
+5. Add custom domain: `bay.fairwaygolfclub.co`
+6. In Salesforce → Setup → App Manager → Connected App → add `https://bay.fairwaygolfclub.co` to OAuth callback URLs
+
+---
 
 ### Kiosk (`fairway-kiosk/`)
 
@@ -113,17 +148,27 @@ Note: `VITE_SF_WALKIN_WORK_ORDER_ID` has been **removed** — WorkOrders are no 
 
 ## Known Issues
 
-### Walk-in check-in: `ParentRecordId` null for test member
+### Walk-in check-in: `ParentRecordId` — RESOLVED (2026-07-09)
 
-**Status:** Fix deployed (`5ec20e4`), pending Cloudflare deploy + re-test.
+**Root cause:** Two issues compounded:
+1. Contacts created outside Experience Cloud had no Person Account linked (`AccountId = null` or pointed to a business account)
+2. SF returns `200` with XML fault body for `InvalidSessionId` instead of `401`, so the kiosk wasn't detecting token expiry
 
-**Symptom:** "required fields are missing: [ParentRecordId]" when kiosk tries to create a ServiceAppointment for the test member.
+**Fixes shipped:**
+- `resolvePersonAccount()` helper in `App.tsx` — finds or creates a Person Account for any member/guest before creating a `ServiceAppointment`. Used by both the member walk-in and guest flows. Verifies `IsPersonAccount = true` before trusting any `AccountId`.
+- XML `InvalidSessionId` detection in `useSalesforce.ts` — checks `content-type: xml` response and throws `SESSION_EXPIRED` to trigger re-auth.
+- Removed `Profile_Tier__c` from `Golfer_Profile__c` create — field doesn't exist in org.
 
-**Root cause:** The test member's Contact was created without a Person Account linked (`AccountId = null` on the Contact record). The kiosk was passing `''` as `ParentRecordId`.
+**Org data fixes applied:**
+- Deleted duplicate Contact for `russellevansdemo@gmail.com` (was linked to "Fairway Golf Club" business account)
+- Re-pointed `GP-0007` (Russell) and `GP-0008` (Jim) to their correct Person Account-linked Contacts
+- Created Person Account for `russ@russevans.me` (Jim Richard) — `001ak00002ztBoHAAU`
 
-**Fix:** `handleMemberSearch` now falls back to `SELECT Id FROM Account WHERE PersonEmail = '...'` when `Contact.AccountId` is null. This covers Contacts created before Person Accounts were enabled on the org.
-
-**If it still fails after deploy:** Check whether a Person Account actually exists for `russellevansdemo@gmail.com` in the org. If not, create one manually or via the guest flow (which auto-creates one).
+**Current test members:**
+| Member | Email | Contact ID | Person Account ID |
+|---|---|---|---|
+| Russell Evans | `russellevansdemo@gmail.com` | `003ak00001h3fqAAAQ` | `001ak00002yxWptAAE` |
+| Jim Richard | `russ@russevans.me` | `003ak00001hl8IgAAI` | `001ak00002ztBoHAAU` |
 
 ---
 
@@ -149,6 +194,21 @@ Note: `VITE_SF_WALKIN_WORK_ORDER_ID` has been **removed** — WorkOrders are no 
 
 ---
 
+## Salesforce Data Model Notes
+
+### `ServiceAppointment` label rename
+The `ServiceAppointment` object was renamed in the org UI to **"Bay Session" / "Bay Sessions"**. API name is still `ServiceAppointment` — all code continues to work.
+
+### Golfer360 seed data (Jim Richard, Bay 2)
+A complete practice session was seeded on 2026-07-09:
+- `Bay_Reservation__c`: `a05ak00000cGnTVAA0`
+- `Golf_Session__c`: `a07ak00001Wh67sAAB`
+- `Session_Participant__c`: `a0Dak000013C49GEAS`
+- 65 `Golf_Shot__c` records across 13 clubs (Driver → LW), realistic ball-flight data
+- Use this session to develop/test the bay display and AI coaching prompts in Salesforce
+
+---
+
 ## Pending Tasks
 
 ### Code changes needed
@@ -166,38 +226,56 @@ Note: `VITE_SF_WALKIN_WORK_ORDER_ID` has been **removed** — WorkOrders are no 
 3. **Membership upsell price**
    - `SessionSummaryScreen` upsell card says `"$X/month"` — fill in real price once decided
 
+4. **Guest "join a session" flow (kiosk)**
+   - New branch in guest check-in: instead of getting their own bay, guest can join an active session
+   - Flow: New Guest → "Join a Session" → see active bays with member names → select → free `Golfer_Profile__c` + `Session_Participant__c` created → directed to bay
+   - Bay display will silently add them as a new player tab
+   - **Not yet built**
+
+5. **Bay calendar view**
+   - Calendar UI showing bay bookings (source: `ServiceAppointment` / "Bay Session" object)
+   - Location TBD (Salesforce LWC in Fairway Ops app, or new standalone app)
+   - **Not yet built**
+
 ### Manual Salesforce steps (cannot be scripted — must be done in browser)
 
-4. **Clone Scheduler booking flow**
+6. **Clone Scheduler booking flow**
    - Setup → Flows → search "Inbound New Appointment" (Salesforce template)
    - Click it → Save As → name: `"Fairway Bay Booking"`
    - In flow canvas: find the Work Type Group variable → set value to "Bay Booking"
    - Activate the flow
 
-5. **Add booking flow to Experience Cloud**
+7. **Add booking flow to Experience Cloud**
    - Experience Builder → open the site → add/edit a "Book a Bay" page
    - Drop a **Flow** component onto the page
    - Set Flow API Name = `Fairway_Bay_Booking` (the flow you just cloned)
    - Publish the page
 
-6. **Add Session Console to Fairway Ops app**
+8. **Add Session Console to Fairway Ops app**
    - Setup → App Builder → Fairway Ops Lightning App → Home page
    - Drag `fairwaySessionConsole` LWC component onto the page
    - Save + Activate
 
 ### Infrastructure
 
-7. **`kiosk.fairwaygolfclub.co` custom domain**
-   - DNS CNAME is set but Cloudflare Pages custom domain activation needs confirming in the Cloudflare dashboard
+9. **Deploy `fairway-bay` to Cloudflare Pages**
+   - New Pages project, root: `fairway-bay`, build: `npm run build`, output: `dist`
+   - Env vars: `VITE_SF_INSTANCE_URL`, `VITE_SF_CLIENT_ID`, `VITE_SF_LOGIN_URL` (same values as kiosk)
+   - Custom domain: `bay.fairwaygolfclub.co`
+   - Add `https://bay.fairwaygolfclub.co` to SF Connected App OAuth callback URLs
+   - See "Bay Display" section above for full deploy checklist
 
-8. **Deploy Golfer360 data model to org**
-   - 9 custom objects + permission sets + `Fairway_Ops` app are committed to `fairway-sf/` but not yet deployed
-   - Run: `sf project deploy start --source-dir force-app --target-org FairwayGolfClub --wait 30`
+10. **`kiosk.fairwaygolfclub.co` custom domain**
+    - DNS CNAME is set but Cloudflare Pages custom domain activation needs confirming in the Cloudflare dashboard
 
-9. **Cloudflare KV for homepage survey widget**
-   - Needs `VOTES_KV` KV namespace + `ADMIN_KEY` in Cloudflare Pages dashboard
+11. **Deploy Golfer360 data model to org**
+    - 9 custom objects + permission sets + `Fairway_Ops` app are committed to `fairway-sf/` but not yet deployed
+    - Run: `sf project deploy start --source-dir force-app --target-org FairwayGolfClub --wait 30`
 
-10. **Cloudflare Stream video**
+12. **Cloudflare KV for homepage survey widget**
+    - Needs `VOTES_KV` KV namespace + `ADMIN_KEY` in Cloudflare Pages dashboard
+
+13. **Cloudflare Stream video**
     - Investor portal video not yet uploaded
 
 ---
