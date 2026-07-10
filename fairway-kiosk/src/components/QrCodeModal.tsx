@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import QRCode from 'qrcode'
+import { useQrCode } from '../hooks/useQrCode'
 import GoldButton from './GoldButton'
 
 interface Props {
@@ -10,15 +9,7 @@ interface Props {
 }
 
 export default function QrCodeModal({ value, title, subtitle, onClose }: Props) {
-  const [dataUrl, setDataUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    QRCode.toDataURL(value, { width: 320, margin: 1, color: { dark: '#0A0A0A', light: '#FFFFFF' } })
-      .then((url) => { if (!cancelled) setDataUrl(url) })
-      .catch(() => { if (!cancelled) setDataUrl(null) })
-    return () => { cancelled = true }
-  }, [value])
+  const dataUrl = useQrCode(value)
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-8">

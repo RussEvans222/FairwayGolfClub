@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { ScheduledSession, ScheduledPlayer } from '../types'
+import { useQrCode } from '../hooks/useQrCode'
 
 interface GreetingData {
   firstName: string
@@ -28,6 +29,8 @@ export default function BayDirectionScreen({
   const [remaining, setRemaining] = useState(autoReturnSeconds)
   const [greeting, setGreeting] = useState<GreetingData | null>(null)
   const [greetingLoading, setGreetingLoading] = useState(false)
+  // Always called (rules of hooks) — only rendered when the player actually has a contactId.
+  const qrDataUrl = useQrCode(player.contactId ?? '')
 
   const loadGreeting = useCallback(async () => {
     if (!fetchGreeting || !session.reservationId) return
@@ -146,7 +149,22 @@ export default function BayDirectionScreen({
             <span className="text-[#C9A84C] text-xs font-bold uppercase tracking-wide">Your Free Golfer360 Profile</span>
           </div>
           <p className="text-[#888] text-xs leading-relaxed">
-            We've created a free profile for you — every shot today is tracked. After your session, scan the QR at the desk to claim your stats and see your AI coaching insights.
+            We've created a free profile for you — every shot today is tracked. Save your check-in code below to skip the line next time, with or without a reservation.
+          </p>
+        </div>
+      )}
+
+      {/* Permanent check-in QR — shown right when a profile is first usable, not just at session end */}
+      {player.contactId && (
+        <div className="rounded-2xl border border-[#2A2A2A] bg-[#111] px-6 py-5 flex flex-col items-center gap-3 max-w-sm w-full">
+          <p className="text-white text-sm font-semibold">Your Fairway check-in code</p>
+          <div className="w-40 h-40 rounded-xl overflow-hidden bg-white flex items-center justify-center">
+            {qrDataUrl
+              ? <img src={qrDataUrl} alt="Check-in QR code" className="w-full h-full" />
+              : <div className="w-6 h-6 border-2 border-[#C9A84C]/30 border-t-[#C9A84C] rounded-full animate-spin" />}
+          </div>
+          <p className="text-[#555] text-xs text-center leading-relaxed">
+            Screenshot this — scan it at the kiosk next time to skip straight to your bay.
           </p>
         </div>
       )}
