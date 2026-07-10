@@ -157,6 +157,57 @@ PR #6's first version encoded a `ServiceAppointment` Id — a one-time code per 
   - Auto-refreshes every 30 seconds
   - **To add to the UI:** App Builder → Fairway Ops app → Home page → drag `fairwaySessionConsole` component
 
+**Revenue tracking — Order/OrderItem model (added 2026-07-10, untested live — no SF access from this environment):**
+
+Payments were never actually recorded anywhere — the kiosk's "Pay $35 — Tap to Continue" button only flipped local UI state; the real charge happens manually, off-system, at the front desk. This fixes the recording half (not the collection half — staff still physically take cash/card).
+
+First pass used a single `Amount_Charged__c` currency field on `ServiceAppointment` — wrong, because a visit isn't always one charge: a golfer can extend their session in 30-min increments (up to the next scheduled booking), and each extension is its own charge. A static field can't represent that. Reworked same day to use **standard `Order` + `OrderItem`** — Salesforce's purpose-built "one purchase, multiple line items" model — instead of a custom object, since the org already has Salesforce's native **Payments** feature enabled (unconfigured): `Payments_Home_Default.flexipage-meta.xml` references `sfdc_payments_capture_daily_report` etc., which only exist if Payments/Order Management has been turned on. Nobody's configured actual card processing through it, but Order/OrderItem is the model it's built on, so this lays the groundwork correctly if that's ever activated instead of manual front-desk collection.
+
+**How it works:**
+- One `Order` per walk-in visit — the running tab. Created when the walk-in check-in flow (kiosk) creates the `ServiceAppointment`, with a new lookup `Order.Service_Appointment__c` tying it back to the visit.
+- One `OrderItem` per charge on that Order — the base session fee when the Order opens, plus one more each time staff extends the session via the `fairwaySessionConsole` LWC's +15/+30 buttons.
+- **Tiered pricing via two Pricebooks, not tiered products.** Both charge types ("Bay Session", "30-Minute Extension") exist as a single `Product2` each, priced differently per `Pricebook2`:
+  - **Standard Pricebook** (built-in) = walk-in/non-member rate — the premium tier, no membership required
+  - **Member Pricing** (new custom Pricebook2) = discounted rate for golfers with an Active or Complimentary `Membership__c` record
+  - `resolvePricebookId(contactId)` in `App.tsx` checks `Membership__c` for that contact (`Status__c IN ('Active','Complimentary')`) and picks the Pricebook before opening the Order. Falls back to Standard on any lookup failure.
+  - Adding more tiers later (Bronze/Silver/Gold, matching the business plan's membership tiers) is just another `Pricebook2` + two more `PricebookEntry` rows — no code changes needed anywhere in the kiosk or Apex.
+- **Current rates (Russell, 2026-07-10):**
+
+  | | Bay Session | 30-Min Extension |
+  |---|---|---|
+  | Member Pricing | $35.00 | $26.25 |
+  | Standard (walk-in) | $45.00 | $28.75 |
+
+  Extension rate is deliberately **more than half** the base rate, not a straight 50/50 split — an unplanned extension costs $17.50 + 25% of that tier's base session rate (member: 17.50 + 0.25×35 = 26.25; walk-in: 17.50 + 0.25×45 = 28.75).
+- **Pricing lives in data, not code** — nothing hardcodes these numbers in TypeScript or Apex; both the kiosk and Apex look up the current `UnitPrice` by product name + resolved Pricebook at charge time. Change a rate in Setup and it takes effect immediately, no deploy needed.
+- **Products/Pricebooks/PricebookEntries are DATA, not metadata** — can't be deployed via `sf project deploy`. Run once: `fairway-sf/force-app/main/default/scripts/seed-payment-products.apex`. Creates the "Member Pricing" Pricebook2 and both products' entries on both Pricebooks at the rates above. Safe to re-run — if a `PricebookEntry` already exists at a *different* rate than the script has, it logs a warning instead of silently overwriting (so a manual rate change in Setup doesn't get clobbered by a stale script re-run).
+- **Extension quantity scales with minutes**, not a fixed unit: `Quantity = minutes / 30.0`, so a +15 charges half of a +30 against the same per-30-min rate — one product covers both buttons, for both tiers.
+- `createWalkInAppointment` in `App.tsx`: after creating the `ServiceAppointment` + `AssignedResource`, resolves the Pricebook via `resolvePricebookId`, looks up the "Bay Session" `PricebookEntry` on it, creates the `Order` (`AccountId`, `EffectiveDate`, `Status = 'Draft'`, `Pricebook2Id`, `Service_Appointment__c`), then the `OrderItem`. If no pricebook entry is found (not seeded yet), the appointment still gets created — just without a revenue record — rather than failing the whole check-in.
+- `FairwaySessionConsoleController.extendSession` (Apex): after extending `SchedEndTime`, calls a new private `chargeExtension(appointmentId, minutes)` — finds the visit's `Order` via `Service_Appointment__c`, looks up the "30-Minute Extension" `PricebookEntry` on **that Order's own `Pricebook2Id`** (so a member's extensions stay at the member rate, a walk-in's stay at the walk-in rate — the tier was already locked in when the Order opened), inserts the scaled `OrderItem`. No-ops silently if there's no Order (e.g. extending a reservation-based check-in, which doesn't open one) or the product isn't seeded.
+- `FairwayOpsDashboardController.cls` — `getBayStatus()` and `getDailyStats()` sum `OrderItem.TotalPrice` (traversing `Order.Service_Appointment__c`) instead of reading a static field. `BayRow.revenueToday` and `DailyStats.totalRevenue` — these totals blend both tiers together; not broken out by member vs. walk-in yet.
+- `fairwayOpsDashboard` LWC — a stat tile in the header ("Revenue Today · Walk-Ins") and a revenue figure in each bay card's footer.
+
+**Note on the business plan's pricing:** `Fairway_Golf_Club_Business_Plan.docx` and the financial model scripts (`build_financials_v2.py` etc.) model walk-in bay rentals at **$55–70/hr** and member rate at **$40–55/hr** (blended assumption: walk-in $65, member $40), with monthly membership tiers Bronze $99 / Silver $199 / Gold $299. The $35/$45 per-session rates above are Russell's current direction for the kiosk specifically and are lower than those hourly figures — worth reconciling with the business plan/investor materials at some point, but not something I resolved here since it wasn't asked.
+
+**Scope: walk-ins only, deliberately.** Reservation check-ins (PIN entry) skip the payment screen entirely and never open an Order — unclear whether reservations are pre-paid, membership-included, or genuinely unbilled today. Revenue numbers are real but partial; labeled "Revenue Today · Walk-Ins" everywhere, not just "Revenue."
+
+**Permissions (`Fairway_Staff`):** added object CRUD for `Order`/`OrderItem` (create+read) and read-only for `Pricebook2`/`PricebookEntry`/`Product2`, FLS on `Order.Service_Appointment__c`, and filled in two missing FLS grants on `Membership__c` (`Contact__c`, `Status__c` — needed for the new membership-tier lookup, but were gaps even before this change since `Membership__c` object access existed without them). **Not verified:** standard `Order` sometimes needs an org-level "Order Management" feature/permission beyond normal object CRUD (separate from what a permission set can grant) — if Order creation fails with a permission error even after deploying this, check Setup → Order Settings / the user's permission for "Manage Orders" specifically, not just the permission set.
+
+**Deploy commands (in order):**
+```bash
+sf project deploy start --source-dir force-app/main/default/objects/Order/fields/Service_Appointment__c.field-meta.xml --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/classes --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/lwc/fairwayOpsDashboard --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/permissionsets/Fairway_Staff.permissionset-meta.xml --target-org FairwayGolfClub
+sf apex run --file force-app/main/default/scripts/seed-payment-products.apex --target-org FairwayGolfClub
+```
+
+**Not yet tested** — no Salesforce access from this environment. Verify:
+- A walk-in with **no** `Membership__c` record checks in → `Order` opens on the **Standard** Pricebook, `OrderItem` at **$45**
+- A contact **with an Active/Complimentary** `Membership__c` record checks in as a walk-in (e.g. via QR fast-track) → `Order` opens on **Member Pricing**, `OrderItem` at **$35**
+- Extend either session +15 or +30 from the session console → second `OrderItem` lands on the *same* Order at the tier-correct scaled rate ($26.25 or $28.75 for a full 30, half that for a 15)
+- Ops dashboard totals both under the correct bay
+
 **Salesforce Scheduler setup (manual, already done in org):**
 - Service Territory: "Fairway Golf Club" (active)
 - Operating Hours: "Fairway Golf Club" — Mon–Sat 8am–10pm ET, Sun 12pm–7pm ET
@@ -203,6 +254,93 @@ PR #6's first version encoded a `ServiceAppointment` Id — a one-time code per 
 |---|---|---|---|
 | Russell Evans | `russellevansdemo@gmail.com` | `003ak00001h3fqAAAQ` | `001ak00002yxWptAAE` |
 | Jim Richard | `russ@russevans.me` | `003ak00001hl8IgAAI` | `001ak00002ztBoHAAU` |
+
+---
+
+## Auto-end sessions + smart bay extend/reassign — BUILT 2026-07-10, NOT YET DEPLOYED
+
+**Why:** Russell reported two stuck sessions (SA-005, SA-006 in the org) that
+nothing ever closed out — there was no mechanism that ended a session once its
+scheduled time was up. Also wanted: (a) a 10-minutes-out prompt on the bay
+screen asking the golfer if they want to extend, and (b) if extending would
+run into another booking already on that same bay, the system should
+intelligently move the *incoming* reservation to whichever bay is actually
+free at that time — the group currently playing never moves.
+
+**Root cause found (2026-07-10, per Russell): missing `ServiceTerritoryId`.**
+The kiosk's walk-in appointment creation (`createWalkInAppointment` in
+`fairway-kiosk/src/App.tsx`) was the only code path building a
+`ServiceAppointment` from scratch, and it never set `ServiceTerritoryId`.
+Appointments booked through the real Scheduler flow (Experience Cloud) get it
+automatically from Salesforce's own candidate-matching, so this only bit
+walk-ins — which is consistent with SA-005/SA-006 being stuck. **Fixed:**
+- `createWalkInAppointment` now resolves the `ServiceTerritory` named
+  `Fairway Golf Club` and sets it on every new `ServiceAppointment`.
+- `Fairway_Staff` permission set: added read access to `ServiceTerritory` —
+  it was entirely missing, so the kiosk's REST-API lookup would have
+  silently returned nothing and reproduced the same bug even with the code
+  fix in place.
+- Both closing paths (`FairwaySessionAutoEnd` sweep and the staff console's
+  manual "End Now" / `endSession`) now backfill `ServiceTerritoryId` from
+  the same lookup if it's still blank on a record, before flipping `Status`
+  to `Completed` — covers any appointment created before this fix, and any
+  future path that might still miss it.
+
+**Immediate fix (run this first, once, to unstick SA-005/SA-006):**
+```bash
+sf apex run --file force-app/main/default/scripts/end-stuck-sessions.apex --target-org FairwayGolfClub
+```
+Closes any `ServiceAppointment` with `Status IN ('Dispatched','In Progress')` and `SchedEndTime` already in the past — backfilling `ServiceTerritoryId` from `Fairway Golf Club` first if it's blank. Safe to re-run. If SA-005/SA-006 *still* don't close after this, check in Setup whether they simply have no `SchedEndTime` at all (the query requires one), and whether a `ServiceTerritory` named exactly `Fairway Golf Club` actually exists and is active — the script logs a warning and skips the backfill (but still tries to close) if it can't find one.
+
+**1. Auto-end — `FairwaySessionAutoEnd.cls` (Schedulable)**
+- Same logic as the immediate fix above, run automatically.
+- After deploying, schedule it **once**:
+  ```bash
+  sf apex run --file force-app/main/default/scripts/schedule-session-autoend.apex --target-org FairwayGolfClub
+  ```
+- Runs every 5 minutes (`0 0/5 * * * ?`). Re-running the script is safe — it aborts any existing job with the same name first, so it won't double-schedule.
+- Extending a session pushes `SchedEndTime` forward, so an extended session is simply not "overdue" yet — the sweep never fights an active extension.
+- Only touches `ServiceAppointment.Status`. Does **not** touch `Golf_Session__c` — that object's lifecycle is owned by the (not-yet-built) session-data/vendor pipeline, and closing it here would be guessing at a contract I don't own.
+
+**2. Smart extend — `FairwaySessionConsoleController.extendSessionSmart()`**
+- Replaces the old dumb `extendSession` (kept as a thin wrapper for the existing staff console LWC, which ignores the richer result).
+- Given `(appointmentId, requestedMinutes)`:
+  1. Finds this appointment's bay via `AssignedResource`.
+  2. Checks for another appointment already booked on the **same bay** starting between the current end time and the requested new end time.
+  3. If found, looks for **any other bay** with no overlapping booking during that conflicting appointment's window. If one is free, reassigns *that other appointment's* `AssignedResource.ServiceResourceId` to the free bay — the group currently playing keeps their bay and gets the full requested extension.
+  4. If no bay is free, caps the extension at the conflicting appointment's start time (never bumps a customer with nowhere to go) and reports how many minutes were actually applied.
+  5. Charges the extension (existing `chargeExtension` logic, tiered member/walk-in pricing) scaled to whatever was **actually** applied, not what was requested.
+- Returns an `ExtendResult { success, minutesApplied, bayReassigned, reassignedBayName, message }`.
+
+**3. Bay-screen prompt — `fairway-bay`**
+- `App.tsx` now selects `SchedEndTime` on the active appointment poll (was missing before) and computes `minutesRemaining`.
+- At ≤10 minutes remaining, `ActiveScreen` shows a modal: "X minutes left — want to keep playing?" with **+15 min** / **+30 min** / "No thanks." Only fires once per appointment (tracked via a ref) so it doesn't nag on every 20s poll.
+- Tapping extend calls a new Apex REST endpoint — **`FairwaySessionExtendApi`** (`@RestResource(urlMapping='/FairwaySessionExtend/*')`) — via `postApexRest()` in `useSalesforce.ts`, since the bay app talks to Salesforce over plain REST (no Aura/LWC context to invoke `@AuraEnabled` methods directly). The endpoint just wraps `extendSessionSmart`.
+- The response message is shown back to the golfer as-is (e.g. "Extended 30 min." or "Extended 12 min. Next booking moved to Bay 2." or "Fully booked right after this session — no time available to extend.").
+- The Cloudflare Pages Function proxy (`fairway-bay/functions/sfapi/[[path]].js`) already passes through arbitrary paths/methods/bodies, so `/sfapi/services/apexrest/FairwaySessionExtend/` needed no proxy changes.
+
+**Permission set changes (`Fairway_Staff`):**
+- `AssignedResource`: `allowEdit` flipped to `true` (needed to reassign a bay's `ServiceResourceId` on an existing junction record).
+- Added `classAccesses` for `FairwaySessionConsoleController` and `FairwaySessionExtendApi` (the console LWC was actually missing this too — pre-existing gap, fixed alongside).
+
+**Deploy sequence:**
+```bash
+sf project deploy start --source-dir force-app/main/default/classes --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/permissionsets --target-org FairwayGolfClub
+sf org assign permset --name Fairway_Staff --target-org FairwayGolfClub   # if not already assigned to bay-screen staff users
+sf apex run --file force-app/main/default/scripts/end-stuck-sessions.apex --target-org FairwayGolfClub
+sf apex run --file force-app/main/default/scripts/schedule-session-autoend.apex --target-org FairwayGolfClub
+```
+Then redeploy `fairway-bay` (push to its Cloudflare Pages project, or trigger a rebuild) to pick up the new prompt/REST-call code — **note `fairway-bay` isn't deployed to Cloudflare Pages yet at all** (see Pending Tasks #9), so this whole feature is inert on the customer-facing bay screen until that deploy happens; the Apex side (auto-end + smart extend) works independently and can be verified via the staff session console today.
+
+**Not yet tested (no Salesforce network access from this session — needs the `sf`-CLI terminal):**
+- `end-stuck-sessions.apex` actually clears SA-005/SA-006 now that it backfills `ServiceTerritoryId` — this is the fix for Russell's specific report, confirm it first
+- A fresh kiosk walk-in creates a `ServiceAppointment` with `ServiceTerritoryId` populated (not blank) — check the record directly in Setup after a test walk-in
+- Scheduled job fires every 5 min and closes a deliberately-overdue test appointment
+- Bay-reassignment path: book Bay 1 1:00–2:00, Bay 2 free at 1:45, put an active session on Bay 1 ending 1:30, extend it 30 min at the kiosk/console — confirm the 1:00pm... er, the 2:00pm Bay 1 booking gets moved to Bay 2, not cancelled or double-booked
+- Cap path: same setup but with Bay 2 *also* booked during that window — confirm the extension is capped instead of silently overwriting the next booking
+- `FairwaySessionExtendApi` REST endpoint reachable with a Fairway_Staff user's OAuth token (once `fairway-bay` is actually deployed)
+- Test class `FairwaySessionAutoEndTest` deploys cleanly — it uses `SeeAllData=true` to read an existing `ServiceResource` (no reliable Apex-insert pattern exists for that object in this org; see comment in the class) — if the org has zero `ServiceResource` records the tests short-circuit as a no-op rather than failing, but that means they'd give false confidence, so confirm at least one bay resource exists when running tests
 
 ---
 

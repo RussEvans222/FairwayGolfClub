@@ -316,9 +316,50 @@ export default function App() {
     }
   }, [selectedSession, selectedPlayerIndex, patch])
 
-  // QR check-in: skips PIN entirely — possession of the code is the credential.
-  // Same "Scheduled" → "Dispatched" transition as handlePinConfirm, just triggered by a scan.
+  // Tiered pricing: golfers with an Active/Complimentary Membership__c record
+  // get the "Member Pricing" Pricebook; everyone else gets the org's Standard
+  // Pricebook (walk-in/non-member rate — a premium over the member rate,
+  // deliberately, since no membership is required). Falls back to Standard
+  // if the membership lookup itself fails for any reason.
+  const resolvePricebookId = useCallback(async (contactId: string): Promise<string | null> => {
+    let pricebookName: string | null = null
+    try {
+      const memberships = await query<{ Id: string }>(
+        `SELECT Id FROM Membership__c WHERE Contact__c = '${contactId}' AND Status__c IN ('Active','Complimentary') LIMIT 1`
+      )
+      if (memberships.length) pricebookName = 'Member Pricing'
+    } catch (e) {
+      console.error('Membership lookup failed, defaulting to walk-in pricing', e)
+    }
+
+    const pbs = await query<{ Id: string }>(
+      pricebookName
+        ? `SELECT Id FROM Pricebook2 WHERE Name = '${pricebookName}' AND IsActive = true LIMIT 1`
+        : `SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1`
+    )
+    return pbs.length ? pbs[0].Id : null
+  }, [query])
+
+  // ── Resolve the "Fairway Golf Club" ServiceTerritory ─────────────────────
+  // Every ServiceAppointment needs this set, or Field Service scheduling
+  // automation can leave it in a state that never lets Status reach
+  // Completed — that's what left SA-005/SA-006 stuck open indefinitely.
+  // Appointments created by the Experience Cloud booking flow already get
+  // this from Salesforce Scheduler's own candidate-matching; this kiosk path
+  // is the one spot that was creating appointments by hand and missing it.
+  const resolveServiceTerritoryId = useCallback(async (): Promise<string | null> => {
+    const territories = await query<{ Id: string }>(
+      `SELECT Id FROM ServiceTerritory WHERE Name = 'Fairway Golf Club' AND IsActive = true LIMIT 1`
+    )
+    return territories.length ? territories[0].Id : null
+  }, [query])
+
   // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
+  // Also opens an Order + OrderItem for the base session fee — a visit can
+  // rack up multiple charges (base fee + N extensions), so a single static
+  // amount on the appointment can't represent that. The Order is the running
+  // tab for this visit; extendSession (session console) adds further
+  // OrderItems to the same Order as the golfer extends their time.
   const createWalkInAppointment = useCallback(async (
     contactId: string,
     accountId: string,
@@ -327,22 +368,53 @@ export default function App() {
     endIso: string,
   ): Promise<string> => {
     const workTypeId  = import.meta.env.VITE_SF_WALKIN_WORK_TYPE_ID  as string
+    const territoryId = await resolveServiceTerritoryId()
 
     const appt = await create<{ id: string }>('ServiceAppointment', {
-      ParentRecordId:  accountId,
-      ContactId:       contactId,
-      WorkTypeId:      workTypeId,
-      SchedStartTime:  startIso,
-      SchedEndTime:    endIso,
-      Status:          'Dispatched',
-      Description:     'Walk-in via kiosk',
+      ParentRecordId:     accountId,
+      ContactId:          contactId,
+      WorkTypeId:         workTypeId,
+      ServiceTerritoryId: territoryId,
+      SchedStartTime:     startIso,
+      SchedEndTime:       endIso,
+      Status:             'Dispatched',
+      Description:        'Walk-in via kiosk',
     })
     await create('AssignedResource', {
       ServiceAppointmentId: appt.id,
       ServiceResourceId:    bayResourceId,
     })
+
+    const pricebookId = await resolvePricebookId(contactId)
+    const priceEntries = pricebookId
+      ? await query<{ Id: string; UnitPrice: number }>(
+          `SELECT Id, UnitPrice FROM PricebookEntry
+           WHERE Product2.Name = 'Bay Session' AND Pricebook2Id = '${pricebookId}' AND IsActive = true
+           LIMIT 1`
+        )
+      : []
+    if (priceEntries.length && pricebookId) {
+      const pe = priceEntries[0]
+      const order = await create<{ id: string }>('Order', {
+        AccountId:              accountId,
+        EffectiveDate:          startIso.slice(0, 10),
+        Status:                 'Draft',
+        Pricebook2Id:           pricebookId,
+        Service_Appointment__c: appt.id,
+      })
+      await create('OrderItem', {
+        OrderId:          order.id,
+        PricebookEntryId: pe.Id,
+        Quantity:         1,
+        UnitPrice:        pe.UnitPrice,
+      })
+    }
+    // If the "Bay Session" product/pricebook entry isn't seeded yet, the
+    // appointment still gets created — just without a revenue record. See
+    // SESSION_SYNC.md "Revenue tracking" for the seed script.
+
     return appt.id
-  }, [create])
+  }, [create, query, resolvePricebookId, resolveServiceTerritoryId])
 
   // Find the next available (unoccupied) bay, checked against the real bay list —
   // never inferred from today's schedule, and never a hardcoded guess. A bay with

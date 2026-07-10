@@ -6,6 +6,12 @@ interface Props {
   activeIndex: number
   onChangeIndex: (i: number) => void
   onChangeBay: () => void
+  minutesRemaining?: number | null
+  showExtendPrompt?: boolean
+  extending?: boolean
+  extendMessage?: string | null
+  onExtend?: (minutes: number) => void
+  onDismissExtendPrompt?: () => void
 }
 
 const CLUB_ORDER = ['Driver','3-Wood','5-Wood','4-Iron','5-Iron','6-Iron','7-Iron','8-Iron','9-Iron','PW','GW','SW','LW']
@@ -29,7 +35,10 @@ function shotShapeColor(shape: string | null): string {
   return '#ffffff60'
 }
 
-export function ActiveScreen({ bay, players, activeIndex, onChangeIndex, onChangeBay }: Props) {
+export function ActiveScreen({
+  bay, players, activeIndex, onChangeIndex, onChangeBay,
+  minutesRemaining, showExtendPrompt, extending, extendMessage, onExtend, onDismissExtendPrompt,
+}: Props) {
   if (!players.length) {
     return (
       <div className="w-full h-full flex items-center justify-center" style={{ background: 'var(--dark)' }}>
@@ -186,6 +195,60 @@ export function ActiveScreen({ bay, players, activeIndex, onChangeIndex, onChang
           >
             →
           </button>
+        </div>
+      )}
+
+      {showExtendPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-8" style={{ background: '#000000b0' }}>
+          <div className="w-full max-w-md rounded-2xl p-8 text-center"
+               style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            {extendMessage ? (
+              <>
+                <div className="text-white text-lg font-semibold mb-6">{extendMessage}</div>
+                <button
+                  onClick={onDismissExtendPrompt}
+                  className="w-full py-3 rounded-xl font-semibold"
+                  style={{ background: 'var(--gold)', color: '#000' }}
+                >
+                  Got it
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="text-white text-xl font-bold mb-2">
+                  {minutesRemaining != null && minutesRemaining > 0
+                    ? `${minutesRemaining} minute${minutesRemaining === 1 ? '' : 's'} left`
+                    : 'Time’s almost up'}
+                </div>
+                <div className="text-white/50 text-sm mb-6">Want to keep playing?</div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => onExtend?.(15)}
+                    disabled={extending}
+                    className="flex-1 py-3 rounded-xl font-semibold disabled:opacity-50"
+                    style={{ background: 'var(--gold)', color: '#000' }}
+                  >
+                    +15 min
+                  </button>
+                  <button
+                    onClick={() => onExtend?.(30)}
+                    disabled={extending}
+                    className="flex-1 py-3 rounded-xl font-semibold disabled:opacity-50"
+                    style={{ background: 'var(--gold)', color: '#000' }}
+                  >
+                    +30 min
+                  </button>
+                </div>
+                <button
+                  onClick={onDismissExtendPrompt}
+                  disabled={extending}
+                  className="mt-4 text-white/40 text-sm disabled:opacity-50"
+                >
+                  No thanks, I&apos;m good
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
