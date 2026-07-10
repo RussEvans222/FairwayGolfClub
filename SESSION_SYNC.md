@@ -1,7 +1,9 @@
 # Fairway Golf Club — Session Sync
 
-**Last updated:** 2026-07-10 (by Claude — no Salesforce CLI access from this environment, see "QR Check-In" below)  
-**Last commit:** `679cfe2` on `main` (RussEvans222/FairwayGolfClub) — PR #6, then reworked again same day (not yet merged) to fix the QR design — see below
+**Last updated:** 2026-07-10 (by Claude, remote/web session — this environment has no network path to Salesforce (`*.my.salesforce.com`) or Cloudflare (`*.pages.dev`, custom domains) at all — confirmed via direct `curl`, not just missing `sf` CLI. Russell is switching to a **local terminal Claude Code session** (real `sf` CLI + real network) to run everything below marked "not yet tested."  
+**Last commit:** `b563d17` on `main` (RussEvans222/FairwayGolfClub) — PR #9 squash-merged 2026-07-10, includes: tiered member/walk-in pricing, Order/OrderItem revenue tracking, auto-end + smart bay extend/reassign, the `fairway-bay` Cloudflare build fix (`@vitejs/plugin-react` v4→v6), and the `ServiceTerritoryId` root-cause fix for stuck sessions. **`main` is fully current — nothing outstanding on the feature branch.**
+
+**For the local terminal session picking this up:** clone/pull `RussEvans222/FairwayGolfClub` on `main`, then read this file top to bottom — every unverified piece is called out explicitly with the exact `sf` command to run. Start with "Auto-end sessions + smart bay extend/reassign" below (SA-005/SA-006 are still stuck as of this writing) and the Cloudflare notes in that same section (`fairway-bay` Pages project needs its **Deploy command** cleared — it's currently misconfigured with a Workers command, `npx wrangler versions upload`, which fails on a static Pages project).
 
 ---
 
@@ -472,10 +474,12 @@ Full research notes in [`SCHEDULER_RESEARCH.md`](./SCHEDULER_RESEARCH.md). Key f
 
 ### Infrastructure
 
-9. **Deploy `fairway-bay` to Cloudflare Pages**
+9. **Deploy `fairway-bay` to Cloudflare Pages — IN PROGRESS 2026-07-10, misconfigured**
    - New Pages project, root: `fairway-bay`, build: `npm run build`, output: `dist`
+   - **Known issue:** the project as created has a **Deploy command** set to `npx wrangler versions upload` (a Workers command), which fails with "Missing entry-point to Worker script" on every deploy — this is a static Pages project, not a Worker. Fix: Settings → Builds & deployments → clear the Deploy command entirely. If it can't be cleared, the project was likely created as a Worker instead of Pages and needs to be deleted/recreated via Workers & Pages → Create → **Pages** → Connect to Git (not "Deploy a Worker").
+   - Also hit (fixed in code, needs a fresh deploy to pick up): `npm ci` was failing with an ERESOLVE conflict — `@vitejs/plugin-react ^4.5.2` doesn't support `vite ^8.1.1`. Bumped to `^6.0.3` (matches `fairway-kiosk`) in commit on `main`.
    - Env vars: `VITE_SF_INSTANCE_URL`, `VITE_SF_CLIENT_ID`, `VITE_SF_LOGIN_URL` (same values as kiosk)
-   - Custom domain: `bay.fairwaygolfclub.co`
+   - Custom domain: `bay.fairwaygolfclub.co` — once the Pages project has a working deployment, add this under the project's **Custom domains** tab; since the zone is already on Cloudflare it auto-creates the CNAME, no manual DNS record needed
    - Add `https://bay.fairwaygolfclub.co` to SF Connected App OAuth callback URLs
    - See "Bay Display" section above for full deploy checklist
 
