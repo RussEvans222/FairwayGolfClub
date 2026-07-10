@@ -429,7 +429,11 @@ export default function App() {
   // the walk-in flow using their already-known identity — skips the email search
   // and PIN screen, but still goes through payment/bay-assignment like any walk-in.
   const handleQrCheckIn = useCallback(async (contactId: string): Promise<string | null> => {
+    const now = Date.now()
     for (const s of scheduledSessions) {
+      // A Scheduled reservation whose window already passed (e.g. a no-show from
+      // earlier today) is stale — treat as no reservation, not a free pass in.
+      if (new Date(s.endTime).getTime() <= now) continue
       const playerIndex = s.players.findIndex(p => p.contactId === contactId && !p.checkedIn)
       if (playerIndex === -1) continue
       try {
