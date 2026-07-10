@@ -66,6 +66,7 @@ export type Screen =
   | 'scheduled-sessions'
   | 'pin-entry'
   | 'pin-setup'
+  | 'qr-checkin'
   | 'bay-direction'
   | 'player-type'
   | 'member-walkin'
