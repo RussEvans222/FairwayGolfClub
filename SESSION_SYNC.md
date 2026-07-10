@@ -267,11 +267,30 @@ run into another booking already on that same bay, the system should
 intelligently move the *incoming* reservation to whichever bay is actually
 free at that time — the group currently playing never moves.
 
+**Root cause found (2026-07-10, per Russell): missing `ServiceTerritoryId`.**
+The kiosk's walk-in appointment creation (`createWalkInAppointment` in
+`fairway-kiosk/src/App.tsx`) was the only code path building a
+`ServiceAppointment` from scratch, and it never set `ServiceTerritoryId`.
+Appointments booked through the real Scheduler flow (Experience Cloud) get it
+automatically from Salesforce's own candidate-matching, so this only bit
+walk-ins — which is consistent with SA-005/SA-006 being stuck. **Fixed:**
+- `createWalkInAppointment` now resolves the `ServiceTerritory` named
+  `Fairway Golf Club` and sets it on every new `ServiceAppointment`.
+- `Fairway_Staff` permission set: added read access to `ServiceTerritory` —
+  it was entirely missing, so the kiosk's REST-API lookup would have
+  silently returned nothing and reproduced the same bug even with the code
+  fix in place.
+- Both closing paths (`FairwaySessionAutoEnd` sweep and the staff console's
+  manual "End Now" / `endSession`) now backfill `ServiceTerritoryId` from
+  the same lookup if it's still blank on a record, before flipping `Status`
+  to `Completed` — covers any appointment created before this fix, and any
+  future path that might still miss it.
+
 **Immediate fix (run this first, once, to unstick SA-005/SA-006):**
 ```bash
 sf apex run --file force-app/main/default/scripts/end-stuck-sessions.apex --target-org FairwayGolfClub
 ```
-Closes any `ServiceAppointment` with `Status IN ('Dispatched','In Progress')` and `SchedEndTime` already in the past. Safe to re-run.
+Closes any `ServiceAppointment` with `Status IN ('Dispatched','In Progress')` and `SchedEndTime` already in the past — backfilling `ServiceTerritoryId` from `Fairway Golf Club` first if it's blank. Safe to re-run. If SA-005/SA-006 *still* don't close after this, check in Setup whether they simply have no `SchedEndTime` at all (the query requires one), and whether a `ServiceTerritory` named exactly `Fairway Golf Club` actually exists and is active — the script logs a warning and skips the backfill (but still tries to close) if it can't find one.
 
 **1. Auto-end — `FairwaySessionAutoEnd.cls` (Schedulable)**
 - Same logic as the immediate fix above, run automatically.
@@ -315,7 +334,8 @@ sf apex run --file force-app/main/default/scripts/schedule-session-autoend.apex 
 Then redeploy `fairway-bay` (push to its Cloudflare Pages project, or trigger a rebuild) to pick up the new prompt/REST-call code — **note `fairway-bay` isn't deployed to Cloudflare Pages yet at all** (see Pending Tasks #9), so this whole feature is inert on the customer-facing bay screen until that deploy happens; the Apex side (auto-end + smart extend) works independently and can be verified via the staff session console today.
 
 **Not yet tested (no Salesforce network access from this session — needs the `sf`-CLI terminal):**
-- `end-stuck-sessions.apex` actually clears SA-005/SA-006
+- `end-stuck-sessions.apex` actually clears SA-005/SA-006 now that it backfills `ServiceTerritoryId` — this is the fix for Russell's specific report, confirm it first
+- A fresh kiosk walk-in creates a `ServiceAppointment` with `ServiceTerritoryId` populated (not blank) — check the record directly in Setup after a test walk-in
 - Scheduled job fires every 5 min and closes a deliberately-overdue test appointment
 - Bay-reassignment path: book Bay 1 1:00–2:00, Bay 2 free at 1:45, put an active session on Bay 1 ending 1:30, extend it 30 min at the kiosk/console — confirm the 1:00pm... er, the 2:00pm Bay 1 booking gets moved to Bay 2, not cancelled or double-booked
 - Cap path: same setup but with Bay 2 *also* booked during that window — confirm the extension is capped instead of silently overwriting the next booking

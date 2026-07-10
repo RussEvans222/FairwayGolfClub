@@ -84,7 +84,13 @@ public with sharing class FairwaySessionConsoleController {
     // ── End session now ───────────────────────────────────────────────────────
     @AuraEnabled
     public static void endSession(String appointmentId) {
-        ServiceAppointment a = [SELECT Id, Status FROM ServiceAppointment WHERE Id = :appointmentId LIMIT 1];
+        ServiceAppointment a = [SELECT Id, Status, ServiceTerritoryId FROM ServiceAppointment WHERE Id = :appointmentId LIMIT 1];
+        if (a.ServiceTerritoryId == null) {
+            List<ServiceTerritory> territories = [
+                SELECT Id FROM ServiceTerritory WHERE Name = 'Fairway Golf Club' AND IsActive = true LIMIT 1
+            ];
+            if (!territories.isEmpty()) a.ServiceTerritoryId = territories[0].Id;
+        }
         a.Status       = 'Completed';
         a.SchedEndTime = DateTime.now();
         update a;

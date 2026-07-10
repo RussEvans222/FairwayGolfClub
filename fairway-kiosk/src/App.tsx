@@ -340,6 +340,20 @@ export default function App() {
     return pbs.length ? pbs[0].Id : null
   }, [query])
 
+  // ── Resolve the "Fairway Golf Club" ServiceTerritory ─────────────────────
+  // Every ServiceAppointment needs this set, or Field Service scheduling
+  // automation can leave it in a state that never lets Status reach
+  // Completed — that's what left SA-005/SA-006 stuck open indefinitely.
+  // Appointments created by the Experience Cloud booking flow already get
+  // this from Salesforce Scheduler's own candidate-matching; this kiosk path
+  // is the one spot that was creating appointments by hand and missing it.
+  const resolveServiceTerritoryId = useCallback(async (): Promise<string | null> => {
+    const territories = await query<{ Id: string }>(
+      `SELECT Id FROM ServiceTerritory WHERE Name = 'Fairway Golf Club' AND IsActive = true LIMIT 1`
+    )
+    return territories.length ? territories[0].Id : null
+  }, [query])
+
   // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
   // Also opens an Order + OrderItem for the base session fee — a visit can
   // rack up multiple charges (base fee + N extensions), so a single static
@@ -354,15 +368,17 @@ export default function App() {
     endIso: string,
   ): Promise<string> => {
     const workTypeId  = import.meta.env.VITE_SF_WALKIN_WORK_TYPE_ID  as string
+    const territoryId = await resolveServiceTerritoryId()
 
     const appt = await create<{ id: string }>('ServiceAppointment', {
-      ParentRecordId: accountId,
-      ContactId:      contactId,
-      WorkTypeId:     workTypeId,
-      SchedStartTime: startIso,
-      SchedEndTime:   endIso,
-      Status:         'Dispatched',
-      Description:    'Walk-in via kiosk',
+      ParentRecordId:     accountId,
+      ContactId:          contactId,
+      WorkTypeId:         workTypeId,
+      ServiceTerritoryId: territoryId,
+      SchedStartTime:     startIso,
+      SchedEndTime:       endIso,
+      Status:             'Dispatched',
+      Description:        'Walk-in via kiosk',
     })
     await create('AssignedResource', {
       ServiceAppointmentId: appt.id,
@@ -398,7 +414,7 @@ export default function App() {
     // SESSION_SYNC.md "Revenue tracking" for the seed script.
 
     return appt.id
-  }, [create, query, resolvePricebookId])
+  }, [create, query, resolvePricebookId, resolveServiceTerritoryId])
 
   // Find the next available (unoccupied) bay, checked against the real bay list —
   // never inferred from today's schedule, and never a hardcoded guess. A bay with

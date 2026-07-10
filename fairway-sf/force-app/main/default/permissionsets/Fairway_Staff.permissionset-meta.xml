@@ -226,6 +226,19 @@
         <object>WorkType</object>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
+    <!-- ServiceTerritory: kiosk resolves "Fairway Golf Club" via REST query
+         when creating a walk-in ServiceAppointment — without read access
+         here the lookup silently returns nothing and reproduces the same
+         stuck-session bug this was added to fix. -->
+    <objectPermissions>
+        <allowCreate>false</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>false</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>ServiceTerritory</object>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
     <objectPermissions>
         <allowCreate>false</allowCreate>
         <allowDelete>false</allowDelete>
