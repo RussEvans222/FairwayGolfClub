@@ -209,6 +209,27 @@ A complete practice session was seeded on 2026-07-09:
 
 ---
 
+## Salesforce Scheduler Research (2026-07-09)
+
+Full research notes in [`SCHEDULER_RESEARCH.md`](./SCHEDULER_RESEARCH.md). Key findings:
+
+**QR code check-in architecture:**
+- Salesforce's native QR is for walk-in/waitlist only — not for pre-scheduled `ServiceAppointment` records
+- For Fairway: generate a QR code containing the `ServiceAppointment` Id, scan it at bay entrance, kiosk PATCHes `Status = "Checked In"` via REST API — no PIN needed
+- Evolution: QR code today → biometric facial recognition later. SF side stays the same; only the identity resolution layer changes.
+
+**Status ladder to add:**
+`Scheduled → Checked In (QR scan) → Dispatched (bay assigned) → In Progress → Completed`
+
+**Native Scheduler features to leverage:**
+- `Checked In` status category — built in, no custom code
+- `Waitlist` object — replace in-memory bay queue with a persistent SF record
+- `AppointmentSchedulingEvent` platform event — future upgrade from polling to push in `fairway-bay`
+- Lobby Management dashboard — greeter check-in view (requires Greeter PSL)
+- Group appointments, guest email management, multi-resource scheduling
+
+---
+
 ## Pending Tasks
 
 ### Code changes needed
@@ -226,7 +247,26 @@ A complete practice session was seeded on 2026-07-09:
 3. **Membership upsell price**
    - `SessionSummaryScreen` upsell card says `"$X/month"` — fill in real price once decided
 
-4. **Guest "join a session" flow (kiosk)**
+4. **QR code check-in on kiosk confirmation screen**
+   - Generate QR code from `ServiceAppointment` Id on the `bay-direction` screen
+   - Golfer scans it at the bay entrance instead of entering a PIN
+   - App PATCHes `Status = "Checked In"` on scan
+   - Library to use: `qrcode` npm package (lightweight, no canvas dependency issues)
+   - **Not yet built**
+
+5. **Add `Checked In` status step to kiosk + session console**
+   - Add `Checked In` as a custom status value in SF Scheduler setup (Status Category: `Checked In`)
+   - Kiosk: QR scan → `Checked In`, bay assignment → `Dispatched`
+   - Session console: show `Checked In` state on bay cards
+   - **Not yet built**
+
+6. **Replace in-memory bay queue with Salesforce Waitlist object**
+   - Current `bayQueue` array in kiosk React state is lost on restart
+   - Native SF `Waitlist` object persists queue and makes it visible in Lobby Management
+   - `QueueEntry` interface already defined in `fairway-kiosk/src/types.ts`
+   - **Not yet built**
+
+7. **Guest "join a session" flow (kiosk)**
    - New branch in guest check-in: instead of getting their own bay, guest can join an active session
    - Flow: New Guest → "Join a Session" → see active bays with member names → select → free `Golfer_Profile__c` + `Session_Participant__c` created → directed to bay
    - Bay display will silently add them as a new player tab
