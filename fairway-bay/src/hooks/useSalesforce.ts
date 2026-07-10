@@ -63,5 +63,29 @@ export function useSalesforce() {
     return data.records as T[]
   }, [auth])
 
-  return { auth, refreshAuth, query }
+  // Calls a custom Apex REST endpoint (POST) — used for the smart-extend
+  // flow, which needs bay-conflict logic that's not safe to reimplement
+  // client-side (see FairwaySessionExtendApi.cls).
+  const postApexRest = useCallback(async <T>(path: string, body: unknown): Promise<T> => {
+    if (!auth) throw new Error('Not authenticated')
+    const res = await fetch(apiUrl(`/services/apexrest${path}`), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+    await checkForSessionError(res)
+    if (!res.ok) {
+      const err = await res.json().catch(() => null)
+      const msg = Array.isArray(err)
+        ? err.map((e: { errorCode?: string; message?: string }) => `${e.errorCode}: ${e.message}`).join(' | ')
+        : `HTTP ${res.status}`
+      throw new Error(`[ApexRest] ${msg}`)
+    }
+    return (await res.json()) as T
+  }, [auth])
+
+  return { auth, refreshAuth, query, postApexRest }
 }

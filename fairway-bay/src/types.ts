@@ -47,3 +47,11 @@ export interface LastSessionRecap {
 }
 
 export type Screen = 'login' | 'bay-select' | 'idle' | 'active'
+
+export interface ExtendResult {
+  success: boolean
+  minutesApplied: number
+  bayReassigned: boolean
+  reassignedBayName: string | null
+  message: string
+}

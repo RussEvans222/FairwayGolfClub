@@ -196,10 +196,13 @@
         <object>ServiceAppointment</object>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
+    <!-- allowEdit: smart-extend can move an *incoming* reservation to a free
+         bay (reassign AssignedResource.ServiceResourceId) so a group already
+         playing can keep going without bumping the next booking. -->
     <objectPermissions>
         <allowCreate>true</allowCreate>
         <allowDelete>false</allowDelete>
-        <allowEdit>false</allowEdit>
+        <allowEdit>true</allowEdit>
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
         <object>AssignedResource</object>
@@ -778,6 +781,14 @@
     </classAccesses>
     <classAccesses>
         <apexClass>FairwayOpsDashboardController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>FairwaySessionConsoleController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>FairwaySessionExtendApi</apexClass>
         <enabled>true</enabled>
     </classAccesses>
 </PermissionSet>

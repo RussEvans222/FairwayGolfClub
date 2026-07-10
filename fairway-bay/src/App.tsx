@@ -4,7 +4,9 @@ import { LoginScreen } from './screens/LoginScreen'
 import { BaySelectScreen } from './screens/BaySelectScreen'
 import { IdleScreen } from './screens/IdleScreen'
 import { ActiveScreen } from './screens/ActiveScreen'
-import type { Bay, PlayerSession, LastSessionRecap, Shot, ClubAverage, Screen } from './types'
+import type { Bay, PlayerSession, LastSessionRecap, Shot, ClubAverage, Screen, ExtendResult } from './types'
+
+const EXTEND_PROMPT_THRESHOLD_MIN = 10
 
 const SF_LOGIN_URL = import.meta.env.VITE_SF_LOGIN_URL as string || 'https://login.salesforce.com'
 const SF_CLIENT_ID = import.meta.env.VITE_SF_CLIENT_ID as string
@@ -12,7 +14,7 @@ const SF_CLIENT_ID = import.meta.env.VITE_SF_CLIENT_ID as string
 const POLL_INTERVAL_MS = 20_000
 
 export default function App() {
-  const { auth, refreshAuth, query } = useSalesforce()
+  const { auth, refreshAuth, query, postApexRest } = useSalesforce()
   const [authError, setAuthError] = useState<string | null>(null)
   const [screen, setScreen] = useState<Screen>('login')
   const [bays, setBays] = useState<Bay[]>([])
@@ -21,7 +23,13 @@ export default function App() {
   const [activePlayerIndex, setActivePlayerIndex] = useState(0)
   const [lastRecap, setLastRecap] = useState<LastSessionRecap | null>(null)
   const [sessionActive, setSessionActive] = useState(false)
+  const [activeAppointmentId, setActiveAppointmentId] = useState<string | null>(null)
+  const [minutesRemaining, setMinutesRemaining] = useState<number | null>(null)
+  const [showExtendPrompt, setShowExtendPrompt] = useState(false)
+  const [extending, setExtending] = useState(false)
+  const [extendMessage, setExtendMessage] = useState<string | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const promptedForAppointment = useRef<string | null>(null)
 
   // ── OAuth callback handler ────────────────────────────────────────────
   useEffect(() => {
@@ -94,9 +102,10 @@ export default function App() {
         Status: string
         ContactId: string | null
         Contact: { FirstName: string; LastName: string } | null
+        SchedEndTime: string | null
       }
       const appts = await query<ApptRow>(
-        `SELECT Id, Status, ContactId, Contact.FirstName, Contact.LastName
+        `SELECT Id, Status, ContactId, Contact.FirstName, Contact.LastName, SchedEndTime
          FROM ServiceAppointment
          WHERE Status IN ('Dispatched','In Progress')
            AND Id IN (SELECT ServiceAppointmentId FROM AssignedResource WHERE ServiceResourceId = '${bay.resourceId}')
@@ -107,12 +116,28 @@ export default function App() {
         // No active session — load last completed session recap
         setSessionActive(false)
         setPlayers([])
+        setActiveAppointmentId(null)
+        setMinutesRemaining(null)
+        setShowExtendPrompt(false)
+        promptedForAppointment.current = null
         await loadLastRecap(bay)
         return
       }
 
       setSessionActive(true)
       const appt = appts[0]
+      setActiveAppointmentId(appt.Id)
+
+      if (appt.SchedEndTime) {
+        const remaining = Math.round((new Date(appt.SchedEndTime).getTime() - Date.now()) / 60000)
+        setMinutesRemaining(remaining)
+        if (remaining <= EXTEND_PROMPT_THRESHOLD_MIN && promptedForAppointment.current !== appt.Id) {
+          promptedForAppointment.current = appt.Id
+          setShowExtendPrompt(true)
+        }
+      } else {
+        setMinutesRemaining(null)
+      }
 
       // 2. Find all Golf_Session__c records for today on this bay (active or recent)
       const today = new Date().toISOString().slice(0, 10)
@@ -179,6 +204,29 @@ export default function App() {
       if (e instanceof Error && e.message === 'SESSION_EXPIRED') handleSessionExpired()
     }
   }, [query, handleSessionExpired])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Extend the active session by N minutes (10-minutes-out prompt) ─────
+  const handleExtend = useCallback(async (minutes: number) => {
+    if (!activeAppointmentId || !auth) return
+    setExtending(true)
+    setExtendMessage(null)
+    try {
+      const result = await postApexRest<ExtendResult>('/FairwaySessionExtend/', {
+        appointmentId: activeAppointmentId,
+        minutes,
+      })
+      setExtendMessage(result.message)
+      if (result.success && selectedBay) {
+        await pollBay(selectedBay) // refresh minutesRemaining immediately
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message === 'SESSION_EXPIRED') { handleSessionExpired(); return }
+      setExtendMessage("Sorry — couldn't extend right now. Please ask staff for help.")
+    } finally {
+      setExtending(false)
+      setShowExtendPrompt(false)
+    }
+  }, [activeAppointmentId, auth, postApexRest, selectedBay, pollBay, handleSessionExpired])
 
   async function buildPlayerStats(
     participantId: string,
@@ -361,6 +409,12 @@ export default function App() {
       activeIndex={activePlayerIndex}
       onChangeIndex={setActivePlayerIndex}
       onChangeBay={() => setScreen('bay-select')}
+      minutesRemaining={minutesRemaining}
+      showExtendPrompt={showExtendPrompt}
+      extending={extending}
+      extendMessage={extendMessage}
+      onExtend={handleExtend}
+      onDismissExtendPrompt={() => { setShowExtendPrompt(false); setExtendMessage(null) }}
     />
   )
 }
