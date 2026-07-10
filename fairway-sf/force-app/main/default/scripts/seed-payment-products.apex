@@ -19,8 +19,12 @@
 // Edit the numbers below and re-run to change rates — nothing else in the
 // codebase hardcodes them.
 
+// Anonymous Apex wraps this whole script in an implicit outer method, which
+// makes any class defined here a nested (not top-level) type — and Apex
+// disallows static methods on nested types. Instance methods + an explicit
+// `new` at the bottom sidestep that.
 public class FairwayPaymentSeed {
-    public static void run() {
+    public void run() {
         Id standardPbId = [SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1].Id;
 
         List<Pricebook2> memberPbs = [SELECT Id FROM Pricebook2 WHERE Name = 'Member Pricing' LIMIT 1];
@@ -67,7 +71,7 @@ public class FairwayPaymentSeed {
         System.debug('✅ Payment products + tiered pricing seeded. Verify rates in Setup → Products / Price Books before relying on real revenue numbers.');
     }
 
-    private static void upsertEntry(Id prodId, Id pbId, Decimal rate, String label) {
+    private void upsertEntry(Id prodId, Id pbId, Decimal rate, String label) {
         List<PricebookEntry> existing = [
             SELECT Id, UnitPrice FROM PricebookEntry
             WHERE Product2Id = :prodId AND Pricebook2Id = :pbId
@@ -90,4 +94,4 @@ public class FairwayPaymentSeed {
     }
 }
 
-FairwayPaymentSeed.run();
+new FairwayPaymentSeed().run();

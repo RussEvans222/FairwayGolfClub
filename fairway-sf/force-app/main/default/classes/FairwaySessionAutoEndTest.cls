@@ -4,17 +4,22 @@
 // "insert ServiceResource" pattern to fabricate in test data. We only read an
 // existing bay resource — all Account/Contact/WorkType/ServiceAppointment
 // test data below is still created fresh by this test.
-@isTest(SeeAllData=true)
+//
+// SeeAllData=true can't be combined with a class-level @isTest or a
+// @testSetup method, so setup is a plain helper each SeeAllData=true test
+// method calls itself instead of a shared @TestSetup. Record identity is
+// tracked by Id (returned from setupData()), not by Description — long text
+// area fields like Description can't be used in a query WHERE clause.
+@isTest
 private class FairwaySessionAutoEndTest {
 
-    @TestSetup
-    static void setup() {
+    static Map<String, Id> setupData() {
         Account personAcct = new Account(FirstName = 'Test', LastName = 'Golfer' + Datetime.now().getTime());
         insert personAcct;
         Contact c = [SELECT Id, AccountId FROM Contact WHERE AccountId = :personAcct.Id LIMIT 1];
 
         List<ServiceResource> bays = [SELECT Id FROM ServiceResource LIMIT 1];
-        if (bays.isEmpty()) return; // no bay resource provisioned yet — nothing to test against
+        if (bays.isEmpty()) return new Map<String, Id>(); // no bay resource provisioned yet — nothing to test against
         ServiceResource bay = bays[0];
 
         WorkType wt = new WorkType(Name = 'Test Session', EstimatedDuration = 60, DurationType = 'Minutes');
@@ -46,48 +51,44 @@ private class FairwaySessionAutoEndTest {
             Description    = 'Still-active test session'
         );
         insert active;
+
+        return new Map<String, Id>{ 'overdue' => overdue.Id, 'active' => active.Id };
     }
 
-    @isTest
+    @isTest(SeeAllData=true)
     static void closesOnlyOverdueSessions() {
-        List<ServiceAppointment> seeded = [
-            SELECT Description, Status FROM ServiceAppointment
-            WHERE Description IN ('Overdue test session', 'Still-active test session')
-        ];
-        if (seeded.isEmpty()) return; // no bay resource provisioned — setup() bailed out
+        Map<String, Id> ids = setupData();
+        if (ids.isEmpty()) return; // no bay resource provisioned — setupData() bailed out
 
         Test.startTest();
         new FairwaySessionAutoEnd().execute(null);
         Test.stopTest();
 
-        Map<String, String> statusByDescription = new Map<String, String>();
+        Map<Id, String> statusById = new Map<Id, String>();
         for (ServiceAppointment a : [
-            SELECT Description, Status FROM ServiceAppointment
-            WHERE Description IN ('Overdue test session', 'Still-active test session')
+            SELECT Id, Status FROM ServiceAppointment WHERE Id IN :ids.values()
         ]) {
-            statusByDescription.put(a.Description, a.Status);
+            statusById.put(a.Id, a.Status);
         }
 
-        System.assertEquals('Completed', statusByDescription.get('Overdue test session'),
+        System.assertEquals('Completed', statusById.get(ids.get('overdue')),
             'Overdue session should be auto-closed');
-        System.assertEquals('Dispatched', statusByDescription.get('Still-active test session'),
+        System.assertEquals('Dispatched', statusById.get(ids.get('active')),
             'Session still within its scheduled window must not be touched');
     }
 
-    @isTest
+    @isTest(SeeAllData=true)
     static void noOpWhenNothingOverdue() {
-        List<ServiceAppointment> active = [
-            SELECT Id, Status FROM ServiceAppointment WHERE Description = 'Still-active test session'
-        ];
-        if (active.isEmpty()) return; // no bay resource provisioned — setup() bailed out
+        Map<String, Id> ids = setupData();
+        if (ids.isEmpty()) return; // no bay resource provisioned — setupData() bailed out
 
-        delete [SELECT Id FROM ServiceAppointment WHERE Description = 'Overdue test session'];
+        delete new ServiceAppointment(Id = ids.get('overdue'));
 
         Test.startTest();
         new FairwaySessionAutoEnd().execute(null);
         Test.stopTest();
 
-        ServiceAppointment a = [SELECT Status FROM ServiceAppointment WHERE Description = 'Still-active test session' LIMIT 1];
+        ServiceAppointment a = [SELECT Status FROM ServiceAppointment WHERE Id = :ids.get('active')];
         System.assertEquals('Dispatched', a.Status);
     }
 }

@@ -1,4 +1,7 @@
-public with sharing class FairwaySessionConsoleController {
+// global: encloses ExtendResult, which FairwaySessionExtendApi's global REST
+// method returns — Apex requires the enclosing class of a global inner type
+// to itself be global.
+global with sharing class FairwaySessionConsoleController {
 
     // ── Data transfer object ──────────────────────────────────────────────────
     public class BaySessionDTO {
@@ -15,7 +18,9 @@ public with sharing class FairwaySessionConsoleController {
     }
 
     // ── Result of a smart extend (may cap or reassign a bay) ──────────────────
-    public class ExtendResult {
+    // global: FairwaySessionExtendApi's @RestResource method returns this type,
+    // and a global method's return type must itself be global.
+    global class ExtendResult {
         @AuraEnabled public Boolean success;
         @AuraEnabled public Integer minutesApplied;
         @AuraEnabled public Boolean bayReassigned;

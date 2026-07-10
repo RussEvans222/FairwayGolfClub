@@ -1,7 +1,23 @@
 # Fairway Golf Club — Session Sync
 
-**Last updated:** 2026-07-10 (by Claude — no Salesforce CLI access from this environment, see "QR Check-In" below)  
+**Last updated:** 2026-07-10 (by Claude — this session **did** have `sf` CLI access and deployed the backlog below; see "Session Update — 2026-07-10 (CLI deploy pass)" immediately below)  
 **Last commit:** `679cfe2` on `main` (RussEvans222/FairwayGolfClub) — PR #6, then reworked again same day (not yet merged) to fix the QR design — see below
+
+---
+
+## Session Update — 2026-07-10 (CLI deploy pass)
+
+A session with actual `sf` CLI access ran through the deploy backlog this file had been accumulating. Everything below marked "not yet deployed" / "untested — no SF access" earlier in this doc **is now deployed**, except where a section explicitly says otherwise. Real bugs surfaced during deploy (the code as written didn't actually compile/run in the org) — all fixed and deployed:
+
+- **Apex classes** (`FairwaySessionAutoEnd`, `FairwaySessionExtendApi`, updated `FairwaySessionConsoleController`) — fixed: (1) `FairwaySessionConsoleController.ExtendResult` had to become a `global` inner class since `FairwaySessionExtendApi`'s `@RestResource` method returns it, which forced the **enclosing class to also be `global`** (Apex requires this); (2) `FairwaySessionAutoEndTest` combined `@testSetup` with class-level `@isTest(SeeAllData=true)` — not allowed together; restructured to a plain `setupData()` helper called per test method, each annotated `@isTest(SeeAllData=true)` individually; (3) the test queried `ServiceAppointment.Description` in a `WHERE` clause — long text area fields can't be filtered in SOQL; switched to tracking record Ids instead.
+- **`Fairway_Staff` permission set** — fixed: (1) `Pricebook2` `viewAllRecords=true` failed with "user license doesn't allow View All Pricebook2" (same fix applied preemptively to `PricebookEntry`/`Product2`); (2) `ServiceTerritory` `viewAllRecords=true` demanded `OperatingHours` read access too — resolved by dropping `viewAllRecords` on `ServiceTerritory` (plain read is enough for the kiosk's name-based lookup); (3) FLS entries for two **required** fields (`Membership__c.Contact__c`, `Membership__c.Status__c`) aren't deployable — Salesforce implicitly grants full access to required fields and rejects explicit FLS metadata for them — removed both blocks.
+- **`Order.Service_Appointment__c` field** deployed first (classes referencing it would otherwise fail to compile in the org).
+- **Session auto-end sweep scheduled** — `schedule-session-autoend.apex` originally used `'0 0/5 * * * ?'` (then a comma list) for "every 5 minutes" — **Apex's cron parser doesn't support `/` increments or comma lists for seconds/minutes at all, only a single literal integer**, unlike standard cron/Quartz. Rewrote to schedule 12 separate jobs (`Fairway Session Auto-End :00` through `:55`), one per 5-minute mark.
+- **`seed-payment-products.apex`** — anonymous Apex wraps the whole script body in an implicit outer method, so a class defined inline becomes a *nested* type, and Apex disallows `static` methods on nested types. Converted `FairwayPaymentSeed` to instance methods + `new FairwayPaymentSeed().run()`. Ran successfully — Member Pricing Pricebook2 + both products' entries on both pricebooks are seeded at the documented rates.
+- **Golfer360 data model** — all 9 custom objects + tabs + `Fairway_Ops` app deployed (139 components, 0 errors). Confirmed queryable; some already had data in the org from earlier work (4 `Golfer_Profile__c`, 61 `Golf_Shot__c`, etc. — Jim Richard's seeded practice session, see below).
+- **SA-0005 / SA-0006** (the stuck sessions this whole auto-end feature was built to fix) — turned out to already be soft-deleted by the time this session ran `end-stuck-sessions.apex` (deleted at 03:28:40–47 UTC that day, mid-session, not by anything this session ran — likely cleaned up directly in Salesforce). Nothing left to fix there specifically, but the sweep is now deployed and scheduled so it won't recur.
+
+**New bug found (unrelated to any of the above, not yet fixed):** see "PaymentLink checkout error" under Known Issues.
 
 ---
 
@@ -227,7 +243,7 @@ sf apex run --file force-app/main/default/scripts/seed-payment-products.apex --t
 - Cannot reset password via CLI (STORM org blocks outbound email to portal users)
 - Log in via: Contact record → "Log in to Experience as User" button in Salesforce
 
-**Custom objects:** `Golf_Session__c`, `Golfer_Profile__c`, and others — committed to `fairway-sf/` but **not yet deployed to org** (see Pending below)
+**Custom objects:** `Golf_Session__c`, `Golfer_Profile__c`, and the rest of the Golfer360 model — **deployed 2026-07-10** (139 components, 0 errors), confirmed queryable. See "Session Update — 2026-07-10" at the top of this file.
 
 ---
 
@@ -249,6 +265,29 @@ sf apex run --file force-app/main/default/scripts/seed-payment-products.apex --t
 - Re-pointed `GP-0007` (Russell) and `GP-0008` (Jim) to their correct Person Account-linked Contacts
 - Created Person Account for `russ@russevans.me` (Jim Richard) — `001ak00002ztBoHAAU`
 
+### `PaymentLink` checkout error — OPEN, blocks member walk-in check-in (found 2026-07-10)
+
+**Symptom:** Checking in as a member and paying at the kiosk fails after "Payment confirmed" with:
+```
+[ServiceAppointment] INVALID_TYPE: SELECT Id FROM PaymentLink WHERE ServiceAppointmentId
+sObject type 'PaymentLink' is not supported.
+```
+
+**Confirmed root cause is NOT kiosk code, NOT any of our Apex/metadata:**
+- Reproduces on a **bare `insert ServiceAppointment` via raw anonymous Apex**, run as the admin user, zero kiosk/custom code involved.
+- Grep across the entire repo (triggers, flows, workflow rules, validation rules, duplicate/matching rules) — nothing references `PaymentLink`. It isn't ours.
+- `PaymentLink` doesn't exist as an entity at all in this org's schema (`EntityDefinition` query: 0 rows) — but ~69 *other* Payment-related standard objects do (`Payment`, `PaymentGateway`, `PaymentRequest`, `PaymentMethod`, etc.), confirming Salesforce Payments is provisioned org-wide, just missing/mismatched on this specific object.
+- **Not tied to the calling user's permissions** — tested both ways: the admin user (`storm.bd727290084d27`) has the "Salesforce Payments Internal" PSL + "Payments Administrator" permission set assigned and hits the error; the kiosk's own service user (`kiosk@fairwaygolfclub.co`) has **neither** and also hits the error. It's an org-wide platform behavior, not permission-gated.
+- Checked (all clean, none reference Payments/PaymentLink): `AppointmentSchedulingPolicy` metadata (no payment field), `WorkType`/`ServiceAppointment`/`ServiceTerritory` field describes, all Flow/WorkflowRule/ValidationRule/DuplicateRule/MatchingRule metadata in the org.
+- Russell confirmed in Setup: **Salesforce Payments can't be disabled once activated** (matches Salesforce's documented behavior — tied to financial audit trail retention, not a simple toggle).
+
+**Leading theory:** Salesforce Scheduler has a relatively new "Collect Payments for Appointments" integration that, once the org has Salesforce Payments provisioned at all, silently checks for a `PaymentLink` on every `ServiceAppointment` insert — and this org's `PaymentLink` object specifically isn't fully provisioned, causing `INVALID_TYPE` instead of a clean empty result.
+
+**Next things to try (unresolved as of this session):**
+- Setup → Quick Find → **"Scheduler"** (not "Payments") → look for a **Salesforce Scheduler Settings** page with a payment-collection toggle scoped to Scheduler specifically, separate from the org-wide (non-disableable) Payments feature.
+- If nothing there: this may need a Salesforce Support case, since it reproduces on a bare insert with zero custom code — looks like a genuine provisioning mismatch in this org/edition.
+- Unexplored: whether *completing* Payments setup (e.g. configuring a test/sandbox Payment Gateway) provisions the missing `PaymentLink` object and makes the query resolve (return 0 rows) instead of erroring — vs. actually disabling the Scheduler integration. Worth trying if the Scheduler-specific toggle doesn't exist.
+
 **Current test members:**
 | Member | Email | Contact ID | Person Account ID |
 |---|---|---|---|
@@ -257,7 +296,7 @@ sf apex run --file force-app/main/default/scripts/seed-payment-products.apex --t
 
 ---
 
-## Auto-end sessions + smart bay extend/reassign — BUILT 2026-07-10, NOT YET DEPLOYED
+## Auto-end sessions + smart bay extend/reassign — BUILT 2026-07-10, Apex deployed + scheduled same day (fairway-bay still not deployed to Cloudflare)
 
 **Why:** Russell reported two stuck sessions (SA-005, SA-006 in the org) that
 nothing ever closed out — there was no mechanism that ended a session once its
@@ -333,14 +372,17 @@ sf apex run --file force-app/main/default/scripts/schedule-session-autoend.apex 
 ```
 Then redeploy `fairway-bay` (push to its Cloudflare Pages project, or trigger a rebuild) to pick up the new prompt/REST-call code — **note `fairway-bay` isn't deployed to Cloudflare Pages yet at all** (see Pending Tasks #9), so this whole feature is inert on the customer-facing bay screen until that deploy happens; the Apex side (auto-end + smart extend) works independently and can be verified via the staff session console today.
 
-**Not yet tested (no Salesforce network access from this session — needs the `sf`-CLI terminal):**
-- `end-stuck-sessions.apex` actually clears SA-005/SA-006 now that it backfills `ServiceTerritoryId` — this is the fix for Russell's specific report, confirm it first
+**Deployed and verified 2026-07-10:**
+- `end-stuck-sessions.apex` ran — SA-0005/SA-0006 turned out to already be soft-deleted (not by this session; see "Session Update" at top), so nothing to clear, but the script itself ran cleanly and correctly reported "nothing overdue."
+- `FairwaySessionAutoEndTest` deploys cleanly — required fixing two real Apex bugs first (`@testSetup` + class-level `SeeAllData=true` isn't allowed together; `Description` field isn't SOQL-filterable). See "Session Update" at top for details.
+- Scheduled job is live — 12 jobs (`Fairway Session Auto-End :00` through `:55`), one per 5-minute mark, since Apex's cron parser doesn't support `/` or comma-list syntax (only a single literal integer). Not yet observed firing/closing a real overdue appointment.
+
+**Still not tested (needs real usage, not just deploy verification):**
 - A fresh kiosk walk-in creates a `ServiceAppointment` with `ServiceTerritoryId` populated (not blank) — check the record directly in Setup after a test walk-in
-- Scheduled job fires every 5 min and closes a deliberately-overdue test appointment
+- Scheduled job actually closes a deliberately-overdue test appointment when it fires
 - Bay-reassignment path: book Bay 1 1:00–2:00, Bay 2 free at 1:45, put an active session on Bay 1 ending 1:30, extend it 30 min at the kiosk/console — confirm the 1:00pm... er, the 2:00pm Bay 1 booking gets moved to Bay 2, not cancelled or double-booked
 - Cap path: same setup but with Bay 2 *also* booked during that window — confirm the extension is capped instead of silently overwriting the next booking
 - `FairwaySessionExtendApi` REST endpoint reachable with a Fairway_Staff user's OAuth token (once `fairway-bay` is actually deployed)
-- Test class `FairwaySessionAutoEndTest` deploys cleanly — it uses `SeeAllData=true` to read an existing `ServiceResource` (no reliable Apex-insert pattern exists for that object in this org; see comment in the class) — if the org has zero `ServiceResource` records the tests short-circuit as a no-op rather than failing, but that means they'd give false confidence, so confirm at least one bay resource exists when running tests
 
 ---
 
@@ -482,9 +524,7 @@ Full research notes in [`SCHEDULER_RESEARCH.md`](./SCHEDULER_RESEARCH.md). Key f
 10. **`kiosk.fairwaygolfclub.co` custom domain**
     - DNS CNAME is set but Cloudflare Pages custom domain activation needs confirming in the Cloudflare dashboard
 
-11. **Deploy Golfer360 data model to org**
-    - 9 custom objects + permission sets + `Fairway_Ops` app are committed to `fairway-sf/` but not yet deployed
-    - Run: `sf project deploy start --source-dir force-app --target-org FairwayGolfClub --wait 30`
+11. ~~Deploy Golfer360 data model to org~~ — **done 2026-07-10**, see "Session Update" at top
 
 12. **Cloudflare KV for homepage survey widget**
     - Needs `VOTES_KV` KV namespace + `ADMIN_KEY` in Cloudflare Pages dashboard
