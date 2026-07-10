@@ -157,6 +157,38 @@ PR #6's first version encoded a `ServiceAppointment` Id — a one-time code per 
   - Auto-refreshes every 30 seconds
   - **To add to the UI:** App Builder → Fairway Ops app → Home page → drag `fairwaySessionConsole` component
 
+**Revenue tracking — Order/OrderItem model (added 2026-07-10, untested live — no SF access from this environment):**
+
+Payments were never actually recorded anywhere — the kiosk's "Pay $35 — Tap to Continue" button only flipped local UI state; the real charge happens manually, off-system, at the front desk. This fixes the recording half (not the collection half — staff still physically take cash/card).
+
+First pass used a single `Amount_Charged__c` currency field on `ServiceAppointment` — wrong, because a visit isn't always one charge: a golfer can extend their session in 30-min increments (up to the next scheduled booking), and each extension is its own charge. A static field can't represent that. Reworked same day to use **standard `Order` + `OrderItem`** — Salesforce's purpose-built "one purchase, multiple line items" model — instead of a custom object, since the org already has Salesforce's native **Payments** feature enabled (unconfigured): `Payments_Home_Default.flexipage-meta.xml` references `sfdc_payments_capture_daily_report` etc., which only exist if Payments/Order Management has been turned on. Nobody's configured actual card processing through it, but Order/OrderItem is the model it's built on, so this lays the groundwork correctly if that's ever activated instead of manual front-desk collection.
+
+**How it works:**
+- One `Order` per walk-in visit — the running tab. Created when the walk-in check-in flow (kiosk) creates the `ServiceAppointment`, with a new lookup `Order.Service_Appointment__c` tying it back to the visit.
+- One `OrderItem` per charge on that Order — the base session fee when the Order opens, plus one more each time staff extends the session via the `fairwaySessionConsole` LWC's +15/+30 buttons.
+- **Pricing lives in data, not code** — a `Product2` + `PricebookEntry` on the org's **Standard Pricebook** for each charge type ("Walk-In Session Fee", "30-Minute Extension"). Both the kiosk and Apex look up the current `UnitPrice` by product name at charge time; nothing hardcodes `$35` or `$17.50` anywhere in TypeScript or Apex. Change the rate in Setup and it takes effect immediately, no deploy needed.
+- **Products/PricebookEntries are DATA, not metadata** — can't be deployed via `sf project deploy`. Run once: `fairway-sf/force-app/main/default/scripts/seed-payment-products.apex`. Seeds "Walk-In Session Fee" ($35 placeholder) and "30-Minute Extension" ($17.50 placeholder — half the base rate, my guess, not confirmed with Russell). Safe to re-run.
+- **Extension quantity scales with minutes**, not a fixed unit: `Quantity = minutes / 30.0`, so a +15 charges half of a +30 against the same per-30-min rate — one product covers both buttons.
+- `createWalkInAppointment` in `App.tsx`: after creating the `ServiceAppointment` + `AssignedResource`, looks up the "Walk-In Session Fee" `PricebookEntry` (`Product2.Name = 'Walk-In Session Fee' AND Pricebook2.IsStandard = true`), creates the `Order` (`AccountId`, `EffectiveDate`, `Status = 'Draft'`, `Pricebook2Id`, `Service_Appointment__c`), then the `OrderItem`. If the pricebook entry isn't seeded yet, the appointment still gets created — just without a revenue record — rather than failing the whole check-in.
+- `FairwaySessionConsoleController.extendSession` (Apex): after extending `SchedEndTime`, calls a new private `chargeExtension(appointmentId, minutes)` — finds the visit's `Order` via `Service_Appointment__c`, looks up the "30-Minute Extension" `PricebookEntry` on that Order's `Pricebook2Id`, inserts the scaled `OrderItem`. No-ops silently if there's no Order (e.g. extending a reservation-based check-in, which doesn't open one) or the product isn't seeded.
+- `FairwayOpsDashboardController.cls` — `getBayStatus()` and `getDailyStats()` now sum `OrderItem.TotalPrice` (traversing `Order.Service_Appointment__c`) instead of reading a static field. `BayRow.revenueToday` and `DailyStats.totalRevenue`.
+- `fairwayOpsDashboard` LWC — unchanged from the first pass: a stat tile in the header ("Revenue Today · Walk-Ins") and a revenue figure in each bay card's footer.
+
+**Scope: walk-ins only, deliberately.** Reservation check-ins (PIN entry) skip the payment screen entirely and never open an Order — unclear whether reservations are pre-paid, membership-included, or genuinely unbilled today. Revenue numbers are real but partial; labeled "Revenue Today · Walk-Ins" everywhere, not just "Revenue."
+
+**Permissions (`Fairway_Staff`):** added object CRUD for `Order`/`OrderItem` (create+read) and read-only for `Pricebook2`/`PricebookEntry`/`Product2`, plus FLS on the one new custom field `Order.Service_Appointment__c`. **Not verified:** standard `Order` sometimes needs an org-level "Order Management" feature/permission beyond normal object CRUD (separate from what a permission set can grant) — if Order creation fails with a permission error even after deploying this, check Setup → Order Settings / the user's permission for "Manage Orders" specifically, not just the permission set.
+
+**Deploy commands (in order):**
+```bash
+sf project deploy start --source-dir force-app/main/default/objects/Order/fields/Service_Appointment__c.field-meta.xml --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/classes --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/lwc/fairwayOpsDashboard --target-org FairwayGolfClub
+sf project deploy start --source-dir force-app/main/default/permissionsets/Fairway_Staff.permissionset-meta.xml --target-org FairwayGolfClub
+sf apex run --file force-app/main/default/scripts/seed-payment-products.apex --target-org FairwayGolfClub
+```
+
+**Not yet tested** — no Salesforce access from this environment. Verify: complete a walk-in check-in, confirm an `Order` + `OrderItem` ($35) exist for the resulting `ServiceAppointment`; extend that session +15 or +30 from the session console, confirm a second `OrderItem` appears on the same Order at the scaled amount; confirm the ops dashboard totals both under the correct bay.
+
 **Salesforce Scheduler setup (manual, already done in org):**
 - Service Territory: "Fairway Golf Club" (active)
 - Operating Hours: "Fairway Golf Club" — Mon–Sat 8am–10pm ET, Sun 12pm–7pm ET

@@ -38,6 +38,10 @@
                 <span class="stat-value">{stats.baysActive} / {totalBays}</span>
                 <span class="stat-label">Bays Active</span>
             </div>
+            <div class="stat-tile">
+                <span class="stat-value green">{totalRevenueLabel}</span>
+                <span class="stat-label">Revenue Today · Walk-Ins</span>
+            </div>
             <div class="stat-tile usage-tile">
                 <div class="usage-bar-wrap">
                     <div class="usage-bar" style={usageBarStyle}></div>
@@ -104,7 +108,7 @@
                                 </template>
                             </div>
                             <div class="bay-footer">
-                                <span>{b.sessionsToday} sessions today</span>
+                                <span>{b.sessionsToday} sessions · {b.revenueLabel} today</span>
                                 <span class={b.syncClass}>{b.syncLabel}</span>
                             </div>
                         </div>

@@ -28,7 +28,7 @@ export default class FairwayOpsDashboard extends LightningElement {
     @track sessions = [];
     @track bays = [];
     @track stats = { totalSessions: 0, checkedIn: 0, scheduled: 0, late: 0,
-                     baysActive: 0, baysIdle: 0, usagePercent: 0, usageGoal: 10 };
+                     baysActive: 0, baysIdle: 0, usagePercent: 0, usageGoal: 10, totalRevenue: 0 };
     @track loadingSessions = true;
     @track loadingBays = true;
     _refreshTimer;
@@ -39,6 +39,7 @@ export default class FairwayOpsDashboard extends LightningElement {
     get noSessions() { return !this.loadingSessions && this.sessions.length === 0; }
     get totalBays() { return this.bays.length; }
     get lateClass() { return this.stats.late > 0 ? 'stat-value red' : 'stat-value'; }
+    get totalRevenueLabel() { return this._fmtCurrency(this.stats.totalRevenue); }
     get usageBarStyle() {
         const pct = Math.min(100, this.stats.usagePercent || 0);
         return `width:${pct}%`;
@@ -86,6 +87,7 @@ export default class FairwayOpsDashboard extends LightningElement {
                     statusBadgeClass: BAY_STATUS_BADGE[b.appointmentStatus] || 'bay-status-badge bay-idle',
                     syncClass:        b.dataSynced ? 'sync-ok' : 'sync-err',
                     syncLabel:        b.dataSynced ? '● Synced' : '● Offline',
+                    revenueLabel:     this._fmtCurrency(b.revenueToday),
                 }));
             })
             .catch(() => { this.bays = []; })
@@ -95,5 +97,9 @@ export default class FairwayOpsDashboard extends LightningElement {
     _fmt(iso) {
         if (!iso) return '—';
         return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    _fmtCurrency(amount) {
+        return '$' + Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
 }

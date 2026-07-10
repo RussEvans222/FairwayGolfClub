@@ -102,6 +102,40 @@ public with sharing class FairwaySessionConsoleController {
         ServiceAppointment a = [SELECT Id, SchedEndTime FROM ServiceAppointment WHERE Id = :appointmentId LIMIT 1];
         a.SchedEndTime = (a.SchedEndTime != null ? a.SchedEndTime : DateTime.now()).addMinutes(minutes);
         update a;
+
+        chargeExtension(appointmentId, minutes);
+    }
+
+    // Adds an OrderItem for this extension to the visit's existing Order (opened
+    // when the walk-in checked in). Quantity scales with minutes so a +15
+    // charges half of a +30 against the same "30-Minute Extension" rate.
+    // Silently no-ops if there's no Order for this appointment (e.g. a
+    // reservation check-in, which doesn't open one) or the extension
+    // product/pricebook entry hasn't been seeded yet — see
+    // scripts/seed-payment-products.apex.
+    private static void chargeExtension(String appointmentId, Integer minutes) {
+        List<Order> orders = [
+            SELECT Id, Pricebook2Id FROM Order
+            WHERE Service_Appointment__c = :appointmentId
+            LIMIT 1
+        ];
+        if (orders.isEmpty()) return;
+
+        List<PricebookEntry> entries = [
+            SELECT Id, UnitPrice FROM PricebookEntry
+            WHERE Product2.Name = '30-Minute Extension'
+              AND Pricebook2Id = :orders[0].Pricebook2Id
+              AND IsActive = true
+            LIMIT 1
+        ];
+        if (entries.isEmpty()) return;
+
+        insert new OrderItem(
+            OrderId          = orders[0].Id,
+            PricebookEntryId = entries[0].Id,
+            Quantity         = minutes / 30.0,
+            UnitPrice        = entries[0].UnitPrice
+        );
     }
 
     // ── Change status directly ────────────────────────────────────────────────

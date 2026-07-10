@@ -316,9 +316,12 @@ export default function App() {
     }
   }, [selectedSession, selectedPlayerIndex, patch])
 
-  // QR check-in: skips PIN entirely — possession of the code is the credential.
-  // Same "Scheduled" → "Dispatched" transition as handlePinConfirm, just triggered by a scan.
   // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
+  // Also opens an Order + OrderItem for the base session fee — a visit can
+  // rack up multiple charges (base fee + N extensions), so a single static
+  // amount on the appointment can't represent that. The Order is the running
+  // tab for this visit; extendSession (session console) adds further
+  // OrderItems to the same Order as the golfer extends their time.
   const createWalkInAppointment = useCallback(async (
     contactId: string,
     accountId: string,
@@ -329,18 +332,44 @@ export default function App() {
     const workTypeId  = import.meta.env.VITE_SF_WALKIN_WORK_TYPE_ID  as string
 
     const appt = await create<{ id: string }>('ServiceAppointment', {
-      ParentRecordId:  accountId,
-      ContactId:       contactId,
-      WorkTypeId:      workTypeId,
-      SchedStartTime:  startIso,
-      SchedEndTime:    endIso,
-      Status:          'Dispatched',
-      Description:     'Walk-in via kiosk',
+      ParentRecordId: accountId,
+      ContactId:      contactId,
+      WorkTypeId:     workTypeId,
+      SchedStartTime: startIso,
+      SchedEndTime:   endIso,
+      Status:         'Dispatched',
+      Description:    'Walk-in via kiosk',
     })
     await create('AssignedResource', {
       ServiceAppointmentId: appt.id,
       ServiceResourceId:    bayResourceId,
     })
+
+    const priceEntries = await query<{ Id: string; UnitPrice: number; Pricebook2Id: string }>(
+      `SELECT Id, UnitPrice, Pricebook2Id FROM PricebookEntry
+       WHERE Product2.Name = 'Walk-In Session Fee' AND Pricebook2.IsStandard = true AND IsActive = true
+       LIMIT 1`
+    )
+    if (priceEntries.length) {
+      const pe = priceEntries[0]
+      const order = await create<{ id: string }>('Order', {
+        AccountId:              accountId,
+        EffectiveDate:          startIso.slice(0, 10),
+        Status:                 'Draft',
+        Pricebook2Id:           pe.Pricebook2Id,
+        Service_Appointment__c: appt.id,
+      })
+      await create('OrderItem', {
+        OrderId:          order.id,
+        PricebookEntryId: pe.Id,
+        Quantity:         1,
+        UnitPrice:        pe.UnitPrice,
+      })
+    }
+    // If the "Walk-In Session Fee" product/pricebook entry isn't seeded yet,
+    // the appointment still gets created — just without a revenue record.
+    // See SESSION_SYNC.md "Revenue tracking" for the seed script.
+
     return appt.id
   }, [create])
 

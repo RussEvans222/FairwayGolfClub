@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Service_Appointment__c</fullName>
+    <label>Service Appointment</label>
+    <type>Lookup</type>
+    <referenceTo>ServiceAppointment</referenceTo>
+    <relationshipName>Orders</relationshipName>
+    <relationshipLabel>Orders</relationshipLabel>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+    <description>Which visit/bay session this order's charges belong to. The running tab for a walk-in — base session fee plus any extensions get their own OrderItem against this same Order.</description>
+</CustomField>

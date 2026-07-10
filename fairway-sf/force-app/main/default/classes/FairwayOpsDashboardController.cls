@@ -19,6 +19,7 @@ public with sharing class FairwayOpsDashboardController {
         @AuraEnabled public String lastGolfer;
         @AuraEnabled public String appointmentStatus;  // Idle / Scheduled / Active / Done
         @AuraEnabled public Integer sessionsToday;
+        @AuraEnabled public Decimal revenueToday;      // sum of today's OrderItem.TotalPrice for this bay — walk-ins only for now
         @AuraEnabled public Boolean dataSynced;
         @AuraEnabled public Date lastCalibration;
     }
@@ -32,6 +33,7 @@ public with sharing class FairwayOpsDashboardController {
         @AuraEnabled public Integer baysIdle;
         @AuraEnabled public Decimal usagePercent;   // sessions today / usage goal
         @AuraEnabled public Integer usageGoal;
+        @AuraEnabled public Decimal totalRevenue;   // sum of today's OrderItem.TotalPrice across all bays — walk-ins only for now
     }
 
     // ── Today's scheduled sessions ──────────────────────────────────────────
@@ -86,6 +88,7 @@ public with sharing class FairwayOpsDashboardController {
             b.bayName          = sr.Name;
             b.monitorType      = 'TrackMan';
             b.sessionsToday    = 0;
+            b.revenueToday     = 0;
             b.appointmentStatus = 'Idle';
             b.dataSynced       = true;
             b.currentGolfer    = null;
@@ -95,6 +98,7 @@ public with sharing class FairwayOpsDashboardController {
 
         // Match today's appointments to bays
         DateTime now = DateTime.now();
+        Map<Id, String> apptIdToBayName = new Map<Id, String>();
         for (ServiceAppointment sa : [
             SELECT Id, Status, SchedStartTime, SchedEndTime,
                    Contact.Name,
@@ -114,6 +118,7 @@ public with sharing class FairwayOpsDashboardController {
 
             BayRow b = rowsByName.get(bName);
             b.sessionsToday++;
+            apptIdToBayName.put(sa.Id, bName);
 
             String golfer = sa.Contact != null ? sa.Contact.Name : 'Guest';
             Boolean active = sa.Status == 'Dispatched' || sa.Status == 'In Progress';
@@ -131,6 +136,21 @@ public with sharing class FairwayOpsDashboardController {
             }
         }
 
+        // Revenue: every charge (base session fee + extensions) is an OrderItem
+        // on an Order tied back to the visit's ServiceAppointment. Walk-ins
+        // only — reservation check-ins don't open an Order today.
+        if (!apptIdToBayName.isEmpty()) {
+            for (OrderItem oi : [
+                SELECT TotalPrice, Order.Service_Appointment__c
+                FROM OrderItem
+                WHERE Order.Service_Appointment__c IN :apptIdToBayName.keySet()
+            ]) {
+                String bName = apptIdToBayName.get(oi.Order.Service_Appointment__c);
+                if (bName == null || !rowsByName.containsKey(bName)) continue;
+                rowsByName.get(bName).revenueToday += oi.TotalPrice;
+            }
+        }
+
         return rowsByName.values();
     }
 
@@ -145,21 +165,35 @@ public with sharing class FairwayOpsDashboardController {
         s.late        = 0;
         s.baysActive  = 0;
         s.baysIdle    = 0;
+        s.totalRevenue = 0;
 
         DateTime now = DateTime.now();
+        Set<Id> apptIdsToday = new Set<Id>();
         for (ServiceAppointment sa : [
-            SELECT Status, SchedStartTime
+            SELECT Id, Status, SchedStartTime
             FROM ServiceAppointment
             WHERE SchedStartTime = TODAY
               AND Status IN ('Scheduled','Dispatched','In Progress','Completed')
         ]) {
             s.totalSessions++;
+            apptIdsToday.add(sa.Id);
             if (sa.Status == 'Dispatched' || sa.Status == 'In Progress' || sa.Status == 'Completed') {
                 s.checkedIn++;
             } else if (sa.Status == 'Scheduled' && sa.SchedStartTime < now) {
                 s.late++;
             } else {
                 s.scheduled++;
+            }
+        }
+
+        if (!apptIdsToday.isEmpty()) {
+            for (AggregateResult ar : [
+                SELECT SUM(TotalPrice) total
+                FROM OrderItem
+                WHERE Order.Service_Appointment__c IN :apptIdsToday
+            ]) {
+                Object total = ar.get('total');
+                if (total != null) s.totalRevenue = (Decimal) total;
             }
         }
 
