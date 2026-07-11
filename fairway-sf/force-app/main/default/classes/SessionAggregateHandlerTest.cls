@@ -115,8 +115,13 @@ private class SessionAggregateHandlerTest {
         update session;
         Test.stopTest();
 
-        Golfer_Profile__c updated = [SELECT Lifetime_Sessions__c FROM Golfer_Profile__c WHERE Id = :profile.Id];
+        Golfer_Profile__c updated = [
+            SELECT Lifetime_Sessions__c, Lifetime_Shots__c, Last_Session_Date__c
+            FROM Golfer_Profile__c WHERE Id = :profile.Id
+        ];
         System.assertEquals(1, updated.Lifetime_Sessions__c, 'Lifetime sessions should be 1 after first session closes');
+        System.assertEquals(5, updated.Lifetime_Shots__c, 'Lifetime shots should be 5 (from @TestSetup shots)');
+        System.assertEquals(Date.today(), updated.Last_Session_Date__c, 'Last session date should be today');
     }
 
     @IsTest

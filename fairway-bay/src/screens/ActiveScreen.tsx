@@ -27,6 +27,10 @@ function sortClubs(averages: PlayerSession['clubAverages']) {
   })
 }
 
+function fmtDate(date: string) {
+  return new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
 function shotShapeColor(shape: string | null): string {
   if (!shape) return '#ffffff40'
   if (shape === 'Straight') return '#4ade80'
@@ -104,7 +108,48 @@ export function ActiveScreen({
         )}
       </div>
 
-      {/* Main body — last shot + club table */}
+      {/* Main body */}
+      {player.shotCount === 0 && player.lastSessionRecap ? (
+        /* Welcome back — no shots yet today, show this golfer's own last session */
+        <div className="flex-1 px-10 pb-6 min-h-0 overflow-y-auto">
+          <div className="rounded-2xl p-8" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <div className="text-white/40 text-xs uppercase tracking-wider mb-1">Welcome back — Last Session</div>
+                <div className="text-white/40 text-sm">
+                  {fmtDate(player.lastSessionRecap.sessionDate)} · {player.lastSessionRecap.totalShots} shots
+                </div>
+              </div>
+              {player.lastSessionRecap.bestCarry != null && (
+                <div className="text-right">
+                  <div className="text-white/40 text-xs uppercase tracking-wider mb-1">Best Carry</div>
+                  <div className="text-4xl font-bold" style={{ color: 'var(--gold)' }}>
+                    {player.lastSessionRecap.bestCarry}
+                  </div>
+                  <div className="text-white/40 text-sm">{player.lastSessionRecap.bestCarryClub} · yds</div>
+                </div>
+              )}
+            </div>
+
+            {player.lastSessionRecap.topClubs.length > 0 && (
+              <>
+                <div className="text-white/30 text-xs uppercase tracking-wider mb-3">Club Averages</div>
+                <div className="grid grid-cols-5 gap-3">
+                  {player.lastSessionRecap.topClubs.map(c => (
+                    <div key={c.club} className="flex flex-col items-center rounded-xl p-3"
+                         style={{ background: 'var(--surface2)' }}>
+                      <div className="text-white/50 text-xs mb-1">{c.club}</div>
+                      <div className="text-white font-bold text-lg">{c.avgCarry} <span className="text-white/30 text-xs">yds</span></div>
+                      <div className="text-white/30 text-xs">{c.shotCount} shot{c.shotCount !== 1 ? 's' : ''}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          <div className="text-white/20 text-xs text-center mt-4">Your live stats will appear here once you hit your first shot</div>
+        </div>
+      ) : (
       <div className="flex-1 flex gap-6 px-10 pb-6 min-h-0">
 
         {/* Last shot card */}
@@ -172,6 +217,7 @@ export function ActiveScreen({
           )}
         </div>
       </div>
+      )}
 
       {/* Player nav arrows — only shown with multiple players */}
       {players.length > 1 && (

@@ -78,11 +78,41 @@ public with sharing class SessionAggregateHandler {
             sessionCountByProfile.put((Id)ar.get('profileId'), ar);
         }
 
+        // Lifetime_Shots__c — total shots across every session this golfer has ever
+        // participated in (any slot, not just primary booker), same scope as sessionCount above.
+        Map<Id, AggregateResult> shotCountByProfile = new Map<Id, AggregateResult>();
+        for (AggregateResult ar : [
+            SELECT gsh.Session_Participant__r.Golfer_Profile__c profileId, COUNT(Id) shotCount
+            FROM Golf_Shot__c gsh
+            WHERE gsh.Session_Participant__r.Golfer_Profile__c IN :profileIds
+            GROUP BY gsh.Session_Participant__r.Golfer_Profile__c
+        ]) {
+            shotCountByProfile.put((Id)ar.get('profileId'), ar);
+        }
+
+        // Last_Session_Date__c — most recent session end date across any participation.
+        Map<Id, AggregateResult> lastSessionByProfile = new Map<Id, AggregateResult>();
+        for (AggregateResult ar : [
+            SELECT sp.Golfer_Profile__c profileId, MAX(sp.Golf_Session__r.Session_End__c) lastDate
+            FROM Session_Participant__c sp
+            WHERE sp.Golfer_Profile__c IN :profileIds
+            GROUP BY sp.Golfer_Profile__c
+        ]) {
+            lastSessionByProfile.put((Id)ar.get('profileId'), ar);
+        }
+
         List<Golfer_Profile__c> profilesToUpdate = new List<Golfer_Profile__c>();
         for (Id profileId : profileIds) {
             Golfer_Profile__c upd = new Golfer_Profile__c(Id = profileId);
             if (sessionCountByProfile.containsKey(profileId)) {
                 upd.Lifetime_Sessions__c = (Integer)sessionCountByProfile.get(profileId).get('sessionCount');
+            }
+            if (shotCountByProfile.containsKey(profileId)) {
+                upd.Lifetime_Shots__c = (Integer)shotCountByProfile.get(profileId).get('shotCount');
+            }
+            if (lastSessionByProfile.containsKey(profileId)) {
+                Datetime lastDt = (Datetime)lastSessionByProfile.get(profileId).get('lastDate');
+                if (lastDt != null) upd.Last_Session_Date__c = lastDt.date();
             }
             profilesToUpdate.add(upd);
         }

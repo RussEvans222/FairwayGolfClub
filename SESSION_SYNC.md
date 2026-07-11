@@ -3,7 +3,7 @@
 **Last updated:** 2026-07-10 (merge of two parallel sessions — a local terminal session with real `sf` CLI access that deployed the backlog below, see "Session Update — 2026-07-10 (CLI deploy pass)" immediately below; and a remote/web session with no Salesforce or Cloudflare network access that kept building kiosk-side fixes in the meantime, see "Checked In status ladder" and the wait-time bug fix under "What's Built and Deployed" further down — **neither of those two kiosk changes has been deployed or tested against the live org yet**, they landed on `main` after the CLI deploy pass ran)  
 **Last commit:** merge of `bab6532` (CLI deploy pass, local session) and `f8068fe` (Checked In status + wait-time bug fix, remote session) on `main` (RussEvans222/FairwayGolfClub)
 
-**For whoever picks this up next:** the Salesforce backend (auto-end, smart extend, tiered pricing, Golfer360 objects) is deployed and largely working — see the CLI deploy pass section for what got fixed along the way and the "PaymentLink checkout error" under Known Issues for the one new bug it surfaced. `fairway-bay` is still **not deployed to Cloudflare** (Pages project needs creating/fixing — deploy command misconfigured, see Pending Tasks #9). The kiosk has two undeployed/untested changes on top of all that: it now writes `Checked In` before `Dispatched` on every check-in (**requires that picklist value to already exist in the org — verify before testing check-in, or every check-in will fail**), and a wait-time display bug (showing a false "next available" countdown when a different bay was actually open) is fixed.
+**For whoever picks this up next:** the Salesforce backend (auto-end, smart extend, tiered pricing, Golfer360 objects) is deployed and largely working — see the CLI deploy pass section for what got fixed along the way and the "PaymentLink checkout error" under Known Issues for the one new bug it surfaced. `fairway-bay` **is now deployed to Cloudflare and live** (see "Session Update — 2026-07-10 (`fairway-bay` goes live + per-golfer recap)" below — the Deploy command misconfiguration and a Connected App OAuth callback gap are both resolved), and a Jim Richard live check-in was verified clean end-to-end in Salesforce. That same session found and fixed a real bug where `SessionAggregateHandler` had never successfully run (missing FLS on `Fairway_Admin`), and added a new per-golfer "last session" recap to the bay screen. The kiosk still has two undeployed/untested changes: it now writes `Checked In` before `Dispatched` on every check-in (**the required picklist value is confirmed present in the org as of today — still needs a live functional test of each check-in path, not just picklist existence**), and a wait-time display bug (showing a false "next available" countdown when a different bay was actually open) is fixed.
 
 ---
 
@@ -23,6 +23,26 @@ A session with actual `sf` CLI access ran through the deploy backlog this file h
 
 ---
 
+## Session Update — 2026-07-10 (`fairway-bay` goes live + per-golfer recap)
+
+Later the same day, with live Cloudflare + `sf` CLI access:
+
+- **`fairway-bay` deployed to Cloudflare Pages — RESOLVED.** The project's Deploy command was wrongly set to `npx wrangler versions upload` (a Workers command), so every build had been failing silently and nothing had ever actually gone through `npm run build` → `dist/` — what was live was an empty placeholder. Russell cleared the Deploy command field in the dashboard; the site now builds and loads. Pending Tasks #9 is resolved.
+- **OAuth `redirect_uri_mismatch` on first login — RESOLVED.** `bay.fairwaygolfclub.co` was never added to the shared Connected App (`Fairway_Kiosk_App`)'s callback URL list. Retrieved the live metadata (don't hand-edit Connected Apps — Setup UI changes don't stay in sync with the repo), added `https://bay.fairwaygolfclub.co/`, `https://fairway-bay.pages.dev/`, and `http://localhost:5181/` (bay's dev port, matching the existing kiosk entries), deployed. Confirmed live via a fresh retrieve.
+- **Jim Richard's live check-in verified end-to-end in Salesforce:** `ServiceAppointment` (Dispatched, `ServiceTerritory` correctly populated, correct 1-hour window), `AssignedResource` → Bay Number One, `Order` (Draft, Standard Pricebook, $45 — correct since Jim has no `Membership__c` record) + `OrderItem`. No double-booking. `ActualStartTime`/`ActualEndTime` still null (known pending item, unrelated). Field history isn't enabled on `ServiceAppointment.Status`, so the momentary `Checked In` write couldn't be directly confirmed from history, but the end state is correct.
+- **Real bug found & fixed: `SessionAggregateHandler` had never successfully run.** `GolfSessionTrigger` fires `SessionAggregateHandler.computeAggregates()` when a `Golf_Session__c` closes, updating session-level averages (`Avg_Ball_Speed__c`, `Avg_Carry_Distance__c`, `Best_Carry__c`, `Session_Duration_Minutes__c` on `Golf_Session__c`) and lifetime golfer stats (`Lifetime_Sessions__c` on `Golfer_Profile__c`). All of these fields were **missing from `Fairway_Admin`'s field-level security** — the permission set was never updated when these aggregate fields were added to the objects, so every write has been silently failing with `CANNOT_INSERT_UPDATE_ACTIVATE_ENTITY` since this was first deployed (same "profile alone doesn't grant FLS, permission set must" pattern documented elsewhere in this org). Added FLS grants for all 6 fields to `Fairway_Admin`, deployed, confirmed via `SessionAggregateHandlerTest` (0/4 → 4/4 passing). **Practically low-impact today** since nothing yet sets `Golf_Session__c.Status__c = 'Completed'` in the live kiosk flow (that's owned by the not-yet-built vendor/session-data pipeline) — but would have silently broken the moment that pipeline existed, so worth having caught now.
+- **New: `Lifetime_Shots__c` and `Last_Session_Date__c` wired up.** Both fields existed on `Golfer_Profile__c` but were dead — never written by `SessionAggregateHandler`. Added: `Lifetime_Shots__c` = total shots across every session a golfer has ever participated in (any slot, not just primary booker); `Last_Session_Date__c` = most recent session end date across the same scope. Deployed + covered by an extended `testGolferProfileLifetimeSessionsUpdated` assertion.
+- **New: `fairway-bay` shows a per-golfer "last session" recap on check-in.** Requested by Russell using a competitor app's Session Summary screen as a *content* reference (date, total shots, per-club shots-hit + avg-carry) — explicitly not a design reference; implementation uses the existing gold/dark bay-screen visual system. Design decision made with Russell: the recap follows **the specific golfer who checked in** (their own history, any bay), not the bay itself — the pre-existing `IdleScreen` recap (last completed session *on this bay*, regardless of who) stays as-is and unchanged, this is additive.
+  - `App.tsx`: new `loadPlayerRecap(profileId, displayName)` — finds the golfer's own most recent `Status__c = 'Completed'` `Golf_Session__c` (via a semi-join on `Session_Participant__c.Golfer_Profile__c`, since `Golf_Session__c` has no direct golfer lookup), aggregates their clubs/best-carry from that session's `Golf_Shot__c` records. Attached to `PlayerSession.lastSessionRecap`, populated inside `buildPlayerStats` whenever a participant has a `profileId` (skipped for the guest/no-profile fallback path).
+  - Club-average aggregation logic was duplicated three ways (live stats, bay recap, new player recap) — factored into shared `aggregateClubAverages()` / `bestCarryOf()` helpers at module scope in `App.tsx`.
+  - `ActiveScreen.tsx`: while `shotCount === 0` for the active player (i.e. checked in, hasn't hit a shot yet today), shows the recap panel instead of the (empty) live shot card + club table. Once they hit their first shot, it flips to the normal live view.
+  - `IdleScreen.tsx`'s existing bay-based recap also now shows shots-per-club (data already existed in `ClubAverage.shotCount`, just wasn't rendered) — small content-parity fix, not a behavior change.
+  - **Verified against live data, not yet visually tested in a browser:** confirmed the exact `loadPlayerRecap` SOQL returns Jim's seeded practice session (`a07ak00001Wh67sAAB`) when queried with his `Golfer_Profile__c` Id. `tsc -b` and `vite build` both pass. **Caveat: Jim's real check-in today won't show this recap** — his new `ServiceAppointment` has no `Golf_Session__c`/`Session_Participant__c` yet (that link only exists via manual seeding today, not the live kiosk flow — same "mock data only" limitation as the rest of Golfer360). Needs a real browser check once a session has that link, or a manually seeded "today" session to confirm the panel renders and clears correctly on first shot.
+- **Housekeeping:** installed 90 Salesforce-focused skills from `forcedotcom/afv-library` via `npx skills add` (SOQL query, metadata deploy/retrieve, permission-set/validation-rule/sharing-rule generation, Agentforce tracing, etc.) — landed in `.agents/skills/` + `skills-lock.json`, not yet committed. Not reviewed in detail; the installer's own output warns "review skills before use, they run with full agent permissions."
+- Noted but untouched: `fairway-bay/dist/` is git-tracked (unlike `fairway-kiosk/dist/`, which is gitignored) — local `npm run build` runs during this session produced diff noise there, reverted before anything was committed. Worth adding `fairway-bay/dist/` to `.gitignore` at some point for consistency, since Cloudflare Pages builds its own `dist/` independently and doesn't read the committed one.
+
+---
+
 ## Repos
 
 | Repo | Purpose | Deployed to |
@@ -37,13 +57,14 @@ A session with actual `sf` CLI access ran through the deploy backlog this file h
 
 ### Bay Display (`fairway-bay/`)
 
-**Status:** Code complete, committed to `main`. **NOT YET deployed to Cloudflare** — needs a new Pages project.
+**Status:** Deployed and live at `bay.fairwaygolfclub.co` as of 2026-07-10 — see "Session Update — 2026-07-10 (`fairway-bay` goes live + per-golfer recap)" above.
 
 **Screens:**
 - `login` — SF OAuth implicit flow (same connected app as kiosk)
 - `bay-select` — picks Bay 1 or Bay 2 (persists until changed)
-- `idle` — "READY" screen + last session recap (player name, date, top 5 club averages, best carry)
+- `idle` — "READY" screen + **bay-based** last session recap (whoever last used this physical bay — player name, date, shots-per-club + avg carry, best carry)
 - `active` — live session stats, polls SF every 20s:
+  - **While the checked-in golfer has 0 shots today:** shows their own **personal** last-session recap instead (any bay, requires their `Golfer_Profile__c` to be linked) — see "per-golfer recap" in the Session Update above for how this differs from the idle screen's bay-based one
   - Last shot card: carry, total, ball speed, launch angle, spin, shot shape (color coded)
   - Club averages table with progress bars, max carry, shot count
   - Multi-player arrow nav (← →) with dot indicators in header
@@ -59,13 +80,13 @@ VITE_SF_CLIENT_ID=3MVG9JJwBBbcN47LfOSqoMzg6MvSJkwE3fpNuaQzV7Yx3d8VU_zfm9uHa.hFqV
 VITE_SF_LOGIN_URL=https://login.salesforce.com
 ```
 
-**To deploy:**
+**Deploy steps (done, kept here for reference):**
 1. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git
 2. Repo: `RussEvans222/FairwayGolfClub`, root directory: `fairway-bay`
-3. Build command: `npm run build`, output directory: `dist`
+3. Build command: `npm run build`, output directory: `dist` — **Deploy command must be left blank**; it was mistakenly set to a Workers command (`npx wrangler versions upload`) initially, which fails every build with "Missing entry-point to Worker script"
 4. Add the three env vars above (Production + Preview)
 5. Add custom domain: `bay.fairwaygolfclub.co`
-6. In Salesforce → Setup → App Manager → Connected App → add `https://bay.fairwaygolfclub.co` to OAuth callback URLs
+6. Connected App OAuth callback URLs — done via `sf` CLI, not Setup UI (see Session Update above)
 
 ---
 
@@ -141,7 +162,7 @@ PR #6's first version encoded a `ServiceAppointment` Id — a one-time code per 
 - **Now writes the `Checked In` status** — see "Checked In status ladder — BUILT 2026-07-10" below.
 - **Not yet tested against the live org** — no Salesforce or Cloudflare network access from this environment. `tsc -b` and `vite build` both pass; the `qr-scanner-worker` chunk bundles correctly. Needs an actual camera + a real contact to verify end to end, both the has-reservation and fast-track-walk-in paths.
 
-**Checked In status ladder — BUILT 2026-07-10 (kiosk code), NOT YET TESTED against the live org**
+**Checked In status ladder — BUILT 2026-07-10 (kiosk code), picklist value CONFIRMED in org 2026-07-10, kiosk build still NOT YET TESTED against the live org**
 
 Russell: *"The status on the session needs to be set to checked in automatically once they check in."* Every check-in path in the kiosk now writes `Status: 'Checked In'` before `'Dispatched'`, instead of skipping straight to `Dispatched` as before.
 
@@ -150,17 +171,9 @@ Russell: *"The status on the session needs to be set to checked in automatically
 - All four check-in paths resolve the bay in the same action today, so the gap between the two writes is milliseconds — this is about leaving a real `Checked In` entry in the record's history, not adding a UX step. Local React state (`selectedSession.status`, etc.) is only ever set to the final `'Dispatched'` value, matching what settles in Salesforce.
 - **Deliberately did not touch** any of the `Status IN ('Dispatched', 'In Progress')` occupancy filters elsewhere in the codebase (fairway-bay's `pollBay`, `FairwaySessionConsoleController.getActiveSessions`, `FairwaySessionAutoEnd`, the kiosk's own wait-time calculations) — since `Checked In` is only ever held for the instant between the two patches, no session should ever be observed sitting in that state by a poll, so those filters don't need `'Checked In'` added. If a partial-failure edge case ever leaves a session stuck on `Checked In` (e.g. the second patch throws), it would currently look "available" to those filters — not yet a known issue, just worth knowing if a bay ever seems to double-book.
 
-**Hard prerequisite: `Checked In` must exist as an active value on `ServiceAppointment.Status` in the org before deploying this kiosk build.** It's a restricted picklist — writing an unrecognized value fails with `INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST`, which would break every check-in path at once (regression, not a no-op). Per Russell (2026-07-10): the org has some picklist values already but "not great," and he's adding it himself. Safe way to add it without touching other live values:
-```bash
-# 1. Pull the current live value set into the repo first — don't hand-write it
-sf project retrieve start --metadata "StandardValueSet:ServiceAppointmentStatus" --target-org FairwayGolfClub
-# 2. Open the retrieved file, add a new <standardValue> entry for "Checked In"
-#    with statusCategory = CheckedIn (confirm the exact category API name in
-#    Setup → Object Manager → Service Appointment → Fields → Status first)
-# 3. Deploy it back
-sf project deploy start --source-dir force-app/main/default/standardValueSets --target-org FairwayGolfClub
-```
-Or do it entirely in Setup UI: Object Manager → Service Appointment → Fields & Relationships → Status → New Value → label "Checked In", map Status Category to "Checked In". **Verify this exists before deploying the kiosk build above** — test one check-in of each type (PIN with existing PIN, PIN setup flow, QR-matches-reservation, walk-in, QR-fast-track-as-walk-in) and confirm the appointment ends up `Dispatched` with no error toast on the kiosk.
+**Hard prerequisite — RESOLVED 2026-07-10.** `Checked In` must exist as an active value on `ServiceAppointment.Status` in the org before deploying this kiosk build (it's a restricted picklist — an unrecognized value fails with `INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST`, breaking every check-in path at once). Russell confirmed via screenshot of the Status field dropdown on a live Bay Session record: full value set is `None / Scheduled / Dispatched / In Progress / Cannot Complete / Completed / Canceled / Checked In` — `Checked In` is present. Not yet confirmed which `statusCategory` it's mapped to (should be `CheckedIn`) — worth a quick check in Object Manager → Service Appointment → Fields & Relationships → Status if the kiosk test below behaves oddly, but the picklist-write blocker itself is cleared.
+
+**Still needed: live functional test**, not just picklist existence — test one check-in of each type (PIN with existing PIN, PIN setup flow, QR-matches-reservation, walk-in, QR-fast-track-as-walk-in) and confirm the appointment ends up `Dispatched` with no error toast on the kiosk, and that a `Checked In` entry briefly appears in field history.
 
 ### Salesforce (`fairway-sf/`)
 
@@ -521,14 +534,7 @@ Full research notes in [`SCHEDULER_RESEARCH.md`](./SCHEDULER_RESEARCH.md). Key f
 
 ### Infrastructure
 
-9. **Deploy `fairway-bay` to Cloudflare Pages — IN PROGRESS 2026-07-10, misconfigured**
-   - New Pages project, root: `fairway-bay`, build: `npm run build`, output: `dist`
-   - **Known issue:** the project as created has a **Deploy command** set to `npx wrangler versions upload` (a Workers command), which fails with "Missing entry-point to Worker script" on every deploy — this is a static Pages project, not a Worker. Fix: Settings → Builds & deployments → clear the Deploy command entirely. If it can't be cleared, the project was likely created as a Worker instead of Pages and needs to be deleted/recreated via Workers & Pages → Create → **Pages** → Connect to Git (not "Deploy a Worker").
-   - Also hit (fixed in code, needs a fresh deploy to pick up): `npm ci` was failing with an ERESOLVE conflict — `@vitejs/plugin-react ^4.5.2` doesn't support `vite ^8.1.1`. Bumped to `^6.0.3` (matches `fairway-kiosk`) in commit on `main`.
-   - Env vars: `VITE_SF_INSTANCE_URL`, `VITE_SF_CLIENT_ID`, `VITE_SF_LOGIN_URL` (same values as kiosk)
-   - Custom domain: `bay.fairwaygolfclub.co` — once the Pages project has a working deployment, add this under the project's **Custom domains** tab; since the zone is already on Cloudflare it auto-creates the CNAME, no manual DNS record needed
-   - Add `https://bay.fairwaygolfclub.co` to SF Connected App OAuth callback URLs
-   - See "Bay Display" section above for full deploy checklist
+9. ~~Deploy `fairway-bay` to Cloudflare Pages~~ — **done 2026-07-10**, see "Session Update — 2026-07-10 (`fairway-bay` goes live + per-golfer recap)" at top. Deploy command cleared, OAuth callback URLs added via `sf` CLI, site live at `bay.fairwaygolfclub.co`.
 
 10. **`kiosk.fairwaygolfclub.co` custom domain**
     - DNS CNAME is set but Cloudflare Pages custom domain activation needs confirming in the Cloudflare dashboard

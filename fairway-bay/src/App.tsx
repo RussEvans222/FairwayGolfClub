@@ -8,6 +8,36 @@ import type { Bay, PlayerSession, LastSessionRecap, Shot, ClubAverage, Screen, E
 
 const EXTEND_PROMPT_THRESHOLD_MIN = 10
 
+type CarryShot = { Club__c: string | null; Carry_Distance__c: number | null }
+
+function aggregateClubAverages(shots: CarryShot[]): ClubAverage[] {
+  const clubMap = new Map<string, { carries: number[]; max: number }>()
+  for (const s of shots) {
+    if (!s.Club__c || s.Carry_Distance__c == null) continue
+    const entry = clubMap.get(s.Club__c) ?? { carries: [], max: 0 }
+    entry.carries.push(s.Carry_Distance__c)
+    entry.max = Math.max(entry.max, s.Carry_Distance__c)
+    clubMap.set(s.Club__c, entry)
+  }
+  return Array.from(clubMap.entries())
+    .map(([club, { carries, max }]) => ({
+      club,
+      avgCarry: Math.round(carries.reduce((a, b) => a + b, 0) / carries.length),
+      shotCount: carries.length,
+      maxCarry: max,
+    }))
+    .sort((a, b) => b.avgCarry - a.avgCarry)
+}
+
+function bestCarryOf(shots: CarryShot[]): { bestCarry: number | null; bestCarryClub: string | null } {
+  const bestCarry = shots.reduce<number | null>((best, s) => {
+    if (s.Carry_Distance__c == null) return best
+    return best == null ? s.Carry_Distance__c : Math.max(best, s.Carry_Distance__c)
+  }, null)
+  const bestCarryClub = shots.find(s => s.Carry_Distance__c === bestCarry)?.Club__c ?? null
+  return { bestCarry, bestCarryClub }
+}
+
 const SF_LOGIN_URL = import.meta.env.VITE_SF_LOGIN_URL as string || 'https://login.salesforce.com'
 const SF_CLIENT_ID = import.meta.env.VITE_SF_CLIENT_ID as string
 
@@ -188,6 +218,7 @@ export default function App() {
           lastShot: null,
           clubAverages: [],
           bestCarry: null,
+          lastSessionRecap: null,
         }]
       }
 
@@ -268,32 +299,54 @@ export default function App() {
       shotNumber: shots[shots.length - 1].Shot_Number__c,
     } : null
 
-    // Aggregate per-club averages
-    const clubMap = new Map<string, { carries: number[]; max: number }>()
-    for (const s of shots) {
-      if (!s.Club__c || s.Carry_Distance__c == null) continue
-      const entry = clubMap.get(s.Club__c) ?? { carries: [], max: 0 }
-      entry.carries.push(s.Carry_Distance__c)
-      entry.max = Math.max(entry.max, s.Carry_Distance__c)
-      clubMap.set(s.Club__c, entry)
-    }
-    const clubAverages: ClubAverage[] = Array.from(clubMap.entries())
-      .map(([club, { carries, max }]) => ({
-        club,
-        avgCarry: Math.round(carries.reduce((a, b) => a + b, 0) / carries.length),
-        shotCount: carries.length,
-        maxCarry: max,
-      }))
-      .sort((a, b) => b.avgCarry - a.avgCarry)
-
-    const bestCarry = shots.reduce<number | null>((best, s) => {
-      if (s.Carry_Distance__c == null) return best
-      return best == null ? s.Carry_Distance__c : Math.max(best, s.Carry_Distance__c)
-    }, null)
+    const clubAverages = aggregateClubAverages(shots)
+    const { bestCarry } = bestCarryOf(shots)
+    const lastSessionRecap = profileId ? await loadPlayerRecap(profileId, displayName) : null
 
     return {
       participantId, profileId, displayName, isGuest, slotNumber,
-      shotCount: shots.length, lastShot, clubAverages, bestCarry,
+      shotCount: shots.length, lastShot, clubAverages, bestCarry, lastSessionRecap,
+    }
+  }
+
+  // A golfer's own last COMPLETED session, on any bay — used to welcome them
+  // back on the active screen before they've hit a shot in today's session.
+  async function loadPlayerRecap(profileId: string, displayName: string): Promise<LastSessionRecap | null> {
+    try {
+      type SessRow = { Id: string; Session_End__c: string; Total_Shots__c: number }
+      const sessions = await query<SessRow>(
+        `SELECT Id, Session_End__c, Total_Shots__c
+         FROM Golf_Session__c
+         WHERE Status__c = 'Completed'
+           AND Id IN (SELECT Golf_Session__c FROM Session_Participant__c WHERE Golfer_Profile__c = '${profileId}')
+         ORDER BY Session_End__c DESC LIMIT 1`
+      )
+      if (!sessions.length) return null
+      const sess = sessions[0]
+
+      type PartRow = { Id: string }
+      const parts = await query<PartRow>(
+        `SELECT Id FROM Session_Participant__c
+         WHERE Golf_Session__c = '${sess.Id}' AND Golfer_Profile__c = '${profileId}' LIMIT 1`
+      )
+      if (!parts.length) return null
+
+      const shots = await query<CarryShot>(
+        `SELECT Club__c, Carry_Distance__c FROM Golf_Shot__c
+         WHERE Golf_Session__c = '${sess.Id}' AND Session_Participant__c = '${parts[0].Id}'`
+      )
+
+      const topClubs = aggregateClubAverages(shots).slice(0, 5)
+      const { bestCarry, bestCarryClub } = bestCarryOf(shots)
+
+      return {
+        playerName: displayName,
+        sessionDate: sess.Session_End__c,
+        totalShots: sess.Total_Shots__c,
+        topClubs, bestCarry, bestCarryClub,
+      }
+    } catch {
+      return null // recap is nice-to-have — never block the live session on it
     }
   }
 
@@ -321,37 +374,15 @@ export default function App() {
 
       if (!partId) { setLastRecap(null); return }
 
-      type ShotRow = { Club__c: string; Carry_Distance__c: number | null }
-      const shots = await query<ShotRow>(
+      const shots = await query<CarryShot>(
         `SELECT Club__c, Carry_Distance__c
          FROM Golf_Shot__c
          WHERE Golf_Session__c = '${sess.Id}'
            AND Session_Participant__c = '${partId}'`
       )
 
-      const clubMap = new Map<string, { carries: number[]; max: number }>()
-      for (const s of shots) {
-        if (!s.Club__c || s.Carry_Distance__c == null) continue
-        const entry = clubMap.get(s.Club__c) ?? { carries: [], max: 0 }
-        entry.carries.push(s.Carry_Distance__c)
-        entry.max = Math.max(entry.max, s.Carry_Distance__c)
-        clubMap.set(s.Club__c, entry)
-      }
-      const topClubs: ClubAverage[] = Array.from(clubMap.entries())
-        .map(([club, { carries, max }]) => ({
-          club,
-          avgCarry: Math.round(carries.reduce((a, b) => a + b, 0) / carries.length),
-          shotCount: carries.length,
-          maxCarry: max,
-        }))
-        .sort((a, b) => b.avgCarry - a.avgCarry)
-        .slice(0, 5)
-
-      const bestCarry = shots.reduce<number | null>((best, s) => {
-        if (s.Carry_Distance__c == null) return best
-        return best == null ? s.Carry_Distance__c : Math.max(best, s.Carry_Distance__c)
-      }, null)
-      const bestCarryClub = shots.find(s => s.Carry_Distance__c === bestCarry)?.Club__c ?? null
+      const topClubs = aggregateClubAverages(shots).slice(0, 5)
+      const { bestCarry, bestCarryClub } = bestCarryOf(shots)
 
       setLastRecap({
         playerName,

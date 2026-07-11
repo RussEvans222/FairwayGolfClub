@@ -16,6 +16,9 @@ export interface PlayerSession {
   lastShot: Shot | null
   clubAverages: ClubAverage[]
   bestCarry: number | null
+  // This golfer's own last completed session, on any bay — shown while
+  // shotCount is still 0 for today, i.e. right as they check in.
+  lastSessionRecap: LastSessionRecap | null
 }
 
 export interface Shot {

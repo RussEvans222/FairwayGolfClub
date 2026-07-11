@@ -65,8 +65,8 @@ export function IdleScreen({ bay, recap, onChangeBay }: Props) {
                     <div key={c.club} className="flex flex-col items-center rounded-xl p-3"
                          style={{ background: 'var(--surface2)' }}>
                       <div className="text-white/50 text-xs mb-1">{c.club}</div>
-                      <div className="text-white font-bold text-lg">{c.avgCarry}</div>
-                      <div className="text-white/30 text-xs">yds avg</div>
+                      <div className="text-white font-bold text-lg">{c.avgCarry} <span className="text-white/30 text-xs">yds</span></div>
+                      <div className="text-white/30 text-xs">{c.shotCount} shot{c.shotCount !== 1 ? 's' : ''}</div>
                     </div>
                   ))}
                 </div>
