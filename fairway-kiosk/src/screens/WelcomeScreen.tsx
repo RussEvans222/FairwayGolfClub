@@ -58,17 +58,16 @@ function getDrinkSuggestion(hour: number): { emoji: string; line: string } {
   return { emoji: '🥃', line: 'Head to the bar for a craft cocktail.' }
 }
 
-function computeWaitMinutes(sessions: ScheduledSession[]): number | null {
-  const now = Date.now()
-  const active = sessions.filter(s => {
-    const start = new Date(s.startTime).getTime()
-    const end = new Date(s.endTime).getTime()
-    return start <= now && end > now
-  })
-  if (active.length === 0) return null
-  const soonest = Math.min(...active.map(s => new Date(s.endTime).getTime()))
-  const mins = Math.round((soonest - now) / 60_000)
-  return Math.max(1, mins)
+// Only meaningful when EVERY bay is occupied — checked per bay via
+// bayStatuses, not just "is anything active anywhere." A bay with zero
+// sessions today (or one that already ended) must never be treated as
+// occupied just because some *other* bay is busy.
+function computeWaitMinutes(bays: BaySummary[], bayStatuses: BayStatus[]): number | null {
+  if (bays.length === 0) return null
+  const allOccupied = bayStatuses.every(b => b.active)
+  if (!allOccupied) return null
+  const soonest = Math.min(...bayStatuses.map(b => b.minutesLeft ?? 0))
+  return Math.max(1, soonest)
 }
 
 function formatWait(totalSeconds: number): string {
@@ -83,13 +82,13 @@ export default function WelcomeScreen({ bayName, sessions, bays, onStart }: Prop
   const bayStatuses = getBayStatuses(bays, sessions)
   const [tagline] = useState(() => TAGLINES[Math.floor(Date.now() / 1000) % TAGLINES.length])
   const [waitSeconds, setWaitSeconds] = useState<number | null>(() => {
-    const mins = computeWaitMinutes(sessions)
+    const mins = computeWaitMinutes(bays, bayStatuses)
     return mins !== null ? mins * 60 : null
   })
 
   const hour = getEasternHour()
   const drink = getDrinkSuggestion(hour)
-  const hasBaysAvailable = sessions.length === 0 || waitSeconds === null
+  const hasBaysAvailable = bays.length === 0 || bayStatuses.some(b => !b.active)
 
   // Pulse the CTA
   useEffect(() => {
@@ -109,11 +108,11 @@ export default function WelcomeScreen({ bayName, sessions, bays, onStart }: Prop
     return () => clearInterval(t)
   }, [waitSeconds === null])
 
-  // Re-compute when sessions prop changes
+  // Re-compute when sessions/bays props change
   useEffect(() => {
-    const mins = computeWaitMinutes(sessions)
+    const mins = computeWaitMinutes(bays, getBayStatuses(bays, sessions))
     setWaitSeconds(mins !== null ? mins * 60 : null)
-  }, [sessions])
+  }, [sessions, bays])
 
   return (
     <div

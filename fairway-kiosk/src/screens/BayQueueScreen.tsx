@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { ScheduledSession } from '../types'
 
+interface BaySummary {
+  bayId: string
+  bayName: string
+}
+
 interface QueuePosition {
   position: number
   totalInQueue: number
@@ -11,30 +16,39 @@ interface QueuePosition {
 interface Props {
   queueInfo: QueuePosition
   sessions: ScheduledSession[]
+  bays: BaySummary[]
   onDone: () => void
   autoReturnSeconds?: number
 }
 
-function computeWaitMinutes(sessions: ScheduledSession[]): number {
+// Only meaningful when EVERY bay is occupied right now (checked per bay);
+// a bay with no session today must never look "busy" just because some
+// other bay's session is still running.
+function computeWaitMinutes(bays: BaySummary[], sessions: ScheduledSession[]): number {
+  if (bays.length === 0) return 0
   const now = Date.now()
-  const active = sessions.filter(s => {
-    const start = new Date(s.startTime).getTime()
-    const end   = new Date(s.endTime).getTime()
-    return start <= now && end >= now
+  const endTimes = bays.map(bay => {
+    const s = sessions.find(s =>
+      s.bayId === bay.bayId &&
+      (s.status === 'Dispatched' || s.status === 'In Progress') &&
+      new Date(s.endTime).getTime() > now
+    )
+    return s ? new Date(s.endTime).getTime() : null
   })
-  if (active.length === 0) return 0
-  const soonestEnd = Math.min(...active.map(s => new Date(s.endTime).getTime()))
+  if (endTimes.some(t => t === null)) return 0
+  const soonestEnd = Math.min(...(endTimes as number[]))
   return Math.max(0, Math.round((soonestEnd - now) / 60000))
 }
 
 export default function BayQueueScreen({
   queueInfo,
   sessions,
+  bays,
   onDone,
   autoReturnSeconds = 30,
 }: Props) {
   const [remaining, setRemaining] = useState(autoReturnSeconds)
-  const waitMinutes = computeWaitMinutes(sessions)
+  const waitMinutes = computeWaitMinutes(bays, sessions)
   const firstName = queueInfo.displayName.split(' ')[0]
 
   useEffect(() => {
