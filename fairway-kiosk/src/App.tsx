@@ -902,6 +902,16 @@ export default function App() {
     try {
       const { contact, profile } = await resolveGuestIdentity(data)
 
+      // resolveGuestIdentity finds-or-creates by email — a "New Guest" who
+      // actually already has a profile (e.g. registered before, used this
+      // screen by mistake) could already be checked in elsewhere.
+      const conflictBay = await checkAlreadyActive(profile.Id)
+      if (conflictBay) {
+        setError(`${data.firstName} is already checked into ${conflictBay}.`)
+        setLoading(false)
+        return
+      }
+
       addPlayer({
         slot: session.players.length + 1, contact, profile,
         displayName: `${data.firstName} ${data.lastName}`, isGuest: true,
@@ -962,7 +972,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolveGuestIdentity, session.players.length, addPlayer, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession, upsertScheduledSession])
+  }, [resolveGuestIdentity, session.players.length, addPlayer, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession, checkAlreadyActive, upsertScheduledSession])
 
   // ── Join an in-progress party ──────────────────────────────────────────
   // Reuses the exact same identity-collection screens as a normal walk-in
@@ -1001,9 +1011,7 @@ export default function App() {
         throw new Error('Missing identity for join request.')
       }
 
-      const conflictBayName = await postApexRest<string | null>('/FairwaySessionConflict/', {
-        golferProfileId: profileId,
-      })
+      const conflictBayName = await checkAlreadyActive(profileId)
       if (conflictBayName) {
         setError(`You're already checked into ${conflictBayName}.`)
         return
@@ -1051,7 +1059,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [selectedJoinSession, pendingMember, pendingGuest, resolvePersonAccount, resolveGuestIdentity, createSessionOrder, postApexRest, loadLiveSessions])
+  }, [selectedJoinSession, pendingMember, pendingGuest, resolvePersonAccount, resolveGuestIdentity, createSessionOrder, postApexRest, checkAlreadyActive, loadLiveSessions])
 
   const fetchGreeting = useCallback(async (appointmentId: string) => {
     type GreetingRow = {
