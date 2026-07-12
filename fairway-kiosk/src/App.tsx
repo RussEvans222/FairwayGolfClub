@@ -36,6 +36,8 @@ interface CoachTipData {
   confidence?: number
 }
 
+const LIVE_SESSION_POLL_MS = 15_000
+
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
@@ -368,7 +370,10 @@ export default function App() {
   }, [query, refreshAuth])
 
   useEffect(() => {
-    if (screen === 'join-party' || screen === 'welcome') loadLiveSessions()
+    if (screen !== 'join-party' && screen !== 'welcome') return
+    loadLiveSessions()
+    const interval = setInterval(loadLiveSessions, LIVE_SESSION_POLL_MS)
+    return () => clearInterval(interval)
   }, [screen, loadLiveSessions])
 
   // Load the real bay list once auth is available — this is the source of truth
