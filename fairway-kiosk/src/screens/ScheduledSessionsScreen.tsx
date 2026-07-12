@@ -137,7 +137,7 @@ export default function ScheduledSessionsScreen({ sessions, bays, loading, onSel
       {/* Header */}
       <div className="flex items-start justify-between flex-shrink-0">
         <div>
-          <p className="text-[#C9A84C] text-xs uppercase tracking-[0.4em] font-medium mb-1">Fairway Golf Club</p>
+          <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-8 w-auto hg-logo-white mb-2" />
           <h1 className="text-4xl font-bold text-white">{greeting}, Golfer!</h1>
           <p className="text-[#666] text-sm mt-1">Find your session below or check in as a walk-in.</p>
         </div>

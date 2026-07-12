@@ -1,10 +1,13 @@
 import { LightningElement, api, track } from 'lwc';
 import getBayGreeting from '@salesforce/apex/FairwayOpsDashboardController.getBayGreeting';
+import IMAGES from '@salesforce/resourceUrl/fgcImages';
 
 export default class FairwayBayGreeting extends LightningElement {
     @api appointmentId;   // passed in via flexipage config or URL param
     @track data = null;
     @track isLoading = true;
+
+    logoUrl = `${IMAGES}/logo-text.png`;
 
     connectedCallback() {
         if (this.appointmentId) {

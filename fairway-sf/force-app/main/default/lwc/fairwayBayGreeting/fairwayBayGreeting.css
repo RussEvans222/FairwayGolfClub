@@ -19,7 +19,7 @@
     width: 100%; display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 1rem; border-bottom: 1px solid #C9A84C33;
 }
-.logo { color: #C9A84C; font-weight: 700; font-size: 1.1rem; }
+.logo-img { height: 28px; width: auto; filter: brightness(0) invert(1); }
 .bay-label { color: #888; font-size: 0.85rem; }
 
 /* Welcome */

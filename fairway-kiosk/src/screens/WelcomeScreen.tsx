@@ -115,81 +115,84 @@ export default function WelcomeScreen({ bayName, sessions, bays, onStart }: Prop
   }, [sessions, bays])
 
   return (
-    <div
-      className="w-full h-full flex flex-col items-center justify-center gap-8 cursor-pointer select-none px-10"
-      onClick={onStart}
-    >
-      {/* Logo */}
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-24 h-24 rounded-full border-2 border-[#C9A84C] flex items-center justify-center">
-          <span className="text-[#C9A84C] text-4xl font-bold">F</span>
-        </div>
-        <p className="text-[#C9A84C] text-xs uppercase tracking-[0.4em] font-medium">Fairway Golf Club</p>
+    <div className="relative w-full h-full cursor-pointer select-none" onClick={onStart}>
+      {/* Full-bleed clubroom photography */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/images/welcome-bg.jpg"
+          alt=""
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/65" />
+        <div className="absolute inset-0 hg-vignette" />
       </div>
 
-      {/* Headline */}
-      <div className="text-center flex flex-col gap-3">
-        <h1 className="text-6xl font-bold text-white tracking-tight leading-[1.1]">
-          Welcome,<br />
-          <span className="text-[#C9A84C]">Golfer.</span>
-        </h1>
-        <p className="text-[#666] text-base max-w-xs mx-auto leading-relaxed">{tagline}</p>
-        {bayName && <p className="text-[#888] text-sm mt-1">{bayName}</p>}
-      </div>
+      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center gap-8 px-10">
+        {/* Logo */}
+        <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-24 w-auto hg-logo-white" />
 
-      {/* Bay availability / wait block */}
-      {hasBaysAvailable ? (
-        <div className="rounded-2xl border border-green-500/25 bg-green-500/5 px-6 py-4 flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
-          <p className="text-green-400 text-sm font-medium">Bays available now — tap to check in</p>
+        {/* Headline */}
+        <div className="text-center flex flex-col gap-3">
+          <h1 className="font-[family-name:var(--font-display)] text-6xl font-bold text-white tracking-tight leading-[1.1]">
+            Welcome,<br />
+            <span className="hg-gold-shimmer">Golfer.</span>
+          </h1>
+          <p className="text-[#ccc] text-base max-w-xs mx-auto leading-relaxed">{tagline}</p>
+          {bayName && <p className="text-[#aaa] text-sm mt-1">{bayName}</p>}
         </div>
-      ) : waitSeconds !== null && waitSeconds > 0 ? (
-        <div className="flex flex-col items-center gap-4 w-full max-w-xs">
-          {/* Countdown */}
-          <div className="rounded-2xl border border-[#C9A84C]/25 bg-[#C9A84C]/5 px-8 py-5 flex flex-col items-center gap-1 w-full">
-            <p className="text-[#888] text-xs uppercase tracking-widest">Next bay available in</p>
-            <p className="text-4xl font-bold text-[#C9A84C] tabular-nums">{formatWait(waitSeconds)}</p>
-          </div>
 
-          {/* Drink suggestion */}
-          <div className="rounded-2xl border border-[#2A2A2A] bg-[#111] px-5 py-4 flex gap-3 items-start w-full">
-            <span className="text-2xl flex-shrink-0">{drink.emoji}</span>
-            <div>
-              <p className="text-white text-sm font-medium">While you wait…</p>
-              <p className="text-[#777] text-xs mt-0.5 leading-relaxed">{drink.line}</p>
+        {/* Bay availability / wait block */}
+        {hasBaysAvailable ? (
+          <div className="hg-glass-panel rounded-full px-6 py-3 flex items-center gap-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+            <p className="text-white text-xs font-semibold uppercase tracking-wider">Bays Available — Tap to Check In</p>
+          </div>
+        ) : waitSeconds !== null && waitSeconds > 0 ? (
+          <div className="flex flex-col items-center gap-4 w-full max-w-xs">
+            {/* Countdown */}
+            <div className="hg-glass-panel rounded-2xl px-8 py-5 flex flex-col items-center gap-1 w-full">
+              <p className="text-[#C9A84C]/80 text-xs uppercase tracking-widest">Next bay available in</p>
+              <p className="font-[family-name:var(--font-display)] text-4xl font-bold text-[#C9A84C] tabular-nums">{formatWait(waitSeconds)}</p>
+            </div>
+
+            {/* Drink suggestion */}
+            <div className="hg-glass-panel rounded-2xl px-5 py-4 flex gap-3 items-start w-full">
+              <span className="text-2xl flex-shrink-0">{drink.emoji}</span>
+              <div>
+                <p className="text-white text-sm font-medium">While you wait…</p>
+                <p className="text-[#ccc] text-xs mt-0.5 leading-relaxed">{drink.line}</p>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {/* Active sessions — live status per bay */}
-      {bayStatuses.length > 0 && (
-        <div className="flex gap-3 flex-wrap justify-center max-w-lg">
-          {bayStatuses.map(b => (
-            <div
-              key={b.bayId}
-              className={`rounded-xl border px-4 py-2 flex items-center gap-2 ${
-                b.active ? 'border-[#C9A84C]/30 bg-[#C9A84C]/5' : 'border-green-500/20 bg-green-500/5'
-              }`}
-            >
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${b.active ? 'bg-[#C9A84C]' : 'bg-green-400'}`} />
-              <span className="text-white text-xs font-medium">{shortBayName(b.bayName)}</span>
-              {b.active ? (
-                <span className="text-[#888] text-xs">{b.golferFirstName} · {b.minutesLeft}m left</span>
-              ) : (
-                <span className="text-green-400 text-xs">Open</span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+        {/* Active sessions — live status per bay */}
+        {bayStatuses.length > 0 && (
+          <div className="flex gap-3 flex-wrap justify-center max-w-lg">
+            {bayStatuses.map(b => (
+              <div
+                key={b.bayId}
+                className="hg-glass-panel rounded-xl px-4 py-2 flex items-center gap-2"
+              >
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${b.active ? 'bg-[#C9A84C]' : 'bg-green-400'}`} />
+                <span className="text-white text-xs font-medium">{shortBayName(b.bayName)}</span>
+                {b.active ? (
+                  <span className="text-[#ccc] text-xs">{b.golferFirstName} · {b.minutesLeft}m left</span>
+                ) : (
+                  <span className="text-green-400 text-xs">Open</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
-      {/* Tap CTA */}
-      <div className={`flex flex-col items-center gap-3 transition-opacity duration-700 ${pulse ? 'opacity-100' : 'opacity-35'}`}>
-        <div className="w-14 h-14 rounded-full border-2 border-[#C9A84C]/50 flex items-center justify-center">
-          <span className="text-xl">👆</span>
+        {/* Tap CTA */}
+        <div className={`flex flex-col items-center gap-3 transition-opacity duration-700 ${pulse ? 'opacity-100' : 'opacity-60'}`}>
+          <div className="hg-glass-button rounded-xl px-10 py-5 flex items-center gap-3">
+            <span className="font-[family-name:var(--font-display)] text-[#C9A84C] text-2xl font-semibold tracking-widest uppercase">Tap to Start</span>
+          </div>
+          <p className="text-[#999] text-xs uppercase tracking-[0.25em]">Touch screen anywhere to begin</p>
         </div>
-        <p className="text-[#555] text-sm uppercase tracking-[0.25em]">Tap anywhere to check in</p>
       </div>
     </div>
   )

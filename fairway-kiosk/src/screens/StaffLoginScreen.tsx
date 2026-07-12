@@ -24,7 +24,7 @@ export default function StaffLoginScreen({ onSkip, error }: Props) {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-10 px-12">
       <div className="text-center">
-        <p className="text-[#C9A84C] text-xs uppercase tracking-[0.4em] font-medium mb-3">Fairway Golf Club</p>
+        <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-14 w-auto hg-logo-white mx-auto mb-4" />
         <h1 className="text-4xl font-bold text-white mb-2">Kiosk Setup</h1>
         <p className="text-[#888] text-base">Sign in once each morning to activate today's sessions</p>
       </div>
