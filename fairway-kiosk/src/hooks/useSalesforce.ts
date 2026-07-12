@@ -100,5 +100,24 @@ export function useSalesforce() {
     }
   }, [auth])
 
-  return { auth, refreshAuth, query, create, patch }
+  // Calls a custom Apex REST endpoint (POST) — used for join-in-progress-party,
+  // which needs slot-assignment/locking logic that's not safe to reimplement
+  // client-side (see FairwaySessionJoinApi.cls).
+  const postApexRest = useCallback(async <T>(path: string, body: unknown): Promise<T> => {
+    if (!auth) throw new Error('Not authenticated')
+    const res = await fetch(apiUrl(`/services/apexrest${path}`), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${auth.accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    await checkForSessionError(res)
+    if (!res.ok) {
+      const err = await res.json().catch(() => null)
+      const msg = Array.isArray(err) ? err.map((e: {errorCode?: string; message?: string}) => `${e.errorCode}: ${e.message}`).join(' | ') : `HTTP ${res.status}`
+      throw new Error(`[ApexRest] ${msg}`)
+    }
+    return (await res.json()) as T
+  }, [auth])
+
+  return { auth, refreshAuth, query, create, patch, postApexRest }
 }

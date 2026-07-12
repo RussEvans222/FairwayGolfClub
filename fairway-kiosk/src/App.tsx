@@ -3,15 +3,15 @@ import { useSession } from './hooks/useSession'
 import { useSalesforce, saveAuth, clearAuth } from './hooks/useSalesforce'
 import type {
   Screen, SkillLevel, GolferProfile, Contact,
-  ScheduledSession, ScheduledPlayer, QueueEntry,
+  ScheduledSession, ScheduledPlayer, QueueEntry, LiveSession, JoinPartyResult,
 } from './types'
 
 import WelcomeScreen from './screens/WelcomeScreen'
+import CheckInScreen from './screens/CheckInScreen'
 import ScheduledSessionsScreen from './screens/ScheduledSessionsScreen'
 import PinEntryScreen from './screens/PinEntryScreen'
-import QrCheckInScreen from './screens/QrCheckInScreen'
 import BayDirectionScreen from './screens/BayDirectionScreen'
-import PlayerTypeScreen from './screens/PlayerTypeScreen'
+import JoinPartyScreen from './screens/JoinPartyScreen'
 import MemberWalkInScreen from './screens/MemberWalkInScreen'
 import GuestRegistrationScreen from './screens/GuestRegistrationScreen'
 import SessionActiveScreen from './screens/SessionActiveScreen'
@@ -68,7 +68,12 @@ export default function App() {
   })
   const [coachTip, setCoachTip] = useState<CoachTipData | null>(null)
 
-  const { auth, refreshAuth, query, create, patch } = useSalesforce()
+  // Join-a-party state
+  const [liveSessions, setLiveSessions] = useState<LiveSession[]>([])
+  const [liveSessionsLoading, setLiveSessionsLoading] = useState(false)
+  const [selectedJoinSession, setSelectedJoinSession] = useState<LiveSession | null>(null)
+
+  const { auth, refreshAuth, query, create, patch, postApexRest } = useSalesforce()
 
   // Writes ServiceAppointment.Status through the full check-in ladder —
   // "Checked In" (identity confirmed) immediately followed by "Dispatched"
@@ -207,10 +212,47 @@ export default function App() {
     }
   }, [query])
 
-  // Reload schedule when we navigate to welcome or sessions screen
+  // Reload schedule when we navigate to welcome, check-in, or sessions screen
   useEffect(() => {
-    if (screen === 'welcome' || screen === 'scheduled-sessions') loadSchedule()
+    if (screen === 'welcome' || screen === 'check-in' || screen === 'scheduled-sessions') loadSchedule()
   }, [screen, loadSchedule])
+
+  // ── Load in-progress sessions a late arrival can join ──────────────────
+  const loadLiveSessions = useCallback(async () => {
+    setLiveSessionsLoading(true)
+    try {
+      type SessionRow = {
+        Id: string
+        Session_Start__c: string
+        Bay__r: { Name: string } | null
+        Session_Participants__r: { records: Array<{ Id: string }> } | null
+      }
+      const rows = await query<SessionRow>(
+        `SELECT Id, Session_Start__c, Bay__r.Name, (SELECT Id FROM Session_Participants__r)
+         FROM Golf_Session__c
+         WHERE Status__c = 'In Progress'
+         ORDER BY Session_Start__c ASC`
+      )
+      setLiveSessions(rows.map(r => ({
+        sessionId: r.Id,
+        bayName: r.Bay__r?.Name ?? 'Bay',
+        startTime: r.Session_Start__c,
+        participantCount: r.Session_Participants__r?.records?.length ?? 0,
+      })))
+    } catch (e) {
+      console.error('Failed to load live sessions', e)
+      if (e instanceof Error && e.message === 'SESSION_EXPIRED') {
+        clearAuth(); refreshAuth()
+      }
+      setLiveSessions([])
+    } finally {
+      setLiveSessionsLoading(false)
+    }
+  }, [query, refreshAuth])
+
+  useEffect(() => {
+    if (screen === 'join-party') loadLiveSessions()
+  }, [screen, loadLiveSessions])
 
   // Load the real bay list once auth is available — this is the source of truth
   // for "which bays exist," independent of whether they have any bookings today.
@@ -233,7 +275,7 @@ export default function App() {
 
   function handleStart() {
     setError(null)
-    setScreen('scheduled-sessions')
+    setScreen('check-in')
   }
 
   function handleReset() {
@@ -244,6 +286,7 @@ export default function App() {
     setWalkInPlayer(null)
     setPendingGuest(null)
     setPendingMember(null)
+    setSelectedJoinSession(null)
     setQueueEntry(null)
     setSummaryStats({ avgBallSpeed: null, avgCarryDistance: null, bestCarry: null, shotCount: null, durationMinutes: null })
     setCoachTip(null)
@@ -383,12 +426,53 @@ export default function App() {
     }
   }, [query])
 
+  // ── Record the session fee owed for one player ──────────────────────────
+  // Creates an individual Order + OrderItem — one per player, not one shared
+  // across a party — for the base session fee. This does NOT collect or
+  // confirm payment; it just records what's owed. A visit can rack up
+  // multiple charges (base fee + N extensions), so a single static amount
+  // can't represent that — the Order is the running tab, and extendSession
+  // (session console) adds further OrderItems to it as the golfer extends.
+  // `appointmentId` is omitted for a join-a-party joiner, who has no
+  // ServiceAppointment of their own (Order.Service_Appointment__c is
+  // optional) — actual payment collection happens at a not-yet-designed bay
+  // checkout step, not here.
+  const createSessionOrder = useCallback(async (
+    contactId: string,
+    accountId: string,
+    startIso: string,
+    appointmentId?: string,
+  ): Promise<void> => {
+    const pricebookId = await resolvePricebookId(contactId)
+    const priceEntries = pricebookId
+      ? await query<{ Id: string; UnitPrice: number }>(
+          `SELECT Id, UnitPrice FROM PricebookEntry
+           WHERE Product2.Name = 'Bay Session' AND Pricebook2Id = '${pricebookId}' AND IsActive = true
+           LIMIT 1`
+        )
+      : []
+    // If the "Bay Session" product/pricebook entry isn't seeded yet, the
+    // check-in still proceeds — just without a revenue record. See
+    // SESSION_SYNC.md "Revenue tracking" for the seed script.
+    if (!priceEntries.length || !pricebookId) return
+
+    const pe = priceEntries[0]
+    const order = await create<{ id: string }>('Order', {
+      AccountId:    accountId,
+      EffectiveDate: startIso.slice(0, 10),
+      Status:       'Draft',
+      Pricebook2Id: pricebookId,
+      ...(appointmentId ? { Service_Appointment__c: appointmentId } : {}),
+    })
+    await create('OrderItem', {
+      OrderId:          order.id,
+      PricebookEntryId: pe.Id,
+      Quantity:         1,
+      UnitPrice:        pe.UnitPrice,
+    })
+  }, [create, query, resolvePricebookId])
+
   // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
-  // Also opens an Order + OrderItem for the base session fee — a visit can
-  // rack up multiple charges (base fee + N extensions), so a single static
-  // amount on the appointment can't represent that. The Order is the running
-  // tab for this visit; extendSession (session console) adds further
-  // OrderItems to the same Order as the golfer extends their time.
   const createWalkInAppointment = useCallback(async (
     contactId: string,
     accountId: string,
@@ -417,36 +501,10 @@ export default function App() {
     })
     await patch('ServiceAppointment', appt.id, { Status: 'Dispatched' })
 
-    const pricebookId = await resolvePricebookId(contactId)
-    const priceEntries = pricebookId
-      ? await query<{ Id: string; UnitPrice: number }>(
-          `SELECT Id, UnitPrice FROM PricebookEntry
-           WHERE Product2.Name = 'Bay Session' AND Pricebook2Id = '${pricebookId}' AND IsActive = true
-           LIMIT 1`
-        )
-      : []
-    if (priceEntries.length && pricebookId) {
-      const pe = priceEntries[0]
-      const order = await create<{ id: string }>('Order', {
-        AccountId:              accountId,
-        EffectiveDate:          startIso.slice(0, 10),
-        Status:                 'Draft',
-        Pricebook2Id:           pricebookId,
-        Service_Appointment__c: appt.id,
-      })
-      await create('OrderItem', {
-        OrderId:          order.id,
-        PricebookEntryId: pe.Id,
-        Quantity:         1,
-        UnitPrice:        pe.UnitPrice,
-      })
-    }
-    // If the "Bay Session" product/pricebook entry isn't seeded yet, the
-    // appointment still gets created — just without a revenue record. See
-    // SESSION_SYNC.md "Revenue tracking" for the seed script.
+    await createSessionOrder(contactId, accountId, startIso, appt.id)
 
     return appt.id
-  }, [create, patch, query, resolvePricebookId, resolveServiceTerritoryId])
+  }, [create, patch, resolveServiceTerritoryId, resolveWalkInChannelId, createSessionOrder])
 
   // Find the next available (unoccupied) bay, checked against the real bay list —
   // never inferred from today's schedule, and never a hardcoded guess. A bay with
@@ -693,6 +751,50 @@ export default function App() {
     setScreen('guest-payment')
   }
 
+  // Find-or-create the Contact (+ Person Account) and Golfer_Profile__c for a
+  // guest, from the name/email/skill collected by GuestRegistrationScreen.
+  // Shared by the normal new-guest walk-in path and the join-a-party guest
+  // path, so this identity-resolution logic doesn't drift into two copies.
+  const resolveGuestIdentity = useCallback(async (data: {
+    firstName: string; lastName: string; email: string; skill: SkillLevel
+  }): Promise<{ contact: Contact & { AccountId: string | null }; profile: GolferProfile }> => {
+    const contacts = await query<Contact & { AccountId: string | null }>(
+      `SELECT Id, FirstName, LastName, Email, AccountId FROM Contact WHERE Email = '${data.email}' LIMIT 1`
+    )
+    let contact: Contact & { AccountId: string | null }
+    if (contacts.length > 0) {
+      contact = contacts[0]
+    } else {
+      // Create a Person Account — this auto-creates the linked Contact in SF.
+      // We then re-query to get the shadow Contact ID so we have a ContactId for the appointment.
+      await resolvePersonAccount(data.email, data.firstName, data.lastName)
+      const newContacts = await query<Contact & { AccountId: string | null }>(
+        `SELECT Id, FirstName, LastName, Email, AccountId FROM Contact WHERE Email = '${data.email}' AND AccountId != null LIMIT 1`
+      )
+      if (!newContacts.length) throw new Error('Contact not found after Person Account creation')
+      contact = newContacts[0]
+    }
+
+    const profiles = await query<GolferProfile>(
+      `SELECT Id, Name, Skill_Segment__c FROM Golfer_Profile__c WHERE Contact__c = '${contact.Id}' LIMIT 1`
+    )
+    let profile: GolferProfile
+    if (profiles.length > 0) {
+      profile = profiles[0]
+    } else {
+      const pr = await create<{ id: string }>('Golfer_Profile__c', {
+        Contact__c: contact.Id, Skill_Segment__c: data.skill,
+      })
+      profile = {
+        Id: pr.id, Name: `${data.firstName} ${data.lastName}`, Skill_Segment__c: data.skill,
+        Handicap__c: null, AI_Coaching_Enabled__c: false, Current_Focus__c: null,
+        Average_7_Iron_Carry__c: null, Average_Driver_Carry__c: null,
+      }
+    }
+
+    return { contact, profile }
+  }, [query, create, resolvePersonAccount])
+
   // Step 2: payment confirmed → create SF records, assign bay
   const handleGuestComplete = useCallback(async (data: {
     firstName: string; lastName: string; email: string; skill: SkillLevel
@@ -700,39 +802,7 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
-      const contacts = await query<Contact & { AccountId: string | null }>(
-        `SELECT Id, FirstName, LastName, Email, AccountId FROM Contact WHERE Email = '${data.email}' LIMIT 1`
-      )
-      let contact: Contact & { AccountId: string | null }
-      if (contacts.length > 0) {
-        contact = contacts[0]
-      } else {
-        // Create a Person Account — this auto-creates the linked Contact in SF.
-        // We then re-query to get the shadow Contact ID so we have a ContactId for the appointment.
-        await resolvePersonAccount(data.email, data.firstName, data.lastName)
-        const newContacts = await query<Contact & { AccountId: string | null }>(
-          `SELECT Id, FirstName, LastName, Email, AccountId FROM Contact WHERE Email = '${data.email}' AND AccountId != null LIMIT 1`
-        )
-        if (!newContacts.length) throw new Error('Contact not found after Person Account creation')
-        contact = newContacts[0]
-      }
-
-      const profiles = await query<GolferProfile>(
-        `SELECT Id, Name, Skill_Segment__c FROM Golfer_Profile__c WHERE Contact__c = '${contact.Id}' LIMIT 1`
-      )
-      let profile: GolferProfile
-      if (profiles.length > 0) {
-        profile = profiles[0]
-      } else {
-        const pr = await create<{ id: string }>('Golfer_Profile__c', {
-          Contact__c: contact.Id, Skill_Segment__c: data.skill,
-        })
-        profile = {
-          Id: pr.id, Name: `${data.firstName} ${data.lastName}`, Skill_Segment__c: data.skill,
-          Handicap__c: null, AI_Coaching_Enabled__c: false, Current_Focus__c: null,
-          Average_7_Iron_Carry__c: null, Average_Driver_Carry__c: null,
-        }
-      }
+      const { contact, profile } = await resolveGuestIdentity(data)
 
       addPlayer({
         slot: session.players.length + 1, contact, profile,
@@ -792,7 +862,83 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, create, session.players.length, addPlayer, scheduledSessions, allBays, createWalkInAppointment])
+  }, [resolveGuestIdentity, session.players.length, addPlayer, scheduledSessions, allBays, createWalkInAppointment])
+
+  // ── Join an in-progress party ──────────────────────────────────────────
+  // Reuses the exact same identity-collection screens as a normal walk-in
+  // (member-walkin/member-walkin-pin or guest-registration → guest-payment) —
+  // this only runs from the guest-payment confirm step, branched on whether
+  // selectedJoinSession is set. Records an individual Order for this one
+  // player (see createSessionOrder), then calls the join-party Apex endpoint
+  // to attach them to the live Golf_Session__c.
+  const handleJoinPartyComplete = useCallback(async () => {
+    if (!selectedJoinSession) return
+    setLoading(true)
+    setError(null)
+    try {
+      let contactId: string
+      let accountId: string
+      let profileId: string | null
+      let displayName: string
+      let isGuest: boolean
+
+      if (pendingMember) {
+        contactId = pendingMember.contactId
+        accountId = pendingMember.accountId
+          ?? await resolvePersonAccount(pendingMember.email, pendingMember.firstName, pendingMember.lastName)
+        profileId = pendingMember.profileId
+        displayName = `${pendingMember.firstName} ${pendingMember.lastName}`
+        isGuest = false
+      } else if (pendingGuest) {
+        const { contact, profile } = await resolveGuestIdentity(pendingGuest)
+        contactId = contact.Id
+        accountId = contact.AccountId
+          ?? await resolvePersonAccount(pendingGuest.email, pendingGuest.firstName, pendingGuest.lastName)
+        profileId = profile.Id
+        displayName = `${pendingGuest.firstName} ${pendingGuest.lastName}`
+        isGuest = true
+      } else {
+        throw new Error('Missing identity for join request.')
+      }
+
+      await createSessionOrder(contactId, accountId, new Date().toISOString())
+
+      const result = await postApexRest<JoinPartyResult>('/FairwaySessionJoin/', {
+        sessionId: selectedJoinSession.sessionId,
+        golferProfileId: profileId,
+        displayName,
+        isGuest,
+      })
+
+      if (!result.success) {
+        setError(result.message)
+        return
+      }
+
+      const now = new Date().toISOString()
+      const syntheticSession: ScheduledSession = {
+        reservationId: 'walk-in',
+        sessionId: selectedJoinSession.sessionId,
+        bayId: '',
+        bayName: result.bayName ?? selectedJoinSession.bayName,
+        bayLabel: result.bayName ?? selectedJoinSession.bayName,
+        startTime: now,
+        endTime: now,
+        status: 'In Progress',
+        players: [{
+          profileId, contactId, displayName, isGuest, checkedIn: true, pin: null,
+        }],
+      }
+      setWalkInSession(syntheticSession)
+      setWalkInPlayer(syntheticSession.players[0])
+      setSelectedJoinSession(null)
+      setScreen('bay-direction')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong joining that session.')
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedJoinSession, pendingMember, pendingGuest, resolvePersonAccount, resolveGuestIdentity, createSessionOrder, postApexRest])
 
   const fetchGreeting = useCallback(async (appointmentId: string) => {
     type GreetingRow = {
@@ -921,18 +1067,34 @@ export default function App() {
       {screen === 'welcome' && (
         <WelcomeScreen bayName={null} sessions={scheduledSessions} bays={allBays} onStart={handleStart} />
       )}
+      {screen === 'check-in' && (
+        <CheckInScreen
+          onScan={handleQrCheckIn}
+          onNewGuest={() => setScreen('guest-registration')}
+          onWalkIn={() => setScreen('scheduled-sessions')}
+          onJoinParty={() => setScreen('join-party')}
+        />
+      )}
       {screen === 'scheduled-sessions' && (
         <ScheduledSessionsScreen
           sessions={scheduledSessions}
           bays={allBays}
           loading={sessionsLoading}
           onSelectPlayer={handleSelectPlayer}
-          onWalkIn={() => setScreen('player-type')}
-          onQrCheckIn={() => setScreen('qr-checkin')}
+          onMemberWalkIn={() => setScreen('member-walkin')}
           onAddGuest={(s) => {
             setSelectedSession(s)
             setScreen('guest-registration')
           }}
+          onBack={() => setScreen('check-in')}
+        />
+      )}
+      {screen === 'join-party' && (
+        <JoinPartyScreen
+          sessions={liveSessions}
+          loading={liveSessionsLoading}
+          onSelect={(s) => { setSelectedJoinSession(s); setScreen('member-walkin') }}
+          onBack={() => setScreen('check-in')}
         />
       )}
       {screen === 'pin-entry' && selectedSession && currentPlayer && (
@@ -955,12 +1117,6 @@ export default function App() {
           error={error}
         />
       )}
-      {screen === 'qr-checkin' && (
-        <QrCheckInScreen
-          onScan={handleQrCheckIn}
-          onBack={() => setScreen('scheduled-sessions')}
-        />
-      )}
       {screen === 'bay-direction' && (() => {
         const baySession = walkInSession ?? selectedSession
         const bayPlayer = walkInPlayer ?? currentPlayer
@@ -973,19 +1129,11 @@ export default function App() {
           />
         ) : null
       })()}
-      {screen === 'player-type' && (
-        <PlayerTypeScreen
-          onGuest={() => setScreen('guest-registration')}
-          onMember={() => setScreen('scheduled-sessions')}
-          onWalkInMember={() => setScreen('member-walkin')}
-          onBack={() => setScreen('scheduled-sessions')}
-        />
-      )}
       {screen === 'member-walkin' && (
         <MemberWalkInScreen
           onFound={handleMemberWalkInFound}
           onNotFound={() => setScreen('guest-registration')}
-          onBack={() => setScreen('player-type')}
+          onBack={() => setScreen(selectedJoinSession ? 'join-party' : 'check-in')}
           loading={loading}
           error={error}
           onSearch={handleMemberSearch}
@@ -1004,7 +1152,7 @@ export default function App() {
       {screen === 'guest-registration' && (
         <GuestRegistrationScreen
           onComplete={handleGuestRegistered}
-          onBack={() => setScreen('player-type')}
+          onBack={() => setScreen(selectedJoinSession ? 'join-party' : 'check-in')}
           loading={loading}
         />
       )}
@@ -1014,8 +1162,8 @@ export default function App() {
             ? `${pendingMember.firstName} ${pendingMember.lastName}`
             : `${pendingGuest!.firstName} ${pendingGuest!.lastName}`}
           onConfirm={pendingMember
-            ? () => handleMemberWalkInComplete()
-            : () => handleGuestComplete(pendingGuest!)}
+            ? () => (selectedJoinSession ? handleJoinPartyComplete() : handleMemberWalkInComplete())
+            : () => (selectedJoinSession ? handleJoinPartyComplete() : handleGuestComplete(pendingGuest!))}
           onBack={() => pendingMember ? setScreen('member-walkin') : setScreen('guest-registration')}
         />
       )}

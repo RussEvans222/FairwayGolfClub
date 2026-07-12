@@ -844,4 +844,8 @@
         <apexClass>FairwaySessionExtendApi</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>FairwaySessionJoinApi</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
 </PermissionSet>

@@ -40,6 +40,17 @@ global with sharing class FairwaySessionConsoleController {
         @AuraEnabled public String message;
     }
 
+    // ── Result of a join-in-progress-party attempt ─────────────────────────────
+    // global: FairwaySessionJoinApi's @RestResource method returns this type,
+    // and a global method's return type must itself be global.
+    global class JoinResult {
+        @AuraEnabled public Boolean success;
+        @AuraEnabled public String message;
+        @AuraEnabled public String participantId;
+        @AuraEnabled public Integer slotAssigned;
+        @AuraEnabled public String bayName;
+    }
+
     // ── Fetch all active + today's scheduled sessions ─────────────────────────
     @AuraEnabled(cacheable=false)
     public static List<BaySessionDTO> getActiveSessions() {
@@ -376,6 +387,88 @@ global with sharing class FairwaySessionConsoleController {
             Quantity         = minutes / 30.0,
             UnitPrice        = entries[0].UnitPrice
         );
+    }
+
+    // ── Join an in-progress session as a late-arriving party member ───────────
+    // Silent add — no approve/deny prompt on the bay screen (fairway-bay just
+    // picks up the new Session_Participant__c row on its next 20s poll, no
+    // code changes needed there). Payment isn't collected here: an individual
+    // Order/OrderItem for this player is created by the kiosk caller before
+    // this method runs (see fairway-kiosk's createSessionOrder) — settled at
+    // a not-yet-built bay checkout step, not at check-in.
+    //
+    // FOR UPDATE locks the parent Golf_Session__c row to serialize concurrent
+    // joins against the same session — nothing else enforces
+    // Simulator_Player_Slot__c uniqueness (no validation rule exists on
+    // Session_Participant__c at all).
+    @AuraEnabled
+    global static JoinResult joinSession(String sessionId, String golferProfileId, String displayName, Boolean isGuest) {
+        JoinResult result = new JoinResult();
+
+        if (String.isBlank(sessionId) || String.isBlank(displayName)) {
+            result.success = false;
+            result.message = 'Missing session or player info.';
+            return result;
+        }
+
+        List<Golf_Session__c> sessions = [
+            SELECT Id, Status__c, Bay__r.Name
+            FROM Golf_Session__c
+            WHERE Id = :sessionId
+            FOR UPDATE
+        ];
+        if (sessions.isEmpty() || sessions[0].Status__c != 'In Progress') {
+            result.success = false;
+            result.message = 'That session is no longer active. Please check in another way.';
+            return result;
+        }
+        Golf_Session__c session = sessions[0];
+
+        Set<Integer> usedSlots = new Set<Integer>();
+        for (Session_Participant__c sp : [
+            SELECT Simulator_Player_Slot__c, Golfer_Profile__c
+            FROM Session_Participant__c
+            WHERE Golf_Session__c = :sessionId
+        ]) {
+            usedSlots.add((Integer) sp.Simulator_Player_Slot__c);
+            if (golferProfileId != null && sp.Golfer_Profile__c == golferProfileId) {
+                result.success = false;
+                result.message = 'You\'re already checked in to this session.';
+                return result;
+            }
+        }
+
+        Integer freeSlot = null;
+        for (Integer i = 1; i <= 4; i++) {
+            if (!usedSlots.contains(i)) { freeSlot = i; break; }
+        }
+        if (freeSlot == null) {
+            result.success = false;
+            result.message = 'This session already has 4 players — it\'s full.';
+            return result;
+        }
+
+        try {
+            Session_Participant__c sp = new Session_Participant__c(
+                Golf_Session__c          = sessionId,
+                Golfer_Profile__c        = String.isBlank(golferProfileId) ? null : golferProfileId,
+                Display_Name__c          = displayName,
+                Is_Primary_Booker__c     = false,
+                Guest_Flag__c            = isGuest == true,
+                Simulator_Player_Slot__c = freeSlot
+            );
+            insert sp;
+
+            result.success       = true;
+            result.participantId = sp.Id;
+            result.slotAssigned  = freeSlot;
+            result.bayName       = session.Bay__r != null ? session.Bay__r.Name : null;
+            result.message       = 'Added to ' + result.bayName + '.';
+        } catch (DmlException e) {
+            result.success = false;
+            result.message = 'Something went wrong adding you to that session. Please ask staff for help.';
+        }
+        return result;
     }
 
     // ── Change status directly ────────────────────────────────────────────────

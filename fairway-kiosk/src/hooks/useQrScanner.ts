@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import QrScanner from 'qr-scanner'
-import GoldButton from '../components/GoldButton'
 
-interface Props {
-  // Returns an error message to display, or null on a successful check-in.
-  onScan: (contactId: string) => Promise<string | null>
-  onBack: () => void
-}
-
-export default function QrCheckInScreen({ onScan, onBack }: Props) {
+// Live camera QR scanner — extracted from the old standalone QrCheckInScreen
+// so it can be embedded directly on CheckInScreen instead of living on its
+// own full screen. No behavior change from the original: same qr-scanner
+// options, same Contact-Id-from-URL parsing, same de-dupe guard.
+export function useQrScanner(onScan: (contactId: string) => Promise<string | null>) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const scannerRef = useRef<QrScanner | null>(null)
   const processingRef = useRef(false)
@@ -59,27 +56,5 @@ export default function QrCheckInScreen({ onScan, onBack }: Props) {
     }
   }, [onScan])
 
-  return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-8 px-16">
-      <div className="text-center">
-        <p className="text-[#C9A84C] text-xs uppercase tracking-[0.4em] font-medium mb-2">QR Check-In</p>
-        <h2 className="text-4xl font-bold text-white">Scan your Fairway code</h2>
-        <p className="text-[#666] text-sm mt-2">Hold your check-in QR code up to the camera.</p>
-      </div>
-
-      <div className="relative w-full max-w-sm aspect-square rounded-2xl overflow-hidden border border-[#2A2A2A] bg-black">
-        <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
-        {checking && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <div className="w-10 h-10 border-2 border-[#C9A84C]/30 border-t-[#C9A84C] rounded-full animate-spin" />
-          </div>
-        )}
-      </div>
-
-      {cameraError && <p className="text-red-400 text-sm text-center max-w-sm">{cameraError}</p>}
-      {scanError && <p className="text-red-400 text-sm text-center max-w-sm">{scanError}</p>}
-
-      <GoldButton variant="ghost" onClick={onBack}>← Back</GoldButton>
-    </div>
-  )
+  return { videoRef, cameraError, scanError, checking }
 }

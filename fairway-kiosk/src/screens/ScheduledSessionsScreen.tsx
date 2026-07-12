@@ -13,9 +13,9 @@ interface Props {
   bays: BaySummary[]
   loading: boolean
   onSelectPlayer: (session: ScheduledSession, playerIndex: number) => void
-  onWalkIn: () => void
-  onQrCheckIn: () => void
+  onMemberWalkIn: () => void
   onAddGuest: (session: ScheduledSession) => void
+  onBack?: () => void
 }
 
 function formatTime(iso: string) {
@@ -120,7 +120,7 @@ function StatusBadge({ status, isLate }: { status: string; isLate: boolean }) {
   )
 }
 
-export default function ScheduledSessionsScreen({ sessions, bays, loading, onSelectPlayer, onWalkIn, onQrCheckIn, onAddGuest }: Props) {
+export default function ScheduledSessionsScreen({ sessions, bays, loading, onSelectPlayer, onMemberWalkIn, onAddGuest, onBack }: Props) {
   const now = Date.now()
   const [qrFor, setQrFor] = useState<{ contactId: string; displayName: string } | null>(null)
 
@@ -263,23 +263,25 @@ export default function ScheduledSessionsScreen({ sessions, bays, loading, onSel
       {/* Walk-in footer */}
       <div className="flex items-center justify-between border-t border-[#1E1E1E] pt-5 flex-shrink-0 gap-3">
         <div>
-          <p className="text-white text-sm font-medium">Walk-in today?</p>
+          <p className="text-white text-sm font-medium">No reservation today?</p>
           <p className="text-[#555] text-xs">
             {waitMinutes > 0 ? `Next bay available in ~${waitMinutes} min` : 'Bays available now'}
           </p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="border border-[#2A2A2A] text-[#888] font-semibold text-sm px-5 py-3 rounded-xl hover:border-[#C9A84C]/40 hover:text-[#C9A84C] active:scale-95 transition-all"
+            >
+              ← Back
+            </button>
+          )}
           <button
-            onClick={onQrCheckIn}
-            className="border border-[#2A2A2A] text-[#888] font-semibold text-sm px-5 py-3 rounded-xl hover:border-[#C9A84C]/40 hover:text-[#C9A84C] active:scale-95 transition-all"
-          >
-            Scan QR
-          </button>
-          <button
-            onClick={onWalkIn}
+            onClick={onMemberWalkIn}
             className="bg-[#C9A84C] text-black font-semibold text-sm px-6 py-3 rounded-xl hover:bg-[#E8C96A] active:scale-95 transition-all"
           >
-            Walk-In Check-In
+            Member Walk-In
           </button>
         </div>
       </div>

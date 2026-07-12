@@ -42,6 +42,8 @@ A golfer walks in alone, gets a bay (today's built walk-in flow — `guest-regis
 
 **This supersedes the existing Pending Task #7 in `SESSION_SYNC.md`** ("Guest 'join a session' flow") — that task's original design was a *silent* join (guest picks an active bay, gets added, no approval step). Case 2 replaces that with an **approval-gated** version. Anywhere Task #7 is referenced going forward, treat this description as the current design.
 
+**Update 2026-07-12: Task #7's original silent-join design was built, not this Case 2's approval-gated one.** Russell explicitly directed building the silent version for that pass — see "Session Update — 2026-07-12" in `SESSION_SYNC.md`. A late arrival picks a live `Golf_Session__c` at the kiosk, signs in or registers, and gets added as a real `Session_Participant__c` with no approve/deny step; `fairway-bay` was not touched (its poll loop already displays new participants). The approve/deny UX and the near-real-time delivery problem described below remain unbuilt — this note doesn't resolve them, it just records that a different (simpler) version shipped first.
+
 **New capability needed:** a live approve/deny prompt requires near-real-time delivery to the bay screen. `fairway-bay` currently only polls Salesforce every 20 seconds (`POLL_INTERVAL_MS` in `fairway-bay/src/App.tsx`) — adequate for stat updates, too slow to feel responsive for someone standing at the kiosk waiting on an answer. `SCHEDULER_RESEARCH.md` already recommended Salesforce's `AppointmentSchedulingEvent` platform event as a push-based alternative to polling for a different reason (real-time stat updates) — the same mechanism is the natural fit here too. Not decided; flagged as the implementation option to evaluate.
 
 ---

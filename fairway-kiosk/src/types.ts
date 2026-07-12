@@ -63,12 +63,12 @@ export interface ScheduledSession {
 
 export type Screen =
   | 'welcome'
+  | 'check-in'
   | 'scheduled-sessions'
   | 'pin-entry'
   | 'pin-setup'
-  | 'qr-checkin'
   | 'bay-direction'
-  | 'player-type'
+  | 'join-party'
   | 'member-walkin'
   | 'member-walkin-pin'
   | 'guest-registration'
@@ -89,3 +89,21 @@ export interface QueueEntry {
 
 export type SessionType = 'Practice' | 'Round' | 'Game'
 export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Competitive'
+
+// An in-progress Golf_Session__c a late arrival can join — deliberately not
+// a variant of ScheduledSession, since that type is shaped around
+// ServiceAppointment/single-player semantics that don't apply here.
+export interface LiveSession {
+  sessionId: string       // Golf_Session__c Id
+  bayName: string         // Bay__r.Name
+  startTime: string       // Session_Start__c
+  participantCount: number
+}
+
+export interface JoinPartyResult {
+  success: boolean
+  message: string
+  participantId?: string
+  slotAssigned?: number
+  bayName?: string
+}

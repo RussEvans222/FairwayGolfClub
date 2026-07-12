@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react'
 import { getEasternHour } from '../utils/time'
 import type { ScheduledSession } from '../types'
+import BackgroundSlideshow from '../components/BackgroundSlideshow'
+
+const SLIDESHOW_IMAGES = [
+  '/images/welcome-bg.jpg',
+  '/images/welcome-bg-simulator.jpg',
+  '/images/welcome-bg-lounge.jpg',
+  '/images/welcome-bg-bar.jpg',
+]
 
 interface BaySummary {
   bayId: string
@@ -116,13 +124,9 @@ export default function WelcomeScreen({ bayName, sessions, bays, onStart }: Prop
 
   return (
     <div className="relative w-full h-full cursor-pointer select-none" onClick={onStart}>
-      {/* Full-bleed clubroom photography */}
+      {/* Full-bleed clubroom photography — auto-rotating slideshow */}
       <div className="absolute inset-0 z-0">
-        <img
-          src="/images/welcome-bg.jpg"
-          alt=""
-          className="w-full h-full object-cover"
-        />
+        <BackgroundSlideshow images={SLIDESHOW_IMAGES} />
         <div className="absolute inset-0 bg-black/65" />
         <div className="absolute inset-0 hg-vignette" />
       </div>
