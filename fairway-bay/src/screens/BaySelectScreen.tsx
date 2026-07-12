@@ -10,9 +10,7 @@ export function BaySelectScreen({ bays, onSelect }: Props) {
     <div className="w-full h-full flex flex-col items-center justify-center gap-10"
          style={{ background: 'var(--dark)' }}>
       <div className="text-center">
-        <div className="text-4xl font-bold mb-2" style={{ color: 'var(--gold)' }}>
-          FAIRWAY
-        </div>
+        <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-14 w-auto mx-auto mb-2" />
         <div className="text-white/50 tracking-widest uppercase text-sm">Select Bay</div>
       </div>
 

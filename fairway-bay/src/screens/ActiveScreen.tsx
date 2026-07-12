@@ -74,8 +74,7 @@ export function ActiveScreen({
       {/* Header */}
       <div className="flex items-center justify-between px-10 pt-8 pb-4">
         <div>
-          <div className="text-2xl font-bold" style={{ color: 'var(--gold)' }}>FAIRWAY</div>
-          <div className="text-white/30 text-xs tracking-widest uppercase">Golf Club</div>
+          <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-10 w-auto" />
         </div>
         <div className="text-center">
           <div className="text-white font-semibold">{bay.name}</div>

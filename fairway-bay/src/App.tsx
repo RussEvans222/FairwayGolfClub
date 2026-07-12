@@ -15,6 +15,17 @@ import type {
 } from './types'
 
 const EXTEND_PROMPT_THRESHOLD_MIN = 10
+const BAY_ORDINAL_WORDS: Record<string, string> = {
+  '1': 'one',
+  '2': 'two',
+  '3': 'three',
+  '4': 'four',
+  '5': 'five',
+  '6': 'six',
+  '7': 'seven',
+  '8': 'eight',
+  '9': 'nine',
+}
 
 type CarryShot = { Club__c: string | null; Carry_Distance__c: number | null }
 
@@ -44,6 +55,32 @@ function bestCarryOf(shots: CarryShot[]): { bestCarry: number | null; bestCarryC
   }, null)
   const bestCarryClub = shots.find(s => s.Carry_Distance__c === bestCarry)?.Club__c ?? null
   return { bestCarry, bestCarryClub }
+}
+
+function getBayOrdinal(value: string): string | null {
+  const digitMatch = value.match(/\d+/)
+  if (digitMatch) return digitMatch[0]
+
+  const lower = value.toLowerCase()
+  for (const [digit, word] of Object.entries(BAY_ORDINAL_WORDS)) {
+    if (lower.includes(word)) return digit
+  }
+
+  return null
+}
+
+function matchesBayResource(resourceName: string, bayOrdinal: string | null): boolean {
+  if (!bayOrdinal) return false
+  const lower = resourceName.toLowerCase()
+  const word = BAY_ORDINAL_WORDS[bayOrdinal]
+  return (
+    lower.includes(`bay ${bayOrdinal}`) ||
+    lower.includes(`bay number ${bayOrdinal}`) ||
+    lower.includes(`bay ${word}`) ||
+    lower.includes(`bay number ${word}`) ||
+    lower.includes(word) ||
+    lower.includes(bayOrdinal)
+  )
 }
 
 const SF_LOGIN_URL = import.meta.env.VITE_SF_LOGIN_URL as string || 'https://login.salesforce.com'
@@ -114,10 +151,11 @@ export default function App() {
       )
       type ResRow = { Id: string; Name: string }
       const resources = await query<ResRow>(
-        `SELECT Id, Name FROM ServiceResource ORDER BY Name ASC`
+        `SELECT Id, Name FROM ServiceResource WHERE IsActive = true ORDER BY Name ASC`
       )
       const mapped: Bay[] = simBays.map((b) => {
-        const res = resources.find(r => r.Name.toLowerCase().includes(b.Bay_Number__c === 'BAY-1' ? 'one' : '2'))
+        const bayOrdinal = getBayOrdinal(b.Bay_Number__c) ?? getBayOrdinal(b.Name)
+        const res = resources.find(r => matchesBayResource(r.Name, bayOrdinal))
         return { id: b.Id, name: b.Name, bayNumber: b.Bay_Number__c, resourceId: res?.Id ?? '' }
       })
       setBays(mapped)
