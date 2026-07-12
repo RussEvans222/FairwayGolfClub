@@ -120,6 +120,26 @@ export default function App() {
     }
   }, [postApexRest])
 
+  // Blocking check, unlike ensureKioskSession above — called BEFORE a new
+  // ServiceAppointment/bay/Order gets created (or an existing reservation is
+  // confirmed), so a golfer already active in one bay can't also get sent to
+  // a second one. ensureKioskSession's own conflict guard (added earlier)
+  // only stops the Golf_Session__c tracking record from being created —
+  // by the time it runs the real booking already exists, which is too late.
+  // Fails open (returns null) if the check itself errors, so a transient
+  // network hiccup can't strand someone at the kiosk — same tradeoff this
+  // app already makes elsewhere (e.g. resolveWalkInChannelId).
+  const checkAlreadyActive = useCallback(async (golferProfileId: string | null): Promise<string | null> => {
+    if (!golferProfileId) return null
+    try {
+      const result = await postApexRest<{ conflictBayName: string | null }>('/FairwaySessionConflict/', { golferProfileId })
+      return result.conflictBayName
+    } catch (e) {
+      console.error('[FairwaySessionConflict] check failed, allowing check-in to proceed', e)
+      return null
+    }
+  }, [postApexRest])
+
   // ── Handle OAuth implicit callback (token in URL hash) ──────────────────
   useEffect(() => {
     const hash = window.location.hash
@@ -265,12 +285,15 @@ export default function App() {
          WHERE Status__c = 'In Progress'
          ORDER BY Session_Start__c ASC`
       )
-      setLiveSessions(rows.map(r => ({
-        sessionId: r.Id,
-        bayName: r.Bay__r?.Name ?? 'Bay',
-        startTime: r.Session_Start__c,
-        participantCount: r.Session_Participants__r?.records?.length ?? 0,
-      })))
+      const maxJoinAgeMs = 4 * 60 * 60 * 1000
+      setLiveSessions(rows
+        .filter(r => Date.now() - new Date(r.Session_Start__c).getTime() <= maxJoinAgeMs)
+        .map(r => ({
+          sessionId: r.Id,
+          bayName: r.Bay__r?.Name ?? 'Bay',
+          startTime: r.Session_Start__c,
+          participantCount: r.Session_Participants__r?.records?.length ?? 0,
+        })))
     } catch (e) {
       console.error('Failed to load live sessions', e)
       if (e instanceof Error && e.message === 'SESSION_EXPIRED') {
@@ -353,6 +376,14 @@ export default function App() {
         return
       }
 
+      // Can't be in two bays at once — check before touching any state.
+      const conflictBay = await checkAlreadyActive(player.profileId)
+      if (conflictBay) {
+        setError(`${player.displayName ?? 'This golfer'} is already checked into ${conflictBay}.`)
+        setLoading(false)
+        return
+      }
+
       // Mark checked in locally
       const checkedInSession: ScheduledSession = {
         ...selectedSession,
@@ -375,7 +406,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [selectedSession, selectedPlayerIndex, markCheckedIn, ensureKioskSession, upsertScheduledSession])
+  }, [selectedSession, selectedPlayerIndex, markCheckedIn, ensureKioskSession, checkAlreadyActive, upsertScheduledSession])
 
   const handlePinSetup = useCallback(async (pin: string) => {
     if (!selectedSession) return
@@ -383,6 +414,13 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
+      const conflictBay = await checkAlreadyActive(player.profileId)
+      if (conflictBay) {
+        setError(`${player.displayName ?? 'This golfer'} is already checked into ${conflictBay}.`)
+        setLoading(false)
+        return
+      }
+
       if (player.profileId) {
         await patch('Golfer_Profile__c', player.profileId, { Member_PIN__c: pin })
       }
@@ -405,7 +443,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn, ensureKioskSession, upsertScheduledSession])
+  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn, ensureKioskSession, checkAlreadyActive, upsertScheduledSession])
 
   // Tiered pricing: golfers with an Active/Complimentary Membership__c record
   // get the "Member Pricing" Pricebook; everyone else gets the org's Standard
@@ -637,6 +675,11 @@ export default function App() {
       if (playerIndex === -1) continue
       const player = s.players[playerIndex]
       try {
+        const conflictBay = await checkAlreadyActive(player.profileId)
+        if (conflictBay) {
+          return `${player.displayName ?? 'This golfer'} is already checked into ${conflictBay}.`
+        }
+
         setSelectedSession(s)
         setSelectedPlayerIndex(playerIndex)
         setScheduledSessions(prev => prev.map(sess =>
@@ -690,7 +733,7 @@ export default function App() {
     } catch (e) {
       return e instanceof Error ? e.message : "We couldn't look up that code."
     }
-  }, [scheduledSessions, patch, query, resolvePersonAccount, markCheckedIn, ensureKioskSession, upsertScheduledSession])
+  }, [scheduledSessions, patch, query, resolvePersonAccount, markCheckedIn, ensureKioskSession, checkAlreadyActive, upsertScheduledSession])
 
   // Called when member is identified — route to PIN screen first
   function handleMemberWalkInFound(data: { contactId: string; accountId?: string | null; profileId: string | null; firstName: string; lastName: string; email: string; pin?: string | null }) {
@@ -735,6 +778,13 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
+      const conflictBay = await checkAlreadyActive(pendingMember.profileId)
+      if (conflictBay) {
+        setError(`${pendingMember.firstName} is already checked into ${conflictBay}.`)
+        setLoading(false)
+        return
+      }
+
       const bay = findAvailableBay()
       const now = new Date().toISOString()
       const endTime = new Date(Date.now() + 60 * 60 * 1000).toISOString()
@@ -789,7 +839,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingMember, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession, upsertScheduledSession])
+  }, [pendingMember, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession, checkAlreadyActive, upsertScheduledSession])
 
   // Walk-in flow handlers
 
@@ -951,6 +1001,14 @@ export default function App() {
         throw new Error('Missing identity for join request.')
       }
 
+      const conflictBayName = await postApexRest<string | null>('/FairwaySessionConflict/', {
+        golferProfileId: profileId,
+      })
+      if (conflictBayName) {
+        setError(`You're already checked into ${conflictBayName}.`)
+        return
+      }
+
       await createSessionOrder(contactId, accountId, new Date().toISOString())
 
       const result = await postApexRest<JoinPartyResult>('/FairwaySessionJoin/', {
@@ -962,6 +1020,11 @@ export default function App() {
 
       if (!result.success) {
         setError(result.message)
+        if (result.message.toLowerCase().includes('no longer active')) {
+          setSelectedJoinSession(null)
+          setScreen('join-party')
+          await loadLiveSessions()
+        }
         return
       }
 
@@ -988,7 +1051,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [selectedJoinSession, pendingMember, pendingGuest, resolvePersonAccount, resolveGuestIdentity, createSessionOrder, postApexRest])
+  }, [selectedJoinSession, pendingMember, pendingGuest, resolvePersonAccount, resolveGuestIdentity, createSessionOrder, postApexRest, loadLiveSessions])
 
   const fetchGreeting = useCallback(async (appointmentId: string) => {
     type GreetingRow = {
@@ -1143,8 +1206,20 @@ export default function App() {
         <JoinPartyScreen
           sessions={liveSessions}
           loading={liveSessionsLoading}
-          onSelect={(s) => { setSelectedJoinSession(s); setScreen('member-walkin') }}
-          onBack={() => setScreen('check-in')}
+          selectedSessionId={selectedJoinSession?.sessionId ?? null}
+          onSelect={(s) => setSelectedJoinSession(s)}
+          onMemberJoin={() => {
+            if (!selectedJoinSession) return
+            setScreen('member-walkin')
+          }}
+          onGuestJoin={() => {
+            if (!selectedJoinSession) return
+            setScreen('guest-registration')
+          }}
+          onBack={() => {
+            setSelectedJoinSession(null)
+            setScreen('check-in')
+          }}
         />
       )}
       {screen === 'pin-entry' && selectedSession && currentPlayer && (

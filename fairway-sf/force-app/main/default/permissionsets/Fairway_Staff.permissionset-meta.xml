@@ -848,4 +848,12 @@
         <apexClass>FairwaySessionJoinApi</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>FairwaySessionCheckinApi</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>FairwaySessionConflictApi</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
 </PermissionSet>

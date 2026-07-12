@@ -104,6 +104,7 @@ export default function App() {
   const [extendMessage, setExtendMessage] = useState<string | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const promptedForAppointment = useRef<string | null>(null)
+  const previousPlayerCount = useRef(0)
 
   // ── OAuth callback handler ────────────────────────────────────────────
   useEffect(() => {
@@ -266,14 +267,17 @@ export default function App() {
         }]
       }
 
-      // Preserve active player index — only reset if player count decreased
-      setPlayers(prev => {
-        if (prev.length > 0 && builtPlayers.length > prev.length) {
-          // New player added silently — don't change index
+      const playerCountIncreased = builtPlayers.length > previousPlayerCount.current
+      previousPlayerCount.current = builtPlayers.length
+
+      setPlayers(builtPlayers)
+      setActivePlayerIndex(prev => {
+        if (builtPlayers.length === 0) return 0
+        if (playerCountIncreased) {
+          return builtPlayers.length - 1
         }
-        return builtPlayers
+        return Math.min(prev, builtPlayers.length - 1)
       })
-      setActivePlayerIndex(prev => Math.min(prev, Math.max(0, builtPlayers.length - 1)))
 
     } catch (e) {
       if (e instanceof Error && e.message === 'SESSION_EXPIRED') handleSessionExpired()
@@ -504,6 +508,7 @@ export default function App() {
     setExtendMessage(null)
     setActivePlayerIndex(0)
     promptedForAppointment.current = null
+    previousPlayerCount.current = 0
     setScreen('idle')
   }
 

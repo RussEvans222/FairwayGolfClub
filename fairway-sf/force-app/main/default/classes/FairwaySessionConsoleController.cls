@@ -687,14 +687,20 @@ global with sharing class FairwaySessionConsoleController {
     }
 
     // ── Shared "already checked in somewhere else" guard ───────────────────
-    // A golfer can't physically be in two bays at once. Used by both
-    // joinSession() and ensureCheckedInSession() before adding a new
-    // participant row. Skipped for anonymous guests (golferProfileId blank)
-    // — there's no reliable identity to dedupe on without a profile.
-    // excludeSessionId lets joinSession() ignore the very session it's
-    // trying to join (that case is a same-session re-join, handled by its
-    // own slot-scan loop instead, with a more specific message).
-    private static String findConflictingActiveBay(String golferProfileId, Id excludeSessionId) {
+    // A golfer can't physically be in two bays at once. Used by joinSession()
+    // and ensureCheckedInSession() before adding a new participant row, and
+    // by FairwaySessionConflictApi so the kiosk can check *before* it creates
+    // a new ServiceAppointment/bay assignment at all — those two callers only
+    // stop the Golf_Session__c tracking record from being created after the
+    // fact, which is too late to stop the real double-booking (a new
+    // ServiceAppointment + AssignedResource + Order already exist by the time
+    // ensureCheckedInSession runs). Skipped for anonymous guests
+    // (golferProfileId blank) — there's no reliable identity to dedupe on
+    // without a profile. excludeSessionId lets joinSession() ignore the very
+    // session it's trying to join (that case is a same-session re-join,
+    // handled by its own slot-scan loop instead, with a more specific
+    // message) — pass null when there's no session to exclude yet.
+    public static String findConflictingActiveBay(String golferProfileId, Id excludeSessionId) {
         if (String.isBlank(golferProfileId)) return null;
         for (Session_Participant__c sp : [
             SELECT Golf_Session__r.Bay__r.Name
