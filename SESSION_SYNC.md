@@ -190,8 +190,8 @@ Note: `VITE_SF_WALKIN_WORK_ORDER_ID` has been **removed** — WorkOrders are no 
 
 PR #6's first version encoded a `ServiceAppointment` Id — a one-time code per booking. Russell's actual intent: a **permanent, per-person code**, generated once, reused forever (like a membership card), that works whether or not they have a same-day reservation. Reworked same day, on top of #6, before/without re-merging the appointment-Id version anywhere else.
 
-- `QrCheckInScreen.tsx` — uses the `qr-scanner` npm package (camera access via `getUserMedia`, decodes in a WebWorker, no manual worker-path config needed with Vite) to scan a code and read a **Contact Id**
-- Entry point: "Scan QR" button on `ScheduledSessionsScreen` footer, next to "Walk-In Check-In"
+- `QrCheckInScreen.tsx` (**retired 2026-07-12** — logic moved into `hooks/useQrScanner.ts`, embedded on `CheckInScreen` instead of a standalone screen; see "Session Update — 2026-07-12") — uses the `qr-scanner` npm package (camera access via `getUserMedia`, decodes in a WebWorker, no manual worker-path config needed with Vite) to scan a code and read a **Contact Id**
+- Entry point (**as of 2026-07-12**): always-on camera on `CheckInScreen`, the screen shown immediately after tapping Welcome — no longer a "Scan QR" button on `ScheduledSessionsScreen` (that button was dropped, see 2026-07-12 entry)
 - `handleQrCheckIn(contactId)` in `App.tsx` — two paths:
   1. **Has a not-yet-checked-in reservation today** → same `Scheduled → Dispatched` transition PIN entry uses, just without a PIN
   2. **No reservation today** → looks up the Contact by Id, resolves their Person Account (`resolvePersonAccount`, same helper the regular member walk-in uses), sets `pendingMember`, and jumps straight to the `guest-payment` screen — fast-tracked past the email search and PIN screen since scanning the badge already proves identity. Payment/bay-assignment then proceeds exactly like any other walk-in (`handleMemberWalkInComplete`).
