@@ -225,18 +225,59 @@ export default function App() {
             }
           }
 
-          const displayName = appt.Contact
-            ? `${appt.Contact.FirstName ?? ''} ${appt.Contact.LastName ?? ''}`.trim()
-            : 'Guest'
+          const isActive = appt.Status === 'In Progress' || appt.Status === 'Completed'
+          const activeSessionRows = isActive
+            ? await query<{ Id: string }>(
+                `SELECT Id
+                 FROM Golf_Session__c
+                 WHERE Service_Appointment__c = '${appt.Id}'
+                 LIMIT 1`
+              )
+            : []
 
-          const players: ScheduledPlayer[] = [{
-            profileId,
-            contactId: appt.ContactId ?? null,
-            displayName,
-            isGuest: !appt.ContactId,
-            checkedIn: appt.Status === 'In Progress' || appt.Status === 'Completed',
-            pin,
-          }]
+          const players: ScheduledPlayer[] = []
+          if (activeSessionRows.length) {
+            type ParticipantRow = {
+              Id: string
+              Display_Name__c: string | null
+              Guest_Flag__c: boolean
+              Contact__c: string | null
+              Golfer_Profile__c: string | null
+            }
+            const participants = await query<ParticipantRow>(
+              `SELECT Id, Display_Name__c, Guest_Flag__c, Contact__c, Golfer_Profile__c
+               FROM Session_Participant__c
+               WHERE Golf_Session__c = '${activeSessionRows[0].Id}'
+               ORDER BY CreatedDate ASC`
+            )
+
+            for (const participant of participants) {
+              const derivedName = participant.Display_Name__c ?? 'Golfer'
+              players.push({
+                profileId: participant.Golfer_Profile__c,
+                contactId: participant.Contact__c,
+                displayName: derivedName || 'Golfer',
+                isGuest: !!participant.Guest_Flag__c,
+                checkedIn: true,
+                pin: null,
+              })
+            }
+          }
+
+          if (!players.length) {
+            const displayName = appt.Contact
+              ? `${appt.Contact.FirstName ?? ''} ${appt.Contact.LastName ?? ''}`.trim()
+              : 'Guest'
+
+            players.push({
+              profileId,
+              contactId: appt.ContactId ?? null,
+              displayName,
+              isGuest: !appt.ContactId,
+              checkedIn: isActive,
+              pin,
+            })
+          }
 
           return {
             reservationId: appt.Id,
