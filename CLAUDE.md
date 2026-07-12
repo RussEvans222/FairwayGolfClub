@@ -191,6 +191,25 @@ Relationship chain: `Contact` → `Golfer_Profile__c` → `Session_Participant__
 
 **Deferred to a later phase** (not built yet): `Membership__c`/Salesforce Subscription Management, `Golf_Club__c` (bag/club performance), `Coaching_Plan__c`, real-time middleware, Data Cloud ingestion, computer vision/RFID attribution.
 
+**Device integration research (2026-07-10):** See `Assets/DeviceConnection.md` for findings on
+getting live shot data out of launch monitors and into this model. Short version: FlightScope
+(X3C/Mevo+) has no public API — the only real open integration point in the vendor landscape is
+**GSPro's Open Connect v1** (local JSON-over-TCP socket, `127.0.0.1:0921`, documented at
+gsprogolf.com), which a relay could sit on as a second client to mirror shot data to Salesforce.
+This only works if bays run GSPro specifically; Awesome Golf Simulator has no equivalent open
+socket. Community reverse-engineering of FlightScope's binary protocol (`ironsight`, TCP port
+5100) exists but is unofficial/unconfirmed for X3C — experimental only. Until Phase 1 (native
+API) middleware exists, this reinforces sticking with Phase 2 (session export) or mock data.
+
+**Booking & check-in process spec (2026-07-10):** See `BOOKING_CHECKIN_PROCESS.md` for the
+full intended design covering all three ways a golfer gets to a bay — pre-arranged scheduled
+visits booked through Experience Cloud (with party check-in, SMS confirmations, and a
+trickle-in join mechanism), single walk-ins with a live approve/deny join request, and
+phone-in/staff-booked reservations. It's a requirements spec, not yet built — cross-references
+exactly what already exists (`ServiceAppointment`, the QR identity check-in system, etc.) against
+real gaps (no SMS integration, no session/party join-code mechanism, the 4-slot
+`Simulator_Player_Slot__c` ceiling vs. a proposed 6-player party max).
+
 ### Supporting metadata
 - `Fairway_Admin` permission set was extended with object + field permissions for all 9 objects, plus visibility into the new `Fairway_Ops` Lightning app.
 - `Fairway_Ops` (`applications/Fairway_Ops.app-meta.xml`) — a separate Lightning app bundling tabs for all 9 objects, so this doesn't clutter the Sales app used for Lead management.
