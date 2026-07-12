@@ -5,15 +5,6 @@ export interface Bay {
   resourceId: string  // ServiceResource Id
 }
 
-export interface BayOverviewCard {
-  bay: Bay
-  isOccupied: boolean
-  participantCount: number
-  minutesRemaining: number | null
-  bestCarry: number | null
-  statusLabel: string
-}
-
 export interface PlayerSession {
   participantId: string
   profileId: string
