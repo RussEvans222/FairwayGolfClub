@@ -7,5 +7,5 @@
     <relationshipName>Golf_Sessions</relationshipName>
     <relationshipLabel>Golf Sessions</relationshipLabel>
     <deleteConstraint>Restrict</deleteConstraint>
-    <required>true</required>
+    <required>false</required>
 </CustomField>

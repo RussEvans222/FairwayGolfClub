@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Service_Resource__c</fullName>
+    <label>Service Resource</label>
+    <type>Lookup</type>
+    <referenceTo>ServiceResource</referenceTo>
+    <relationshipName>Simulator_Bays</relationshipName>
+    <relationshipLabel>Simulator Bays</relationshipLabel>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+    <description>The Salesforce Scheduler ServiceResource this physical bay corresponds to. Links the shot-tracking bay model (Simulator_Bay__c) to the live booking model (ServiceResource/ServiceAppointment) — previously reconciled only by a fragile bay-name string match in fairway-bay's App.tsx. One-bay-per-resource is enforced only by convention and the migration script, not by a lookup uniqueness constraint.</description>
+</CustomField>

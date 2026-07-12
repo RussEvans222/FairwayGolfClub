@@ -51,6 +51,31 @@ global with sharing class FairwaySessionConsoleController {
         @AuraEnabled public String bayName;
     }
 
+    // ── Result of ensuring a Golf_Session__c exists for a checked-in ServiceAppointment ──
+    // global: FairwaySessionCheckinApi's @RestResource method returns this type,
+    // and a global method's return type must itself be global.
+    global class EnsureSessionResult {
+        @AuraEnabled public Boolean success;
+        @AuraEnabled public String message;
+        @AuraEnabled public String sessionId;
+        @AuraEnabled public String participantId;
+        @AuraEnabled public Integer slotAssigned;
+        @AuraEnabled public String bayName;
+        @AuraEnabled public Boolean sessionWasCreated; // true only if this call created a brand-new Golf_Session__c
+    }
+
+    // ── One checked-in golfer, for the ServiceAppointment "who's here" LWC ────
+    public class ParticipantDTO {
+        @AuraEnabled public String participantId;
+        @AuraEnabled public String displayName;
+        @AuraEnabled public Integer slot;
+        @AuraEnabled public Boolean isPrimaryBooker;
+        @AuraEnabled public Boolean isGuest;
+        @AuraEnabled public String sessionId;
+        @AuraEnabled public String sessionStatus;
+        @AuraEnabled public String bayName;
+    }
+
     // ── Fetch all active + today's scheduled sessions ─────────────────────────
     @AuraEnabled(cacheable=false)
     public static List<BaySessionDTO> getActiveSessions() {
@@ -467,6 +492,212 @@ global with sharing class FairwaySessionConsoleController {
         } catch (DmlException e) {
             result.success = false;
             result.message = 'Something went wrong adding you to that session. Please ask staff for help.';
+        }
+        return result;
+    }
+
+    // ── Ensure a Golf_Session__c exists for a checked-in ServiceAppointment ───
+    // Called by the kiosk at every check-in completion (reservation PIN, QR,
+    // member walk-in, guest walk-in) so the *original* host — not just later
+    // Join-a-Party arrivals — gets tracked as a real Session_Participant__c.
+    // Idempotent: calling this again for the same appointment is a safe no-op
+    // once a session+primary-participant already exist. FOR UPDATE on the
+    // ServiceAppointment row serializes concurrent calls for the same
+    // appointment (e.g. a double-tap); the DmlException catch around the
+    // Golf_Session__c insert is a belt-and-suspenders backstop for the
+    // narrower race on the Service_Appointment__c lookup itself (Salesforce
+    // doesn't support a unique constraint on Lookup fields, so this can't be
+    // enforced at the schema level the way Simulator_Player_Slot__c ordering
+    // is here).
+    //
+    // Note: this deliberately does NOT create a Bay_Reservation__c — that
+    // object is documented (BOOKING_CHECKIN_PROCESS.md) as dormant/disconnected
+    // from the live booking flow, and Golf_Session__c.Reservation__c was
+    // relaxed to optional specifically so this method doesn't have to
+    // resurrect it just to satisfy a required lookup.
+    @AuraEnabled
+    global static EnsureSessionResult ensureCheckedInSession(String serviceAppointmentId, String golferProfileId, String displayName, Boolean isGuest) {
+        EnsureSessionResult result = new EnsureSessionResult();
+        result.sessionWasCreated = false;
+
+        if (String.isBlank(serviceAppointmentId) || String.isBlank(displayName)) {
+            result.success = false;
+            result.message = 'Missing appointment or player info.';
+            return result;
+        }
+
+        List<ServiceAppointment> appts = [
+            SELECT Id, SchedStartTime, SchedEndTime
+            FROM ServiceAppointment
+            WHERE Id = :serviceAppointmentId
+            FOR UPDATE
+        ];
+        if (appts.isEmpty()) {
+            result.success = false;
+            result.message = 'That appointment no longer exists.';
+            return result;
+        }
+
+        Golf_Session__c session;
+        // Tracked separately from session.Bay__r.Name — a freshly-inserted
+        // sObject doesn't have its parent relationship fields populated in
+        // memory, so the create path below can't rely on session.Bay__r.
+        String resolvedBayName;
+        List<Golf_Session__c> existing = [
+            SELECT Id, Status__c, Bay__r.Name
+            FROM Golf_Session__c
+            WHERE Service_Appointment__c = :serviceAppointmentId
+            LIMIT 1
+        ];
+
+        if (!existing.isEmpty()) {
+            session = existing[0];
+            resolvedBayName = session.Bay__r != null ? session.Bay__r.Name : null;
+            List<Session_Participant__c> primaries = [
+                SELECT Id, Simulator_Player_Slot__c
+                FROM Session_Participant__c
+                WHERE Golf_Session__c = :session.Id AND Is_Primary_Booker__c = true
+                LIMIT 1
+            ];
+            if (!primaries.isEmpty()) {
+                result.success       = true;
+                result.sessionId     = session.Id;
+                result.participantId = primaries[0].Id;
+                result.slotAssigned  = (Integer) primaries[0].Simulator_Player_Slot__c;
+                result.bayName       = resolvedBayName;
+                result.message       = 'Already tracked.';
+                return result;
+            }
+            // Falls through to the participant-insert step below using this
+            // existing session — a defensive path that shouldn't occur in
+            // practice (every create path below inserts its primary
+            // participant in the same call), but avoids ever leaving a
+            // session with zero participants if it does.
+        } else {
+            List<AssignedResource> ars = [
+                SELECT ServiceResourceId
+                FROM AssignedResource
+                WHERE ServiceAppointmentId = :serviceAppointmentId
+                LIMIT 1
+            ];
+            if (ars.isEmpty()) {
+                result.success = false;
+                result.message = 'No bay assigned to this appointment yet.';
+                return result;
+            }
+            List<Simulator_Bay__c> bays = [
+                SELECT Id, Name
+                FROM Simulator_Bay__c
+                WHERE Service_Resource__c = :ars[0].ServiceResourceId
+                LIMIT 1
+            ];
+            if (bays.isEmpty()) {
+                result.success = false;
+                result.message = 'No simulator bay is linked to this appointment\'s resource yet.';
+                return result;
+            }
+
+            resolvedBayName = bays[0].Name;
+            try {
+                session = new Golf_Session__c(
+                    Bay__c                 = bays[0].Id,
+                    Service_Appointment__c = serviceAppointmentId,
+                    Session_Type__c        = 'Practice',
+                    Status__c              = 'In Progress',
+                    Session_Start__c       = DateTime.now()
+                );
+                insert session;
+                result.sessionWasCreated = true;
+            } catch (DmlException e) {
+                // Lost a race to a concurrent call despite the FOR UPDATE
+                // lock above — re-query and treat as the "already exists" path.
+                List<Golf_Session__c> raced = [
+                    SELECT Id, Status__c, Bay__r.Name
+                    FROM Golf_Session__c
+                    WHERE Service_Appointment__c = :serviceAppointmentId
+                    LIMIT 1
+                ];
+                if (raced.isEmpty()) {
+                    result.success = false;
+                    result.message = 'Something went wrong starting this session. Please ask staff for help.';
+                    return result;
+                }
+                session = raced[0];
+                resolvedBayName = session.Bay__r != null ? session.Bay__r.Name : resolvedBayName;
+            }
+        }
+
+        Set<Integer> usedSlots = new Set<Integer>();
+        for (Session_Participant__c sp : [
+            SELECT Simulator_Player_Slot__c
+            FROM Session_Participant__c
+            WHERE Golf_Session__c = :session.Id
+        ]) {
+            usedSlots.add((Integer) sp.Simulator_Player_Slot__c);
+        }
+        Integer freeSlot = null;
+        for (Integer i = 1; i <= 4; i++) {
+            if (!usedSlots.contains(i)) { freeSlot = i; break; }
+        }
+        if (freeSlot == null) {
+            result.success   = false;
+            result.sessionId = session.Id;
+            result.message   = 'This session already has 4 players — it\'s full.';
+            return result;
+        }
+
+        Session_Participant__c sp = new Session_Participant__c(
+            Golf_Session__c          = session.Id,
+            Golfer_Profile__c        = String.isBlank(golferProfileId) ? null : golferProfileId,
+            Display_Name__c          = displayName,
+            Is_Primary_Booker__c     = true,
+            Guest_Flag__c            = isGuest == true,
+            Simulator_Player_Slot__c = freeSlot
+        );
+        insert sp;
+
+        result.success       = true;
+        result.sessionId     = session.Id;
+        result.participantId = sp.Id;
+        result.slotAssigned  = freeSlot;
+        result.bayName       = resolvedBayName;
+        result.message       = 'Checked in.';
+        return result;
+    }
+
+    // ── Golfers checked into a ServiceAppointment's linked session ────────────
+    // Backs the fairwaySessionParticipants LWC on the ServiceAppointment
+    // record page.
+    @AuraEnabled(cacheable=false)
+    public static List<ParticipantDTO> getSessionParticipants(String serviceAppointmentId) {
+        List<ParticipantDTO> result = new List<ParticipantDTO>();
+        if (String.isBlank(serviceAppointmentId)) return result;
+
+        List<Golf_Session__c> sessions = [
+            SELECT Id, Status__c, Bay__r.Name
+            FROM Golf_Session__c
+            WHERE Service_Appointment__c = :serviceAppointmentId
+            LIMIT 1
+        ];
+        if (sessions.isEmpty()) return result;
+        Golf_Session__c session = sessions[0];
+
+        for (Session_Participant__c sp : [
+            SELECT Id, Display_Name__c, Simulator_Player_Slot__c, Is_Primary_Booker__c, Guest_Flag__c
+            FROM Session_Participant__c
+            WHERE Golf_Session__c = :session.Id
+            ORDER BY Simulator_Player_Slot__c ASC
+        ]) {
+            ParticipantDTO dto = new ParticipantDTO();
+            dto.participantId   = sp.Id;
+            dto.displayName     = sp.Display_Name__c;
+            dto.slot            = (Integer) sp.Simulator_Player_Slot__c;
+            dto.isPrimaryBooker = sp.Is_Primary_Booker__c;
+            dto.isGuest         = sp.Guest_Flag__c;
+            dto.sessionId       = session.Id;
+            dto.sessionStatus   = session.Status__c;
+            dto.bayName         = session.Bay__r != null ? session.Bay__r.Name : null;
+            result.add(dto);
         }
         return result;
     }

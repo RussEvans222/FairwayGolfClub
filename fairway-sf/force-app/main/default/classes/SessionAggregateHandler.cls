@@ -185,7 +185,7 @@ public with sharing class SessionAggregateHandler {
             }
             profilesToUpdate.add(upd);
         }
-        if (!profilesToUpdate.isEmpty()) update profilesToUpdate;
+        if (!profilesToUpdate.isEmpty()) Database.update(profilesToUpdate, AccessLevel.SYSTEM_MODE);
     }
 
     private class ShotAgg {

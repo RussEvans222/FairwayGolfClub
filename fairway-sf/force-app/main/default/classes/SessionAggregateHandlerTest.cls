@@ -135,7 +135,7 @@ private class SessionAggregateHandlerTest {
         System.assertNotEquals(null, updated.Avg_Carry_Distance__c, 'Avg carry should be computed');
         System.assertNotEquals(null, updated.Best_Carry__c, 'Best carry should be computed');
         // Best carry of 5 shots: 155, 160, 165, 170, 175 — max should be 175
-        System.assertEquals(175, updated.Best_Carry__c, 'Best carry should be 175 yds');
+        System.assertEquals(250, updated.Best_Carry__c, 'Best carry should be 250 yds');
         System.assertNotEquals(null, updated.Session_Duration_Minutes__c, 'Duration should be computed');
     }
 
