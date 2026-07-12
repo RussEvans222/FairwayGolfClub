@@ -2,10 +2,11 @@ import type { Bay } from '../types'
 
 interface Props {
   bay: Bay
+  onStartPlaying: () => void
   onChangeBay: () => void
 }
 
-export function IdleScreen({ bay, onChangeBay }: Props) {
+export function IdleScreen({ bay, onStartPlaying, onChangeBay }: Props) {
   return (
     <div className="w-full h-full flex flex-col" style={{ background: 'var(--dark)' }}>
       {/* Header */}
@@ -61,7 +62,7 @@ export function IdleScreen({ bay, onChangeBay }: Props) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => {}}
+                  onClick={onStartPlaying}
                   className="mt-6 w-full rounded-full px-6 py-4 text-lg font-semibold tracking-wide transition-transform hover:scale-[1.02]"
                   style={{ background: 'var(--gold)', color: '#111' }}
                 >

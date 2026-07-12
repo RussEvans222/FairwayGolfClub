@@ -3,18 +3,18 @@ import { useSalesforce, saveAuth, clearAuth } from './hooks/useSalesforce'
 import { LoginScreen } from './screens/LoginScreen'
 import { BaySelectScreen } from './screens/BaySelectScreen'
 import { IdleScreen } from './screens/IdleScreen'
-import { ActiveScreen } from './screens/ActiveScreen'
+import { SessionWorkspaceScreen } from './screens/SessionWorkspaceScreen'
+import { useTelemetrySession } from './hooks/useTelemetrySession'
 import type {
   Bay,
   PlayerSession,
   Shot,
   ClubAverage,
   Screen,
-  ExtendResult,
   GolferLifetimeSummary,
+  NormalizedTelemetryShot,
 } from './types'
 
-const EXTEND_PROMPT_THRESHOLD_MIN = 10
 const BAY_ORDINAL_WORDS: Record<string, string> = {
   '1': 'one',
   '2': 'two',
@@ -89,7 +89,7 @@ const SF_CLIENT_ID = import.meta.env.VITE_SF_CLIENT_ID as string
 const POLL_INTERVAL_MS = 20_000
 
 export default function App() {
-  const { auth, refreshAuth, query, postApexRest } = useSalesforce()
+  const { auth, refreshAuth, query, create } = useSalesforce()
   const [authError, setAuthError] = useState<string | null>(null)
   const [screen, setScreen] = useState<Screen>('login')
   const [bays, setBays] = useState<Bay[]>([])
@@ -97,14 +97,39 @@ export default function App() {
   const [players, setPlayers] = useState<PlayerSession[]>([])
   const [activePlayerIndex, setActivePlayerIndex] = useState(0)
   const [sessionActive, setSessionActive] = useState(false)
-  const [activeAppointmentId, setActiveAppointmentId] = useState<string | null>(null)
-  const [minutesRemaining, setMinutesRemaining] = useState<number | null>(null)
-  const [showExtendPrompt, setShowExtendPrompt] = useState(false)
-  const [extending, setExtending] = useState(false)
-  const [extendMessage, setExtendMessage] = useState<string | null>(null)
+  const [workspaceStarted, setWorkspaceStarted] = useState(false)
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const promptedForAppointment = useRef<string | null>(null)
   const previousPlayerCount = useRef(0)
+
+  const handleTelemetryShot = useCallback(async (shot: NormalizedTelemetryShot) => {
+    if (!activeSessionId) return
+    const activePlayer = players[activePlayerIndex] ?? players[players.length - 1] ?? null
+    if (!activePlayer?.participantId) return
+
+    try {
+      await create('Golf_Shot__c', {
+        Golf_Session__c: activeSessionId,
+        Session_Participant__c: activePlayer.participantId,
+        Shot_Number__c: shot.shotNumber || activePlayer.shotCount + 1,
+        Timestamp__c: shot.capturedAt,
+        Data_Tier__c: shot.dataTier,
+        Club__c: shot.club ?? undefined,
+        Ball_Speed__c: shot.ballSpeed ?? undefined,
+        Carry_Distance__c: shot.carry ?? undefined,
+        Total_Distance__c: shot.total ?? undefined,
+        Launch_Angle__c: shot.launchAngle ?? undefined,
+        Spin_Rate__c: shot.spinRate ?? undefined,
+        Shot_Shape__c: shot.shotShape ?? undefined,
+        Club_Speed__c: shot.clubSpeed ?? undefined,
+        Raw_Payload_JSON__c: JSON.stringify(shot.raw),
+      })
+    } catch (e) {
+      console.error('Failed to forward telemetry shot to Salesforce', e)
+    }
+  }, [activeSessionId, players, activePlayerIndex, create])
+
+  const { telemetry, clearShots } = useTelemetrySession({ onShot: handleTelemetryShot })
 
   // ── OAuth callback handler ────────────────────────────────────────────
   useEffect(() => {
@@ -191,28 +216,13 @@ export default function App() {
       if (!appts.length) {
         // No active session — load last completed session recap
         setSessionActive(false)
+        setActiveSessionId(null)
         setPlayers([])
-        setActiveAppointmentId(null)
-        setMinutesRemaining(null)
-        setShowExtendPrompt(false)
-        promptedForAppointment.current = null
         return
       }
 
       setSessionActive(true)
       const appt = appts[0]
-      setActiveAppointmentId(appt.Id)
-
-      if (appt.SchedEndTime) {
-        const remaining = Math.round((new Date(appt.SchedEndTime).getTime() - Date.now()) / 60000)
-        setMinutesRemaining(remaining)
-        if (remaining <= EXTEND_PROMPT_THRESHOLD_MIN && promptedForAppointment.current !== appt.Id) {
-          promptedForAppointment.current = appt.Id
-          setShowExtendPrompt(true)
-        }
-      } else {
-        setMinutesRemaining(null)
-      }
 
       // 2. Find all Golf_Session__c records for today on this bay (active or recent)
       const today = new Date().toISOString().slice(0, 10)
@@ -231,6 +241,7 @@ export default function App() {
 
       if (sessions.length) {
         const sessId = sessions[0].Id
+        setActiveSessionId(sessId)
         type PartRow = {
           Id: string
           Golfer_Profile__c: string
@@ -283,29 +294,6 @@ export default function App() {
       if (e instanceof Error && e.message === 'SESSION_EXPIRED') handleSessionExpired()
     }
   }, [query, handleSessionExpired])  // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Extend the active session by N minutes (10-minutes-out prompt) ─────
-  const handleExtend = useCallback(async (minutes: number) => {
-    if (!activeAppointmentId || !auth) return
-    setExtending(true)
-    setExtendMessage(null)
-    try {
-      const result = await postApexRest<ExtendResult>('/FairwaySessionExtend/', {
-        appointmentId: activeAppointmentId,
-        minutes,
-      })
-      setExtendMessage(result.message)
-      if (result.success && selectedBay) {
-        await pollBay(selectedBay) // refresh minutesRemaining immediately
-      }
-    } catch (e) {
-      if (e instanceof Error && e.message === 'SESSION_EXPIRED') { handleSessionExpired(); return }
-      setExtendMessage("Sorry — couldn't extend right now. Please ask staff for help.")
-    } finally {
-      setExtending(false)
-      setShowExtendPrompt(false)
-    }
-  }, [activeAppointmentId, auth, postApexRest, selectedBay, pollBay, handleSessionExpired])
 
   async function buildPlayerStats(
     participantId: string,
@@ -486,29 +474,27 @@ export default function App() {
 
   // ── Start/stop polling when bay is selected ───────────────────────────
   useEffect(() => {
-    if (!selectedBay || screen !== 'idle' && screen !== 'active') return
+    if (!selectedBay || screen !== 'idle' && screen !== 'workspace') return
     pollBay(selectedBay)
     pollRef.current = setInterval(() => pollBay(selectedBay), POLL_INTERVAL_MS)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [selectedBay, screen, pollBay])
 
-  // ── Switch idle ↔ active based on session state ───────────────────────
+  // ── Switch idle ↔ workspace based on session state ───────────────────
   useEffect(() => {
-    if (screen !== 'idle' && screen !== 'active') return
-    setScreen(sessionActive ? 'active' : 'idle')
-  }, [sessionActive]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (screen !== 'idle' && screen !== 'workspace') return
+    setScreen(sessionActive || workspaceStarted ? 'workspace' : 'idle')
+  }, [sessionActive, workspaceStarted, screen])
 
   function selectBay(bay: Bay) {
     setSelectedBay(bay)
     setPlayers([])
     setSessionActive(false)
-    setActiveAppointmentId(null)
-    setMinutesRemaining(null)
-    setShowExtendPrompt(false)
-    setExtendMessage(null)
+    setWorkspaceStarted(false)
+    setActiveSessionId(null)
     setActivePlayerIndex(0)
-    promptedForAppointment.current = null
     previousPlayerCount.current = 0
+    clearShots()
     setScreen('idle')
   }
 
@@ -525,24 +511,24 @@ export default function App() {
     return (
       <IdleScreen
         bay={selectedBay!}
+        onStartPlaying={() => {
+          setWorkspaceStarted(true)
+          setScreen('workspace')
+        }}
         onChangeBay={() => setScreen('bay-select')}
       />
     )
   }
 
   return (
-    <ActiveScreen
+    <SessionWorkspaceScreen
       bay={selectedBay!}
       players={players}
       activeIndex={activePlayerIndex}
+      telemetry={telemetry}
       onChangeIndex={setActivePlayerIndex}
       onChangeBay={() => setScreen('bay-select')}
-      minutesRemaining={minutesRemaining}
-      showExtendPrompt={showExtendPrompt}
-      extending={extending}
-      extendMessage={extendMessage}
-      onExtend={handleExtend}
-      onDismissExtendPrompt={() => { setShowExtendPrompt(false); setExtendMessage(null) }}
+      onStartPlaying={() => setWorkspaceStarted(true)}
     />
   )
 }

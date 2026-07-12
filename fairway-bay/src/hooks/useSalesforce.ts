@@ -63,6 +63,27 @@ export function useSalesforce() {
     return data.records as T[]
   }, [auth])
 
+  const create = useCallback(async <T>(object: string, body: Record<string, unknown>): Promise<T> => {
+    if (!auth) throw new Error('Not authenticated')
+    const res = await fetch(apiUrl(`/services/data/v67.0/sobjects/${object}`), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+    await checkForSessionError(res)
+    if (!res.ok) {
+      const err = await res.json().catch(() => null)
+      const msg = Array.isArray(err)
+        ? err.map((e: { errorCode?: string; message?: string }) => `${e.errorCode}: ${e.message}`).join(' | ')
+        : `HTTP ${res.status}`
+      throw new Error(`[${object}] ${msg}`)
+    }
+    return res.json() as Promise<T>
+  }, [auth])
+
   // Calls a custom Apex REST endpoint (POST) — used for the smart-extend
   // flow, which needs bay-conflict logic that's not safe to reimplement
   // client-side (see FairwaySessionExtendApi.cls).
@@ -87,5 +108,5 @@ export function useSalesforce() {
     return (await res.json()) as T
   }, [auth])
 
-  return { auth, refreshAuth, query, postApexRest }
+  return { auth, refreshAuth, query, create, postApexRest }
 }
