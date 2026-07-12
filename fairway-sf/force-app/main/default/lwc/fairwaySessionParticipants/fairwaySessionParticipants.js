@@ -22,6 +22,10 @@ export default class FairwaySessionParticipants extends LightningElement {
 
     get hasParticipants() { return !this.loading && this.participants.length > 0; }
     get noParticipants()  { return !this.loading && this.participants.length === 0; }
+    // Every row carries the same bayName (it's session-level, not per-player) —
+    // surfaced here so the bay is visible up top without hunting through the
+    // participant list, which was hard to spot on the plain page layout.
+    get bayName() { return this.participants.length ? this.participants[0].bayName : null; }
 
     load() {
         if (!this.recordId) return;

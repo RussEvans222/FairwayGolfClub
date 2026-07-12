@@ -29,6 +29,15 @@
 .header-row { display: flex; align-items: center; justify-content: space-between; }
 .header-title { font-size: 1rem; font-weight: 700; color: var(--fwc-text); }
 
+.bay-banner {
+    display: flex; align-items: baseline; gap: 8px;
+    background: var(--fwc-primary); color: var(--fwc-on-primary);
+    border-radius: var(--fwc-radius-control); padding: 10px 14px;
+}
+.bay-banner-icon { font-size: 1rem; }
+.bay-banner-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.75; }
+.bay-banner-name { font-size: 1.1rem; font-weight: 700; }
+
 .loading-msg, .empty-sub { color: var(--fwc-text-muted); font-size: 0.85rem; }
 
 .empty-card { text-align: center; padding: 1.5rem 1rem; }

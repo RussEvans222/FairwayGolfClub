@@ -449,6 +449,17 @@ global with sharing class FairwaySessionConsoleController {
         }
         Golf_Session__c session = sessions[0];
 
+        // A golfer can't physically be in two bays at once — block joining
+        // this session if they're already an active participant somewhere
+        // else. (Same-session re-join is caught separately below, in the
+        // slot-scan loop, since that also needs to walk every participant.)
+        String conflictBay = findConflictingActiveBay(golferProfileId, session.Id);
+        if (conflictBay != null) {
+            result.success = false;
+            result.message = 'You\'re already checked into ' + conflictBay + '.';
+            return result;
+        }
+
         Set<Integer> usedSlots = new Set<Integer>();
         for (Session_Participant__c sp : [
             SELECT Simulator_Player_Slot__c, Golfer_Profile__c
@@ -597,6 +608,16 @@ global with sharing class FairwaySessionConsoleController {
                 return result;
             }
 
+            // Same "can't be in two bays at once" guard as joinSession() —
+            // there's no prior session to exclude here since we're about to
+            // create a brand-new one.
+            String conflictBay = findConflictingActiveBay(golferProfileId, null);
+            if (conflictBay != null) {
+                result.success = false;
+                result.message = 'You\'re already checked into ' + conflictBay + '.';
+                return result;
+            }
+
             resolvedBayName = bays[0].Name;
             try {
                 session = new Golf_Session__c(
@@ -663,6 +684,29 @@ global with sharing class FairwaySessionConsoleController {
         result.bayName       = resolvedBayName;
         result.message       = 'Checked in.';
         return result;
+    }
+
+    // ── Shared "already checked in somewhere else" guard ───────────────────
+    // A golfer can't physically be in two bays at once. Used by both
+    // joinSession() and ensureCheckedInSession() before adding a new
+    // participant row. Skipped for anonymous guests (golferProfileId blank)
+    // — there's no reliable identity to dedupe on without a profile.
+    // excludeSessionId lets joinSession() ignore the very session it's
+    // trying to join (that case is a same-session re-join, handled by its
+    // own slot-scan loop instead, with a more specific message).
+    private static String findConflictingActiveBay(String golferProfileId, Id excludeSessionId) {
+        if (String.isBlank(golferProfileId)) return null;
+        for (Session_Participant__c sp : [
+            SELECT Golf_Session__r.Bay__r.Name
+            FROM Session_Participant__c
+            WHERE Golfer_Profile__c = :golferProfileId
+              AND Golf_Session__r.Status__c = 'In Progress'
+              AND Golf_Session__c != :excludeSessionId
+            LIMIT 1
+        ]) {
+            return sp.Golf_Session__r.Bay__r != null ? sp.Golf_Session__r.Bay__r.Name : 'another bay';
+        }
+        return null;
     }
 
     // ── Golfers checked into a ServiceAppointment's linked session ────────────
