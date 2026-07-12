@@ -1,0 +1,113 @@
+<template>
+    <div class="schedule">
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">
+                <span class="logo-mark">⛳</span>
+                <span>Daily Schedule</span>
+            </div>
+        </div>
+
+        <!-- Date nav -->
+        <div class="date-nav">
+            <lightning-button-icon icon-name="utility:chevronleft" alternative-text="Previous day"
+                onclick={handlePrevDay}>
+            </lightning-button-icon>
+            <div class="date-label-wrap">
+                <span class="date-label">{dateLabel}</span>
+                <template if:false={isToday}>
+                    <button class="today-link" onclick={handleToday}>Jump to today</button>
+                </template>
+            </div>
+            <lightning-button-icon icon-name="utility:chevronright" alternative-text="Next day"
+                onclick={handleNextDay}>
+            </lightning-button-icon>
+        </div>
+
+        <!-- Checking-in-soon highlight -->
+        <template if:true={soonSession}>
+            <div class="soon-card">
+                <div class="soon-info">
+                    <span class="soon-label">Checking in soon</span>
+                    <span class="soon-name">{soonSession.contactName} · {soonSession.bayName}</span>
+                    <span class="soon-time">{soonSession.timeRange}</span>
+                </div>
+                <button class="btn btn-checkin" data-id={soonSession.appointmentId} onclick={handleCheckIn}>
+                    Check In
+                </button>
+            </div>
+        </template>
+
+        <!-- Stat cards (today only — getDailyStats is always "today") -->
+        <template if:true={isToday}>
+            <div class="stat-row">
+                <div class="stat-card">
+                    <span class="stat-value">{revenueLabel}</span>
+                    <span class="stat-label">Revenue Today</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">{utilizationLabel}</span>
+                    <span class="stat-label">Bay Utilization</span>
+                </div>
+            </div>
+        </template>
+
+        <!-- Calendar grid: bay overlay columns -->
+        <div class="panel grid-panel">
+            <div class="panel-header">Bay Schedule</div>
+
+            <template if:true={loading}>
+                <div class="loading-msg">Loading…</div>
+            </template>
+
+            <template if:false={loading}>
+                <template if:true={noBays}>
+                    <div class="empty-msg">No active bays configured.</div>
+                </template>
+                <template if:false={noBays}>
+                    <div class="grid-scroll">
+                        <div class="grid-body">
+
+                            <!-- Time ruler -->
+                            <div class="time-ruler">
+                                <div class="time-ruler-spacer"></div>
+                                <div class="time-ruler-body">
+                                    <template for:each={hourMarkers} for:item="m">
+                                        <div key={m.key} class="hour-mark" style={m.style}>
+                                            <span class="hour-label">{m.label}</span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Bay columns -->
+                            <template for:each={columns} for:item="col">
+                                <div key={col.bayId} class="bay-column">
+                                    <div class="bay-column-header">{col.bayName}</div>
+                                    <div class="bay-column-body">
+                                        <template for:each={hourMarkers} for:item="m">
+                                            <div key={m.key} class="hour-gridline" style={m.style}></div>
+                                        </template>
+                                        <template if:true={showNowLine}>
+                                            <div class="now-line" style={nowLineStyle}></div>
+                                        </template>
+                                        <template for:each={col.events} for:item="ev">
+                                            <div key={ev.key} class={ev.cssClass} style={ev.style}>
+                                                <span class="event-name">{ev.contactName}</span>
+                                                <span class="event-time">{ev.timeRange}</span>
+                                                <span class="event-status">{ev.statusLabel}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                        </div>
+                    </div>
+                </template>
+            </template>
+        </div>
+
+    </div>
+</template>

@@ -365,6 +365,24 @@ export default function App() {
     return territories.length ? territories[0].Id : null
   }, [query])
 
+  // ── Resolve the "In Person" Engagement Channel Type ──────────────────────
+  // Lets Business Stats (FairwayOpsDashboardController.getChannelSplit) tell
+  // walk-ins apart from appointments booked ahead through the Experience
+  // Cloud portal or by phone. Silently no-ops (leaves EngagementChannelTypeId
+  // unset) if the channel record hasn't been seeded yet — see
+  // scripts/seed-engagement-channels.apex in fairway-sf.
+  const resolveWalkInChannelId = useCallback(async (): Promise<string | null> => {
+    try {
+      const channels = await query<{ Id: string }>(
+        `SELECT Id FROM EngagementChannelType WHERE Name = 'In Person' AND IsActive = true LIMIT 1`
+      )
+      return channels.length ? channels[0].Id : null
+    } catch (e) {
+      console.error('Engagement channel lookup failed, leaving EngagementChannelTypeId unset', e)
+      return null
+    }
+  }, [query])
+
   // ── Create a real ServiceAppointment in Salesforce for walk-ins ─────────
   // Also opens an Order + OrderItem for the base session fee — a visit can
   // rack up multiple charges (base fee + N extensions), so a single static
@@ -380,16 +398,18 @@ export default function App() {
   ): Promise<string> => {
     const workTypeId  = import.meta.env.VITE_SF_WALKIN_WORK_TYPE_ID  as string
     const territoryId = await resolveServiceTerritoryId()
+    const channelId   = await resolveWalkInChannelId()
 
     const appt = await create<{ id: string }>('ServiceAppointment', {
-      ParentRecordId:     accountId,
-      ContactId:          contactId,
-      WorkTypeId:         workTypeId,
-      ServiceTerritoryId: territoryId,
-      SchedStartTime:     startIso,
-      SchedEndTime:       endIso,
-      Status:             'Checked In', // immediately followed by Dispatched below, once the bay is assigned
-      Description:        'Walk-in via kiosk',
+      ParentRecordId:         accountId,
+      ContactId:              contactId,
+      WorkTypeId:             workTypeId,
+      ServiceTerritoryId:     territoryId,
+      EngagementChannelTypeId: channelId,
+      SchedStartTime:         startIso,
+      SchedEndTime:           endIso,
+      Status:                 'Checked In', // immediately followed by Dispatched below, once the bay is assigned
+      Description:            'Walk-in via kiosk',
     })
     await create('AssignedResource', {
       ServiceAppointmentId: appt.id,

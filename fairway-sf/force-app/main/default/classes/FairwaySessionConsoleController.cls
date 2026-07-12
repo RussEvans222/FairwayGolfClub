@@ -15,6 +15,18 @@ global with sharing class FairwaySessionConsoleController {
         @AuraEnabled public String schedEnd;
         @AuraEnabled public Integer minutesRemaining;
         @AuraEnabled public Boolean isOvertime;
+        // ── Bay Control-only fields (populated by getBaySession) ──────────────
+        @AuraEnabled public Integer partySize;
+        @AuraEnabled public String simulatorType;
+        @AuraEnabled public String rateLabel;
+        @AuraEnabled public Decimal ratePerSession;
+        @AuraEnabled public Decimal sessionTotal;
+    }
+
+    // ── Resolved session rate (Standard vs. Member pricing) ────────────────────
+    private class RateInfo {
+        Decimal amount;
+        String label;
     }
 
     // ── Result of a smart extend (may cap or reassign a bay) ──────────────────
@@ -84,6 +96,114 @@ global with sharing class FairwaySessionConsoleController {
             result.add(dto);
         }
         return result;
+    }
+
+    // ── Fetch the current/next session for a single bay (Bay Control record page) ──
+    @AuraEnabled(cacheable=false)
+    public static BaySessionDTO getBaySession(String serviceResourceId) {
+        DateTime dayStart = DateTime.newInstance(Date.today(), Time.newInstance(0, 0, 0, 0));
+        DateTime dayEnd   = DateTime.newInstance(Date.today().addDays(1), Time.newInstance(0, 0, 0, 0));
+
+        List<AssignedResource> ars = [
+            SELECT ServiceAppointmentId, ServiceResource.Name,
+                   ServiceAppointment.Id, ServiceAppointment.ContactId, ServiceAppointment.Contact.Name,
+                   ServiceAppointment.Status, ServiceAppointment.SchedStartTime, ServiceAppointment.SchedEndTime,
+                   ServiceAppointment.Party_Size__c
+            FROM AssignedResource
+            WHERE ServiceResourceId = :serviceResourceId
+              AND ServiceAppointment.SchedStartTime >= :dayStart
+              AND ServiceAppointment.SchedStartTime <  :dayEnd
+              AND ServiceAppointment.Status NOT IN ('Completed', 'Canceled')
+            ORDER BY ServiceAppointment.SchedStartTime ASC
+        ];
+        if (ars.isEmpty()) return null;
+
+        // Prefer an in-flight session (Dispatched/In Progress) over a merely scheduled one.
+        AssignedResource chosen = ars[0];
+        for (AssignedResource ar : ars) {
+            if (ar.ServiceAppointment.Status == 'Dispatched' || ar.ServiceAppointment.Status == 'In Progress') {
+                chosen = ar;
+                break;
+            }
+        }
+
+        ServiceAppointment sa = chosen.ServiceAppointment;
+        BaySessionDTO dto = new BaySessionDTO();
+        dto.appointmentId = sa.Id;
+        dto.contactName   = sa.Contact != null ? sa.Contact.Name : 'Unknown Golfer';
+        dto.status        = sa.Status;
+        dto.statusLabel   = statusLabel(sa.Status);
+        dto.schedStart    = sa.SchedStartTime != null ? sa.SchedStartTime.format() : null;
+        dto.schedEnd      = sa.SchedEndTime   != null ? sa.SchedEndTime.format()   : null;
+        dto.bayName       = chosen.ServiceResource.Name;
+        dto.bayResourceId = serviceResourceId;
+        dto.partySize     = sa.Party_Size__c != null ? Integer.valueOf(sa.Party_Size__c) : null;
+        // Real monitor type would need the not-yet-built ServiceResource<->Simulator_Bay__c
+        // link — hardcoded to match the same placeholder already used in
+        // FairwayOpsDashboardController.getBayStatus().
+        dto.simulatorType = 'TrackMan';
+
+        if (sa.SchedEndTime != null) {
+            Long ms = sa.SchedEndTime.getTime() - DateTime.now().getTime();
+            dto.minutesRemaining = (Integer) Math.round(ms / 60000.0);
+            dto.isOvertime       = dto.minutesRemaining < 0;
+        }
+
+        RateInfo rate      = resolveSessionRate(sa.ContactId);
+        dto.rateLabel      = rate.label;
+        dto.ratePerSession = rate.amount;
+
+        for (AggregateResult ar : [
+            SELECT SUM(TotalPrice) total
+            FROM OrderItem
+            WHERE Order.Service_Appointment__c = :sa.Id
+        ]) {
+            Object total = ar.get('total');
+            if (total != null) dto.sessionTotal = (Decimal) total;
+        }
+
+        return dto;
+    }
+
+    // ── Resolve this contact's session rate (mirrors fairway-kiosk's resolvePricebookId) ──
+    // Standard vs. "Member Pricing" Pricebook2, keyed off an Active/Complimentary
+    // Membership__c row — same binary split the kiosk already uses at checkout time.
+    // If finer-grained tier pricing is added later, it's just more Pricebook2 rows;
+    // this resolution logic doesn't need to change.
+    private static RateInfo resolveSessionRate(Id contactId) {
+        RateInfo info = new RateInfo();
+        Boolean isMember = false;
+
+        if (contactId != null) {
+            List<Membership__c> memberships = [
+                SELECT Id FROM Membership__c
+                WHERE Contact__c = :contactId AND Status__c IN ('Active', 'Complimentary')
+                LIMIT 1
+            ];
+            isMember = !memberships.isEmpty();
+        }
+
+        List<Pricebook2> pbs = isMember
+            ? [SELECT Id FROM Pricebook2 WHERE Name = 'Member Pricing' AND IsActive = true LIMIT 1]
+            : [SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1];
+        if (pbs.isEmpty()) {
+            info.label = 'Rate unavailable';
+            return info;
+        }
+
+        List<PricebookEntry> entries = [
+            SELECT UnitPrice FROM PricebookEntry
+            WHERE Product2.Name = 'Bay Session' AND Pricebook2Id = :pbs[0].Id AND IsActive = true
+            LIMIT 1
+        ];
+        if (entries.isEmpty()) {
+            info.label = 'Rate unavailable';
+            return info;
+        }
+
+        info.amount = entries[0].UnitPrice;
+        info.label  = isMember ? 'Member rate' : 'Standard rate';
+        return info;
     }
 
     // ── End session now ───────────────────────────────────────────────────────

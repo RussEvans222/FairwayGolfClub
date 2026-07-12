@@ -4,6 +4,7 @@ public with sharing class FairwayOpsDashboardController {
         @AuraEnabled public String appointmentId;
         @AuraEnabled public String contactName;
         @AuraEnabled public String bayName;
+        @AuraEnabled public String bayResourceId;
         @AuraEnabled public DateTime schedStart;
         @AuraEnabled public DateTime schedEnd;
         @AuraEnabled public String status;       // Scheduled / Dispatched / In Progress / Completed
@@ -24,6 +25,15 @@ public with sharing class FairwayOpsDashboardController {
         @AuraEnabled public Date lastCalibration;
     }
 
+    // ── Walk-in vs. booked split, by Salesforce Scheduler Engagement Channel ──
+    public class ChannelSplit {
+        @AuraEnabled public Integer walkInCount;
+        @AuraEnabled public Integer bookedCount;
+        @AuraEnabled public Integer unknownCount;
+        @AuraEnabled public Decimal walkInPercent;
+        @AuraEnabled public Decimal bookedPercent;
+    }
+
     public class DailyStats {
         @AuraEnabled public Integer totalSessions;
         @AuraEnabled public Integer checkedIn;
@@ -39,15 +49,29 @@ public with sharing class FairwayOpsDashboardController {
     // ── Today's scheduled sessions ──────────────────────────────────────────
     @AuraEnabled(cacheable=false)
     public static List<SessionRow> getTodaySessions() {
+        return getSessionsForDate(Date.today());
+    }
+
+    // ── Scheduled sessions for an arbitrary date (powers Daily Schedule's date nav) ──
+    // NOTE: comparing a DateTime field to a bound Date variable with `=` does NOT
+    // get the same "expand to the full day" treatment SOQL gives the TODAY literal
+    // — it's treated as an exact midnight instant and matches nothing. Use an
+    // explicit day-start/day-end range instead, same pattern as getBayStatus/
+    // getDailyStats/getBaySession below.
+    @AuraEnabled(cacheable=false)
+    public static List<SessionRow> getSessionsForDate(Date d) {
         List<SessionRow> rows = new List<SessionRow>();
-        DateTime now = DateTime.now();
+        DateTime now      = DateTime.now();
+        DateTime dayStart = DateTime.newInstance(d, Time.newInstance(0, 0, 0, 0));
+        DateTime dayEnd   = DateTime.newInstance(d.addDays(1), Time.newInstance(0, 0, 0, 0));
 
         for (ServiceAppointment sa : [
             SELECT Id, Status, SchedStartTime, SchedEndTime,
                    Contact.Name,
-                   (SELECT ServiceResource.Name FROM ServiceResources LIMIT 1)
+                   (SELECT ServiceResource.Id, ServiceResource.Name FROM ServiceResources LIMIT 1)
             FROM ServiceAppointment
-            WHERE SchedStartTime = TODAY
+            WHERE SchedStartTime >= :dayStart
+              AND SchedStartTime <  :dayEnd
               AND Status IN ('Scheduled','Dispatched','In Progress','Completed')
             ORDER BY SchedStartTime ASC
             LIMIT 200
@@ -63,13 +87,65 @@ public with sharing class FairwayOpsDashboardController {
 
             if (sa.ServiceResources != null && !sa.ServiceResources.isEmpty()
                     && sa.ServiceResources[0].ServiceResource != null) {
-                r.bayName = sa.ServiceResources[0].ServiceResource.Name;
+                r.bayName       = sa.ServiceResources[0].ServiceResource.Name;
+                r.bayResourceId = sa.ServiceResources[0].ServiceResource.Id;
             } else {
                 r.bayName = '—';
             }
             rows.add(r);
         }
         return rows;
+    }
+
+    // ── Operating hours for the calendar grid ────────────────────────────────
+    public class OperatingHoursWindow {
+        @AuraEnabled public Integer startMinutes; // minutes since midnight
+        @AuraEnabled public Integer endMinutes;
+    }
+
+    private static final List<String> DAY_NAMES = new List<String>{
+        'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+    };
+    // 1900-01-07 was a Sunday — used as a stable reference point to compute day-of-week
+    // by day-count arithmetic, avoiding locale-dependent DateTime.format('EEEE').
+    private static final Date REFERENCE_SUNDAY = Date.newInstance(1900, 1, 7);
+
+    // ── Real business hours for a given date, from Setup → Operating Hours
+    // ("Fairway Golf Club" ServiceTerritory) — drives the Daily Schedule
+    // calendar grid's time range so it always matches whatever is actually
+    // configured (e.g. shorter Sunday hours), not a hardcoded window.
+    @AuraEnabled(cacheable=false)
+    public static OperatingHoursWindow getOperatingHours(Date d) {
+        OperatingHoursWindow w = new OperatingHoursWindow();
+        // Default fallback if territory/hours/time-slot config is missing.
+        w.startMinutes = 8 * 60;
+        w.endMinutes   = 22 * 60;
+
+        Integer diffDays = REFERENCE_SUNDAY.daysBetween(d);
+        Integer dowIndex = Math.mod(diffDays, 7);
+        if (dowIndex < 0) dowIndex += 7;
+        String dayName = DAY_NAMES[dowIndex];
+
+        List<ServiceTerritory> territories = [
+            SELECT OperatingHoursId
+            FROM ServiceTerritory
+            WHERE Name = 'Fairway Golf Club' AND IsActive = true
+            LIMIT 1
+        ];
+        if (territories.isEmpty() || territories[0].OperatingHoursId == null) return w;
+
+        List<TimeSlot> slots = [
+            SELECT StartTime, EndTime
+            FROM TimeSlot
+            WHERE OperatingHoursId = :territories[0].OperatingHoursId
+              AND DayOfWeek = :dayName
+            LIMIT 1
+        ];
+        if (slots.isEmpty()) return w;
+
+        w.startMinutes = slots[0].StartTime.hour() * 60 + slots[0].StartTime.minute();
+        w.endMinutes   = slots[0].EndTime.hour() * 60 + slots[0].EndTime.minute();
+        return w;
     }
 
     // ── Bay status overview ─────────────────────────────────────────────────
@@ -212,6 +288,43 @@ public with sharing class FairwayOpsDashboardController {
             : 0;
 
         return s;
+    }
+
+    // ── Walk-in vs. booked split for Business Stats ─────────────────────────
+    // "In Person" engagement channel = walk-in; anything else (Phone, Community/
+    // self-service) = booked ahead. NOTE: EngagementChannelTypeId is unpopulated
+    // on historical/seeded ServiceAppointment records and won't be real until (a)
+    // fairway-kiosk's walk-in creation sets it and (b) the Experience Cloud
+    // booking Flow (Setup-only, no source control) is updated to set it too —
+    // see BOOKING_CHECKIN_PROCESS.md. Field API name (EngagementChannelTypeId)
+    // should be double-checked against the org on first deploy of this method.
+    @AuraEnabled(cacheable=false)
+    public static ChannelSplit getChannelSplit() {
+        ChannelSplit c = new ChannelSplit();
+        Integer walkIn = 0, booked = 0, unknown = 0;
+
+        for (ServiceAppointment sa : [
+            SELECT Id, EngagementChannelTypeId, EngagementChannelType.Name
+            FROM ServiceAppointment
+            WHERE SchedStartTime = TODAY
+              AND Status IN ('Scheduled', 'Dispatched', 'In Progress', 'Completed')
+        ]) {
+            if (sa.EngagementChannelTypeId == null) {
+                unknown++;
+            } else if (sa.EngagementChannelType.Name == 'In Person') {
+                walkIn++;
+            } else {
+                booked++;
+            }
+        }
+
+        Integer known = walkIn + booked;
+        c.walkInCount   = walkIn;
+        c.bookedCount   = booked;
+        c.unknownCount  = unknown;
+        c.walkInPercent = known > 0 ? (Decimal.valueOf(walkIn) / known * 100).setScale(0) : 0;
+        c.bookedPercent = known > 0 ? (Decimal.valueOf(booked) / known * 100).setScale(0) : 0;
+        return c;
     }
 
     // ── Bay greeting: golfer profile + latest insight ───────────────────────

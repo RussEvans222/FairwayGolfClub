@@ -1,10 +1,29 @@
+/* ── Fairway Command design tokens ──────────────────────────────────────── */
+:host {
+    --fwc-primary: #1a4332;
+    --fwc-on-primary: #ffffff;
+    --fwc-bg: #f8f9ff;
+    --fwc-surface: #ffffff;
+    --fwc-surface-alt: #eff4ff;
+    --fwc-border: #e2e8f0;
+    --fwc-text: #0b1c30;
+    --fwc-text-muted: #64748b;
+    --fwc-gold: #c5a059;
+    --fwc-success: #16a34a;
+    --fwc-danger: #ba1a1a;
+    --fwc-radius-card: 16px;
+    --fwc-radius-control: 8px;
+    --fwc-radius-pill: 999px;
+    --fwc-shadow: 0 4px 20px rgba(11, 28, 48, 0.08);
+}
+
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 .console {
-    background: #0A0A0A;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    padding: 20px;
-    min-height: 400px;
+    background: var(--fwc-bg);
+    color: var(--fwc-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 16px;
+    min-height: 200px;
     position: relative;
 }
 
@@ -13,47 +32,50 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid #1E1E1E;
+    margin-bottom: 16px;
+    padding: 0.85rem 1.25rem;
+    background: var(--fwc-primary);
+    border-radius: var(--fwc-radius-card);
+    box-shadow: var(--fwc-shadow);
 }
 .console-title {
     display: flex;
     align-items: baseline;
     gap: 10px;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
-    color: #fff;
+    color: var(--fwc-on-primary);
 }
-.console-title .logo { font-size: 20px; }
+.console-title .logo { font-size: 18px; }
 .console-title .subtitle {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: #C9A84C;
-    font-weight: 500;
+    color: var(--fwc-gold);
+    font-weight: 600;
 }
 
 /* ── State messages ─────────────────────────────────────────────────────── */
 .loading-msg, .empty-msg {
     padding: 40px 0;
     text-align: center;
-    color: #555;
+    color: var(--fwc-text-muted);
 }
-.empty-sub { font-size: 13px; color: #3A3A3A; margin-top: 6px; }
+.empty-sub { font-size: 13px; color: var(--fwc-text-muted); margin-top: 6px; }
 
 /* ── Card grid ──────────────────────────────────────────────────────────── */
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
 }
 
 /* ── Session card ───────────────────────────────────────────────────────── */
 .session-card {
-    background: #111;
-    border: 1px solid #2A2A2A;
-    border-radius: 16px;
+    background: var(--fwc-surface);
+    border: 1px solid var(--fwc-border);
+    border-radius: var(--fwc-radius-card);
+    box-shadow: var(--fwc-shadow);
     padding: 18px;
     display: flex;
     flex-direction: column;
@@ -62,7 +84,7 @@
     overflow: hidden;
 }
 .session-card.card-overtime {
-    border-color: rgba(239, 68, 68, 0.4);
+    border-color: rgba(186, 26, 26, 0.4);
 }
 
 /* ── Card header ─────────────────────────────────────────────────────────── */
@@ -79,16 +101,17 @@
 .bay-name {
     font-size: 16px;
     font-weight: 700;
-    color: #fff;
+    color: var(--fwc-text);
 }
 
 /* ── Timer ───────────────────────────────────────────────────────────────── */
 .timer {
     font-size: 13px;
-    font-weight: 600;
-    color: #C9A84C;
+    font-weight: 700;
+    color: var(--fwc-primary);
+    font-variant-numeric: tabular-nums;
 }
-.timer.timer-over { color: #EF4444; }
+.timer.timer-over { color: var(--fwc-danger); }
 
 /* ── Golfer row ─────────────────────────────────────────────────────────── */
 .card-golfer {
@@ -100,29 +123,29 @@
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: rgba(201, 168, 76, 0.15);
-    border: 1px solid rgba(201, 168, 76, 0.3);
+    background: rgba(26, 67, 50, 0.1);
+    border: 1px solid rgba(26, 67, 50, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 16px;
     font-weight: 700;
-    color: #C9A84C;
+    color: var(--fwc-primary);
     flex-shrink: 0;
 }
-.golfer-name { font-size: 15px; font-weight: 600; color: #fff; margin: 0; }
-.golfer-time { font-size: 12px; color: #666; margin: 2px 0 0; }
+.golfer-name { font-size: 15px; font-weight: 600; color: var(--fwc-text); margin: 0; }
+.golfer-time { font-size: 12px; color: var(--fwc-text-muted); margin: 2px 0 0; }
 
 /* ── Progress bar ───────────────────────────────────────────────────────── */
 .progress-track {
     height: 4px;
-    background: #1E1E1E;
+    background: var(--fwc-surface-alt);
     border-radius: 4px;
     overflow: hidden;
 }
 .progress-fill {
     height: 100%;
-    background: #C9A84C;
+    background: var(--fwc-primary);
     border-radius: 4px;
     transition: width 1s linear;
 }
@@ -130,14 +153,14 @@
 /* ── Badges ──────────────────────────────────────────────────────────────── */
 .badge {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     padding: 3px 10px;
-    border-radius: 999px;
+    border-radius: var(--fwc-radius-pill);
 }
-.badge-scheduled  { background: rgba(255,255,255,0.06); color: #888; }
-.badge-checkedin  { background: rgba(201,168,76,0.15);  color: #C9A84C; }
-.badge-active     { background: rgba(74,222,128,0.12);  color: #4ADE80; }
-.badge-done       { background: rgba(255,255,255,0.04); color: #444; }
+.badge-scheduled  { background: #dbeafe; color: #2563eb; }
+.badge-checkedin  { background: rgba(197,160,89,0.18);  color: #8a6a2f; }
+.badge-active     { background: #dcfce7;  color: var(--fwc-success); }
+.badge-done       { background: var(--fwc-surface-alt); color: var(--fwc-text-muted); }
 
 /* ── Action buttons ─────────────────────────────────────────────────────── */
 .card-actions {
@@ -147,7 +170,7 @@
 }
 .btn {
     border: none;
-    border-radius: 8px;
+    border-radius: var(--fwc-radius-control);
     font-size: 12px;
     font-weight: 600;
     padding: 7px 14px;
@@ -158,9 +181,9 @@
 .btn:not(:disabled):hover { opacity: 0.85; }
 .btn:not(:disabled):active { transform: scale(0.97); }
 
-.btn-end     { background: rgba(239,68,68,0.15); color: #EF4444; }
-.btn-restart { background: rgba(201,168,76,0.12); color: #C9A84C; }
-.btn-extend  { background: rgba(74,222,128,0.08); color: #4ADE80; }
+.btn-end     { background: #fee2e2; color: var(--fwc-danger); }
+.btn-restart { background: rgba(197,160,89,0.15); color: #8a6a2f; }
+.btn-extend  { background: rgba(26,67,50,0.1); color: var(--fwc-primary); }
 
 /* ── Status picker ──────────────────────────────────────────────────────── */
 .status-row {
@@ -168,13 +191,13 @@
     align-items: center;
     gap: 10px;
 }
-.status-label-text { font-size: 12px; color: #555; flex-shrink: 0; }
+.status-label-text { font-size: 12px; color: var(--fwc-text-muted); flex-shrink: 0; }
 .status-select {
     flex: 1;
-    background: #1A1A1A;
-    border: 1px solid #333;
-    border-radius: 8px;
-    color: #ccc;
+    background: var(--fwc-surface);
+    border: 1px solid var(--fwc-border);
+    border-radius: var(--fwc-radius-control);
+    color: var(--fwc-text);
     font-size: 12px;
     padding: 6px 10px;
     cursor: pointer;
@@ -185,8 +208,8 @@
 .busy-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(10,10,10,0.7);
-    border-radius: 16px;
+    background: rgba(248, 249, 255, 0.75);
+    border-radius: var(--fwc-radius-card);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -194,8 +217,8 @@
 .spinner {
     width: 28px;
     height: 28px;
-    border: 2px solid rgba(201,168,76,0.2);
-    border-top-color: #C9A84C;
+    border: 2px solid rgba(26,67,50,0.15);
+    border-top-color: var(--fwc-primary);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
 }
@@ -211,9 +234,9 @@
     font-size: 13px;
     font-weight: 600;
     z-index: 9999;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     animation: fadeIn 0.2s ease;
 }
-.toast-success { background: rgba(74,222,128,0.15); color: #4ADE80; border: 1px solid rgba(74,222,128,0.3); }
-.toast-error   { background: rgba(239,68,68,0.15);  color: #EF4444; border: 1px solid rgba(239,68,68,0.3); }
+.toast-success { background: #dcfce7; color: var(--fwc-success); border: 1px solid rgba(22,163,74,0.3); }
+.toast-error   { background: #fee2e2; color: var(--fwc-danger); border: 1px solid rgba(186,26,26,0.3); }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

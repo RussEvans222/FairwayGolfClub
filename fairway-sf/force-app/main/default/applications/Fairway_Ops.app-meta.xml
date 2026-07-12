@@ -6,6 +6,9 @@
     <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
     <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
     <navType>Standard</navType>
+    <tabs>Fairway_Ops_Home</tabs>
+    <tabs>Fairway_Daily_Schedule</tabs>
+    <tabs>standard-ServiceResource</tabs>
     <tabs>Simulator_Bay__c</tabs>
     <tabs>Golfer_Profile__c</tabs>
     <tabs>Bay_Reservation__c</tabs>
@@ -16,5 +19,6 @@
     <tabs>Round_Hole_Result__c</tabs>
     <tabs>Practice_Insight__c</tabs>
     <tabs>Membership__c</tabs>
+    <tabs>Fairway_Business_Stats</tabs>
     <uiType>Lightning</uiType>
 </CustomApplication>

@@ -4,8 +4,26 @@
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
-                <componentName>c:fairwayOpsDashboard</componentName>
-                <identifier>c__fairwayOpsDashboard</identifier>
+                <componentName>fairwaySessionConsole</componentName>
+                <identifier>c_fairwaySessionConsole</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>fairwayOpsDashboard</componentName>
+                <identifier>c_fairwayOpsDashboard</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>fairwayDailySchedule</componentName>
+                <identifier>c_fairwayDailySchedule</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>fairwayBusinessStats</componentName>
+                <identifier>c_fairwayBusinessStats</identifier>
             </componentInstance>
         </itemInstances>
         <name>main</name>
@@ -13,7 +31,7 @@
     </flexiPageRegions>
     <masterLabel>Fairway Ops Home</masterLabel>
     <template>
-        <name>lightning_OneColumn</name>
+        <name>flexipage:defaultAppHomeTemplate</name>
     </template>
     <type>AppPage</type>
 </FlexiPage>

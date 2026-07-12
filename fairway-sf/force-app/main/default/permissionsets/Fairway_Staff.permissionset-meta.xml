@@ -60,6 +60,22 @@
         <tab>standard-Contact</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+    <tabSettings>
+        <tab>standard-ServiceResource</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Fairway_Ops_Home</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Fairway_Daily_Schedule</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Fairway_Business_Stats</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
 
     <!-- ═══════════════════════════════════════════════
          OBJECT PERMISSIONS
@@ -258,6 +274,19 @@
         <modifyAllRecords>false</modifyAllRecords>
         <object>WorkOrder</object>
         <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <!-- EngagementChannelType: read-only lookup the kiosk queries directly via
+         REST (resolveWalkInChannelId) to tag walk-ins for Business Stats'
+         walk-in-vs-booked split — same "read-only lookup table" pattern as
+         Pricebook2/PricebookEntry/Product2 above. -->
+    <objectPermissions>
+        <allowCreate>false</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>false</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>EngagementChannelType</object>
+        <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
 
     <!-- Revenue tracking — Order/OrderItem is the running tab per visit (base
@@ -723,6 +752,16 @@
         <editable>false</editable>
         <readable>true</readable>
         <field>Round_Hole_Result__c.Score_To_Par__c</field>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <readable>true</readable>
+        <field>ServiceAppointment.Party_Size__c</field>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <readable>true</readable>
+        <field>ServiceAppointment.EngagementChannelTypeId</field>
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>

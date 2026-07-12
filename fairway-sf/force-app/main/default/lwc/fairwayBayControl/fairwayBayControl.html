@@ -1,0 +1,114 @@
+<template>
+    <div class="bay-control">
+
+        <template if:true={loading}>
+            <div class="loading-msg">Loading bay…</div>
+        </template>
+
+        <template if:false={loading}>
+
+            <!-- Empty state: bay has no session today -->
+            <template if:true={noSession}>
+                <div class="empty-card">
+                    <p class="empty-title">Bay Available</p>
+                    <p class="empty-sub">No session scheduled for this bay today.</p>
+                    <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                        title="Refresh" onclick={handleRefresh}>
+                    </lightning-button-icon>
+                </div>
+            </template>
+
+            <!-- Active/scheduled session -->
+            <template if:true={hasSession}>
+                <div class="card">
+
+                    <!-- Header -->
+                    <div class="card-header">
+                        <div class="header-left">
+                            <span class="bay-name">{session.bayName}</span>
+                            <span class={session.badgeClass}>{session.statusLabel}</span>
+                        </div>
+                        <div class="simulator-status">{session.simulatorType}</div>
+                    </div>
+
+                    <!-- Countdown -->
+                    <div class="countdown-block">
+                        <span class="countdown-label">Time Remaining</span>
+                        <span class={session.timerClass}>
+                            <template if:true={session.isOvertime}>⚠ Overtime</template>
+                            <template if:false={session.isOvertime}>{session.countdown}</template>
+                        </span>
+                        <div class="progress-track">
+                            <div class="progress-fill" style={session.progressStyle}></div>
+                        </div>
+                    </div>
+
+                    <!-- Current player / party -->
+                    <div class="info-row">
+                        <div class="info-cell">
+                            <span class="info-label">Current Player</span>
+                            <span class="info-value">{session.contactName}</span>
+                        </div>
+                        <div class="info-cell">
+                            <span class="info-label">Party Size</span>
+                            <span class="info-value">{session.partySizeLabel}</span>
+                        </div>
+                    </div>
+
+                    <!-- Session manifest -->
+                    <div class="manifest">
+                        <div class="manifest-row">
+                            <span class="manifest-label">Start Time</span>
+                            <span class="manifest-value">{session.schedStartLabel}</span>
+                        </div>
+                        <div class="manifest-row">
+                            <span class="manifest-label">Scheduled End</span>
+                            <span class="manifest-value">{session.schedEndLabel}</span>
+                        </div>
+                        <div class="manifest-row">
+                            <span class="manifest-label">{session.rateLabel}</span>
+                            <span class="manifest-value">{session.rateAmountLabel}</span>
+                        </div>
+                        <div class="manifest-row manifest-total">
+                            <span class="manifest-label">Session Total</span>
+                            <span class="manifest-value">{session.sessionTotalLabel}</span>
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="controls-grid">
+                        <button class="btn btn-restart" onclick={handleRestart} disabled={busy}>Restart</button>
+                        <button class="btn btn-end" onclick={handleEnd} disabled={busy}>End Session</button>
+                        <button class="btn btn-extend" data-mins="15" onclick={handleExtend} disabled={busy}>+15 min</button>
+                        <button class="btn btn-extend" data-mins="30" onclick={handleExtend} disabled={busy}>+30 min</button>
+                    </div>
+
+                    <!-- Status picker -->
+                    <div class="status-row">
+                        <span class="status-label-text">Set bay status:</span>
+                        <select class="status-select" onchange={handleStatusChange} disabled={busy}>
+                            <option value="">— choose —</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="Dispatched">Checked In</option>
+                            <option value="In Progress">Active</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-print" onclick={handlePrintBill}>Print Current Bill</button>
+
+                    <template if:true={busy}>
+                        <div class="busy-overlay"><div class="spinner"></div></div>
+                    </template>
+                </div>
+            </template>
+
+        </template>
+
+        <!-- Toast -->
+        <template if:true={toast.visible}>
+            <div class={toast.cssClass}>{toast.message}</div>
+        </template>
+
+    </div>
+</template>

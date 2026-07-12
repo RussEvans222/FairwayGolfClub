@@ -360,6 +360,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>ServiceAppointment.Party_Size__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Session_Participant__c.AI_Coaching_Enabled_For_Session__c</field>
         <readable>true</readable>
     </fieldPermissions>

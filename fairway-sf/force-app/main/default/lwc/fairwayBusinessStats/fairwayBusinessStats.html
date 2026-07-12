@@ -1,0 +1,79 @@
+<template>
+    <div class="stats">
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">
+                <span class="logo-mark">⛳</span>
+                <span>Business Stats</span>
+            </div>
+            <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                title="Refresh" onclick={handleRefresh} variant="border-inverse">
+            </lightning-button-icon>
+        </div>
+
+        <template if:true={loading}>
+            <div class="loading-msg">Loading…</div>
+        </template>
+
+        <template if:false={loading}>
+
+            <!-- Top-line stats -->
+            <div class="stat-row">
+                <div class="stat-card">
+                    <span class="stat-value">{revenueLabel}</span>
+                    <span class="stat-label">Total Revenue Today</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">{utilizationLabel}</span>
+                    <span class="stat-label">Bay Utilization</span>
+                    <div class="usage-bar-wrap"><div class="usage-bar" style={utilizationBarStyle}></div></div>
+                </div>
+            </div>
+
+            <!-- Walk-in vs booked -->
+            <div class="panel">
+                <div class="panel-header">Walk-In vs. Bookings</div>
+                <template if:true={channelHasData}>
+                    <div class="channel-row">
+                        <div class="channel-cell">
+                            <span class="channel-value">{walkInPercentLabel}</span>
+                            <span class="channel-label">Walk-In</span>
+                        </div>
+                        <div class="channel-cell">
+                            <span class="channel-value">{bookedPercentLabel}</span>
+                            <span class="channel-label">Booked Ahead</span>
+                        </div>
+                    </div>
+                </template>
+                <template if:false={channelHasData}>
+                    <div class="empty-msg">No engagement-channel data yet for today's sessions.</div>
+                </template>
+            </div>
+
+            <!-- Operational health -->
+            <div class="panel">
+                <div class="panel-header">Operational Health</div>
+                <template for:each={healthChecks} for:item="h">
+                    <div key={h.label} class={h.cssClass}>
+                        <span class="health-icon">{h.icon}</span>
+                        <span class="health-label">{h.label}</span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Top performing bays -->
+            <div class="panel">
+                <div class="panel-header">Top Performing Bays Today</div>
+                <template for:each={topBays} for:item="b">
+                    <div key={b.bayId} class="bay-row">
+                        <span class="bay-name">{b.bayName}</span>
+                        <span class="bay-sessions">{b.sessionsToday} sessions</span>
+                        <span class="bay-revenue">{b.revenueLabel}</span>
+                    </div>
+                </template>
+            </div>
+
+        </template>
+    </div>
+</template>
