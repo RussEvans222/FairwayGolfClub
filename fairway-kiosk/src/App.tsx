@@ -75,6 +75,17 @@ export default function App() {
 
   const { auth, refreshAuth, query, create, patch, postApexRest } = useSalesforce()
 
+  const upsertScheduledSession = useCallback((nextSession: ScheduledSession) => {
+    setScheduledSessions(prev => {
+      const index = prev.findIndex(s => s.reservationId === nextSession.reservationId)
+      if (index === -1) return [...prev, nextSession]
+
+      const next = [...prev]
+      next[index] = nextSession
+      return next
+    })
+  }, [])
+
   // Writes ServiceAppointment.Status through the full check-in ladder —
   // "Checked In" (identity confirmed) immediately followed by "Dispatched"
   // (bay known) — instead of jumping straight to Dispatched. Every check-in
@@ -343,17 +354,17 @@ export default function App() {
       }
 
       // Mark checked in locally
-      setScheduledSessions(prev => prev.map(s =>
-        s.reservationId !== selectedSession.reservationId ? s : {
-          ...s,
-          players: s.players.map((p, i) => i === selectedPlayerIndex ? { ...p, checkedIn: true } : p),
-        }
-      ))
+      const checkedInSession: ScheduledSession = {
+        ...selectedSession,
+        status: selectedSession.status === 'Scheduled' ? 'Dispatched' : selectedSession.status,
+        players: selectedSession.players.map((p, i) => i === selectedPlayerIndex ? { ...p, checkedIn: true } : p),
+      }
+      upsertScheduledSession(checkedInSession)
+      setSelectedSession(checkedInSession)
 
       // Checked in, bay assigned
       if (selectedSession.status === 'Scheduled') {
         await markCheckedIn(selectedSession.reservationId)
-        setSelectedSession(s => s ? { ...s, status: 'Dispatched' } : s)
       }
 
       await ensureKioskSession(selectedSession.reservationId, player.profileId, player.displayName ?? 'Golfer', player.isGuest)
@@ -364,7 +375,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn, ensureKioskSession])
+  }, [selectedSession, selectedPlayerIndex, markCheckedIn, ensureKioskSession, upsertScheduledSession])
 
   const handlePinSetup = useCallback(async (pin: string) => {
     if (!selectedSession) return
@@ -375,15 +386,15 @@ export default function App() {
       if (player.profileId) {
         await patch('Golfer_Profile__c', player.profileId, { Member_PIN__c: pin })
       }
-      setScheduledSessions(prev => prev.map(s =>
-        s.reservationId !== selectedSession.reservationId ? s : {
-          ...s,
-          players: s.players.map((p, i) => i === selectedPlayerIndex ? { ...p, pin, checkedIn: true } : p),
-        }
-      ))
+      const checkedInSession: ScheduledSession = {
+        ...selectedSession,
+        status: selectedSession.status === 'Scheduled' ? 'Dispatched' : selectedSession.status,
+        players: selectedSession.players.map((p, i) => i === selectedPlayerIndex ? { ...p, pin, checkedIn: true } : p),
+      }
+      upsertScheduledSession(checkedInSession)
+      setSelectedSession(checkedInSession)
       if (selectedSession.status === 'Scheduled') {
         await markCheckedIn(selectedSession.reservationId)
-        setSelectedSession(s => s ? { ...s, status: 'Dispatched' } : s)
       }
 
       await ensureKioskSession(selectedSession.reservationId, player.profileId, player.displayName ?? 'Golfer', player.isGuest)
@@ -394,7 +405,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn, ensureKioskSession])
+  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn, ensureKioskSession, upsertScheduledSession])
 
   // Tiered pricing: golfers with an Active/Complimentary Membership__c record
   // get the "Member Pricing" Pricebook; everyone else gets the org's Standard
@@ -639,6 +650,13 @@ export default function App() {
           setSelectedSession(sel => sel ? { ...sel, status: 'Dispatched' } : sel)
         }
         await ensureKioskSession(s.reservationId, player.profileId, player.displayName ?? 'Golfer', player.isGuest)
+        const nextSession: ScheduledSession = {
+          ...s,
+          status: s.status === 'Scheduled' ? 'Dispatched' : s.status,
+          players: s.players.map((p, i) => i === playerIndex ? { ...p, checkedIn: true } : p),
+        }
+        upsertScheduledSession(nextSession)
+        setSelectedSession(nextSession)
         setScreen('bay-direction')
         return null
       } catch (e) {
@@ -672,7 +690,7 @@ export default function App() {
     } catch (e) {
       return e instanceof Error ? e.message : "We couldn't look up that code."
     }
-  }, [scheduledSessions, patch, query, resolvePersonAccount, markCheckedIn, ensureKioskSession])
+  }, [scheduledSessions, patch, query, resolvePersonAccount, markCheckedIn, ensureKioskSession, upsertScheduledSession])
 
   // Called when member is identified — route to PIN screen first
   function handleMemberWalkInFound(data: { contactId: string; accountId?: string | null; profileId: string | null; firstName: string; lastName: string; email: string; pin?: string | null }) {
@@ -748,6 +766,7 @@ export default function App() {
         }
         setWalkInSession(syntheticSession)
         setWalkInPlayer(syntheticSession.players[0])
+        upsertScheduledSession(syntheticSession)
         setScreen('bay-direction')
       } else {
         // All bays occupied — add to queue
@@ -770,7 +789,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingMember, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession])
+  }, [pendingMember, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession, upsertScheduledSession])
 
   // Walk-in flow handlers
 
@@ -870,6 +889,7 @@ export default function App() {
         const syntheticPlayer: ScheduledPlayer = syntheticSession.players[0]
         setWalkInSession(syntheticSession)
         setWalkInPlayer(syntheticPlayer)
+        upsertScheduledSession(syntheticSession)
         setScreen('bay-direction')
       } else {
         // All bays occupied — put guest in queue
@@ -892,7 +912,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolveGuestIdentity, session.players.length, addPlayer, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession])
+  }, [resolveGuestIdentity, session.players.length, addPlayer, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession, upsertScheduledSession])
 
   // ── Join an in-progress party ──────────────────────────────────────────
   // Reuses the exact same identity-collection screens as a normal walk-in

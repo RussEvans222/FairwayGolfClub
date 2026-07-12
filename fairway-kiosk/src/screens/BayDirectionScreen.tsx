@@ -61,6 +61,7 @@ export default function BayDirectionScreen({
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-7 px-10 text-center overflow-y-auto py-8">
+      <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-10 w-auto hg-logo-white" />
 
       {/* Avatar + name */}
       <div className="flex flex-col items-center gap-3">

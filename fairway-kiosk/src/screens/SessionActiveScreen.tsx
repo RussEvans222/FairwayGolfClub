@@ -30,6 +30,8 @@ export default function SessionActiveScreen({ session, onEndSession }: Props) {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-10 px-16">
+      <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-10 w-auto hg-logo-white" />
+
       {/* Timer */}
       <div className="text-center">
         <p className="text-[#888] text-xs uppercase tracking-widest mb-2">Session Time</p>

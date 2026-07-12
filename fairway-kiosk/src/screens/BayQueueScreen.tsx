@@ -59,6 +59,7 @@ export default function BayQueueScreen({
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-8 px-10 text-center">
+      <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-10 w-auto hg-logo-white" />
 
       {/* Header */}
       <div>
