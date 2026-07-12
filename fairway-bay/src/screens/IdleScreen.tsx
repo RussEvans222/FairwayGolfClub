@@ -1,22 +1,11 @@
-import type { Bay, LastSessionRecap } from '../types'
+import type { Bay } from '../types'
 
 interface Props {
   bay: Bay
-  recap: LastSessionRecap | null
   onChangeBay: () => void
 }
 
-function fmt(date: string) {
-  return new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
-function formatNumber(value: number | null | undefined, suffix = '') {
-  if (value == null) return '—'
-  return `${value.toLocaleString()}${suffix}`
-}
-
-export function IdleScreen({ bay, recap, onChangeBay }: Props) {
-  const displayName = recap?.playerName ?? 'Golfer'
+export function IdleScreen({ bay, onChangeBay }: Props) {
   return (
     <div className="w-full h-full flex flex-col" style={{ background: 'var(--dark)' }}>
       {/* Header */}
@@ -54,53 +43,15 @@ export function IdleScreen({ bay, recap, onChangeBay }: Props) {
             <div className="max-w-4xl">
               <div className="text-white/55 text-xs uppercase tracking-[0.45em]">Bay ready</div>
               <div className="mt-4 text-6xl md:text-8xl font-black leading-[0.9] tracking-tight text-white">
-                Welcome, {displayName}
+                Welcome to Bay {bay.bayNumber}
               </div>
               <div className="mt-6 max-w-2xl text-lg md:text-xl text-white/72">
                 Your bay is ready. Check in at the kiosk to start your next session.
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
-              <InfoCard label="Bay" value={bay.name} />
-              <InfoCard label="Last Session" value={recap ? fmt(recap.sessionDate) : '—'} />
-              <InfoCard label="Total Shots" value={formatNumber(recap?.totalShots)} />
-            </div>
-
             <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
               <div className="rounded-2xl p-6 backdrop-blur-sm"
-                   style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                <div className="flex items-center justify-between gap-4 mb-5">
-                  <div>
-                    <div className="text-white/45 text-[11px] uppercase tracking-[0.32em]">Last Session</div>
-                    <div className="mt-2 text-2xl font-bold text-white">{recap?.playerName ?? 'No session yet'}</div>
-                  </div>
-                  {recap?.bestCarry != null ? (
-                    <div className="text-right">
-                      <div className="text-white/45 text-[11px] uppercase tracking-[0.32em]">Best Carry</div>
-                      <div className="mt-2 text-4xl font-black text-white" style={{ color: 'var(--gold)' }}>
-                        {recap.bestCarry}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                {recap?.topClubs.length ? (
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {recap.topClubs.map(c => (
-                      <div key={c.club} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                        <div className="text-white/50 text-xs mb-1">{c.club}</div>
-                        <div className="text-white font-bold text-lg">{c.avgCarry} <span className="text-white/30 text-xs">yds</span></div>
-                        <div className="text-white/30 text-xs">{c.shotCount} shot{c.shotCount !== 1 ? 's' : ''}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-white/30 text-sm">No prior session data on this bay yet.</div>
-                )}
-              </div>
-
-              <div className="flex flex-col justify-between rounded-2xl p-6 backdrop-blur-sm"
                    style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
                 <div>
                   <div className="text-white/45 text-[11px] uppercase tracking-[0.32em]">Ready</div>
@@ -118,6 +69,15 @@ export function IdleScreen({ bay, recap, onChangeBay }: Props) {
                   Click to start playing
                 </button>
               </div>
+
+              <div className="rounded-2xl p-6 backdrop-blur-sm"
+                   style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div className="text-white/45 text-[11px] uppercase tracking-[0.32em]">Bay</div>
+                <div className="mt-3 text-3xl font-black text-white">{bay.name}</div>
+                <div className="mt-3 text-white/60 text-sm leading-6">
+                  Insert the golfer at the kiosk, then the welcome screen will switch to live Salesforce stats.
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -130,16 +90,6 @@ export function IdleScreen({ bay, recap, onChangeBay }: Props) {
           Change Bay
         </button>
       </div>
-    </div>
-  )
-}
-
-function InfoCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl p-4 backdrop-blur-sm"
-         style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-      <div className="text-white/45 text-[11px] uppercase tracking-[0.32em]">{label}</div>
-      <div className="mt-3 text-xl font-bold text-white leading-none">{value}</div>
     </div>
   )
 }

@@ -90,6 +90,68 @@ public with sharing class SessionAggregateHandler {
             shotCountByProfile.put((Id)ar.get('profileId'), ar);
         }
 
+        Map<Id, ProfileLifetimeAgg> lifetimeByProfile = new Map<Id, ProfileLifetimeAgg>();
+        for (Id profileId : profileIds) {
+            lifetimeByProfile.put(profileId, new ProfileLifetimeAgg());
+        }
+
+        for (AggregateResult ar : [
+            SELECT gsh.Session_Participant__r.Golfer_Profile__c profileId,
+                   gsh.Club__c club,
+                   COUNT(Id) shotCount,
+                   AVG(gsh.Carry_Distance__c) avgCarry
+            FROM Golf_Shot__c gsh
+            WHERE gsh.Session_Participant__r.Golfer_Profile__c IN :profileIds
+              AND gsh.Club__c != null
+            GROUP BY gsh.Session_Participant__r.Golfer_Profile__c, gsh.Club__c
+        ]) {
+            Id profileId = (Id)ar.get('profileId');
+            ProfileLifetimeAgg agg = lifetimeByProfile.get(profileId);
+            if (agg == null) continue;
+
+            String club = (String)ar.get('club');
+            Integer shotCount = (Integer)ar.get('shotCount');
+            Decimal avgCarry = (Decimal)ar.get('avgCarry');
+            agg.totalClubShots += shotCount != null ? shotCount : 0;
+
+            if (club != null) {
+                Integer clubCount = shotCount != null ? shotCount : 0;
+                if (agg.favoriteClub == null || clubCount > agg.favoriteClubShotCount) {
+                    agg.favoriteClub = club;
+                    agg.favoriteClubShotCount = clubCount;
+                }
+            }
+
+            String normalizedClub = normalizeClubName(club);
+            if (normalizedClub == 'driver') {
+                agg.driverCarryTotal = avgCarry;
+                agg.driverShotCount = shotCount != null ? shotCount : 0;
+            } else if (normalizedClub == '7iron') {
+                agg.sevenIronCarryTotal = avgCarry;
+                agg.sevenIronShotCount = shotCount != null ? shotCount : 0;
+            }
+        }
+
+        Map<Id, AggregateResult> mostPlayedCourseByProfile = new Map<Id, AggregateResult>();
+        for (AggregateResult ar : [
+            SELECT sp.Golfer_Profile__c profileId, sp.Golf_Session__r.Course_Played__c course, COUNT(Golf_Session__c) sessionCount
+            FROM Session_Participant__c sp
+            WHERE sp.Golfer_Profile__c IN :profileIds
+              AND sp.Is_Primary_Booker__c = true
+              AND sp.Golf_Session__r.Course_Played__c != null
+            GROUP BY sp.Golfer_Profile__c, sp.Golf_Session__r.Course_Played__c
+        ]) {
+            Id profileId = (Id)ar.get('profileId');
+            ProfileLifetimeAgg agg = lifetimeByProfile.get(profileId);
+            if (agg == null) continue;
+
+            Integer sessionCount = (Integer)ar.get('sessionCount');
+            if (sessionCount != null && sessionCount > agg.mostPlayedCourseCount) {
+                agg.mostPlayedCourse = (String)ar.get('course');
+                agg.mostPlayedCourseCount = sessionCount;
+            }
+        }
+
         // Last_Session_Date__c — most recent session end date across any participation.
         Map<Id, AggregateResult> lastSessionByProfile = new Map<Id, AggregateResult>();
         for (AggregateResult ar : [
@@ -110,6 +172,13 @@ public with sharing class SessionAggregateHandler {
             if (shotCountByProfile.containsKey(profileId)) {
                 upd.Lifetime_Shots__c = (Integer)shotCountByProfile.get(profileId).get('shotCount');
             }
+            ProfileLifetimeAgg lifetime = lifetimeByProfile.get(profileId);
+            if (lifetime != null) {
+                if (lifetime.driverCarryTotal != null) upd.Average_Driver_Carry__c = lifetime.driverCarryTotal.setScale(1);
+                if (lifetime.sevenIronCarryTotal != null) upd.Average_7_Iron_Carry__c = lifetime.sevenIronCarryTotal.setScale(1);
+                if (lifetime.favoriteClub != null) upd.Favorite_Club__c = lifetime.favoriteClub;
+                if (lifetime.mostPlayedCourse != null) upd.Most_Played_Course__c = lifetime.mostPlayedCourse;
+            }
             if (lastSessionByProfile.containsKey(profileId)) {
                 Datetime lastDt = (Datetime)lastSessionByProfile.get(profileId).get('lastDate');
                 if (lastDt != null) upd.Last_Session_Date__c = lastDt.date();
@@ -125,5 +194,22 @@ public with sharing class SessionAggregateHandler {
         Decimal avgClubSpeed;
         Decimal bestCarry;
         Integer shotCount = 0;
+    }
+
+    private class ProfileLifetimeAgg {
+        Decimal driverCarryTotal;
+        Integer driverShotCount = 0;
+        Decimal sevenIronCarryTotal;
+        Integer sevenIronShotCount = 0;
+        String favoriteClub;
+        Integer favoriteClubShotCount = 0;
+        String mostPlayedCourse;
+        Integer mostPlayedCourseCount = 0;
+        Integer totalClubShots = 0;
+    }
+
+    private static String normalizeClubName(String club) {
+        if (String.isBlank(club)) return null;
+        return club.replaceAll('[^A-Za-z0-9]', '').toLowerCase();
     }
 }

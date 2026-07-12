@@ -7,7 +7,6 @@ import { ActiveScreen } from './screens/ActiveScreen'
 import type {
   Bay,
   PlayerSession,
-  LastSessionRecap,
   Shot,
   ClubAverage,
   Screen,
@@ -60,7 +59,6 @@ export default function App() {
   const [selectedBay, setSelectedBay] = useState<Bay | null>(null)
   const [players, setPlayers] = useState<PlayerSession[]>([])
   const [activePlayerIndex, setActivePlayerIndex] = useState(0)
-  const [lastRecap, setLastRecap] = useState<LastSessionRecap | null>(null)
   const [sessionActive, setSessionActive] = useState(false)
   const [activeAppointmentId, setActiveAppointmentId] = useState<string | null>(null)
   const [minutesRemaining, setMinutesRemaining] = useState<number | null>(null)
@@ -159,7 +157,6 @@ export default function App() {
         setMinutesRemaining(null)
         setShowExtendPrompt(false)
         promptedForAppointment.current = null
-        await loadLastRecap(bay)
         return
       }
 
@@ -341,7 +338,7 @@ export default function App() {
       )
       if (!profiles.length) return null
       const profile = profiles[0]
-      return {
+      const summary: GolferLifetimeSummary = {
         lifetimeSessions: profile.Lifetime_Sessions__c,
         lifetimeShots: profile.Lifetime_Shots__c,
         avgHandicapTrend: profile.Avg_Handicap_Trend__c,
@@ -352,54 +349,97 @@ export default function App() {
         mostPlayedCourse: profile.Most_Played_Course__c,
         lastSessionDate: profile.Last_Session_Date__c,
       }
+
+      if (
+        summary.lifetimeSessions != null ||
+        summary.lifetimeShots != null ||
+        summary.avgHandicapTrend != null ||
+        summary.averageDriverCarry != null ||
+        summary.average7IronCarry != null ||
+        summary.favoriteClub != null ||
+        summary.currentFocus != null ||
+        summary.mostPlayedCourse != null ||
+        summary.lastSessionDate != null
+      ) {
+        return summary
+      }
+
+      type SessionRow = {
+        Id: string
+        Session_End__c: string | null
+        Course_Played__c: string | null
+      }
+      const sessions = await query<SessionRow>(
+        `SELECT Id, Session_End__c, Course_Played__c
+         FROM Golf_Session__c
+         WHERE Id IN (SELECT Golf_Session__c FROM Session_Participant__c WHERE Golfer_Profile__c = '${profileId}')
+           AND Status__c = 'Completed'
+         ORDER BY Session_End__c DESC`
+      )
+
+      type ShotRow = {
+        Club__c: string | null
+        Carry_Distance__c: number | null
+      }
+      const shots = await query<ShotRow>(
+        `SELECT Club__c, Carry_Distance__c
+         FROM Golf_Shot__c
+         WHERE Session_Participant__r.Golfer_Profile__c = '${profileId}'`
+      )
+
+      const clubCounts = new Map<string, { carryTotal: number; carryCount: number; shotCount: number }>()
+      const courseCounts = new Map<string, number>()
+      let driverCarryTotal = 0
+      let driverCarryCount = 0
+      let sevenCarryTotal = 0
+      let sevenCarryCount = 0
+
+      for (const shot of shots) {
+        if (shot.Club__c) {
+          const existing = clubCounts.get(shot.Club__c) ?? { carryTotal: 0, carryCount: 0, shotCount: 0 }
+          existing.shotCount += 1
+          if (shot.Carry_Distance__c != null) {
+            existing.carryTotal += shot.Carry_Distance__c
+            existing.carryCount += 1
+          }
+          clubCounts.set(shot.Club__c, existing)
+
+          if (shot.Club__c === 'Driver' && shot.Carry_Distance__c != null) {
+            driverCarryTotal += shot.Carry_Distance__c
+            driverCarryCount += 1
+          }
+          if (shot.Club__c === '7-Iron' && shot.Carry_Distance__c != null) {
+            sevenCarryTotal += shot.Carry_Distance__c
+            sevenCarryCount += 1
+          }
+        }
+      }
+
+      for (const session of sessions) {
+        if (!session.Course_Played__c) continue
+        courseCounts.set(session.Course_Played__c, (courseCounts.get(session.Course_Played__c) ?? 0) + 1)
+      }
+
+      const mostPlayedClub = Array.from(clubCounts.entries())
+        .sort((a, b) => b[1].shotCount - a[1].shotCount)[0]?.[0] ?? null
+      const mostPlayedCourse = Array.from(courseCounts.entries())
+        .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+      const lastSessionDate = sessions[0]?.Session_End__c ?? null
+
+      return {
+        lifetimeSessions: sessions.length || null,
+        lifetimeShots: shots.length || null,
+        avgHandicapTrend: summary.avgHandicapTrend,
+        averageDriverCarry: summary.averageDriverCarry ?? (driverCarryCount ? Math.round(driverCarryTotal / driverCarryCount) : null),
+        average7IronCarry: summary.average7IronCarry ?? (sevenCarryCount ? Math.round(sevenCarryTotal / sevenCarryCount) : null),
+        favoriteClub: summary.favoriteClub ?? mostPlayedClub,
+        currentFocus: summary.currentFocus,
+        mostPlayedCourse: summary.mostPlayedCourse ?? mostPlayedCourse,
+        lastSessionDate: summary.lastSessionDate ?? lastSessionDate,
+      }
     } catch {
       return null // profile stats are nice-to-have — never block the live session on them
     }
-  }
-
-  async function loadLastRecap(bay: Bay) {
-    try {
-      type SessRow = { Id: string; Session_End__c: string; Total_Shots__c: number }
-      const sessions = await query<SessRow>(
-        `SELECT Id, Session_End__c, Total_Shots__c
-         FROM Golf_Session__c
-         WHERE Bay__c = '${bay.id}' AND Status__c = 'Completed'
-         ORDER BY Session_End__c DESC LIMIT 1`
-      )
-      if (!sessions.length) { setLastRecap(null); return }
-      const sess = sessions[0]
-
-      type PartRow = { Id: string; Display_Name__c: string; Golfer_Profile__c: string }
-      const parts = await query<PartRow>(
-        `SELECT Id, Display_Name__c, Golfer_Profile__c
-         FROM Session_Participant__c
-         WHERE Golf_Session__c = '${sess.Id}'
-           AND Is_Primary_Booker__c = true LIMIT 1`
-      )
-      const playerName = parts[0]?.Display_Name__c ?? 'Unknown'
-      const partId = parts[0]?.Id
-
-      if (!partId) { setLastRecap(null); return }
-
-      const shots = await query<CarryShot>(
-        `SELECT Club__c, Carry_Distance__c
-         FROM Golf_Shot__c
-         WHERE Golf_Session__c = '${sess.Id}'
-           AND Session_Participant__c = '${partId}'`
-      )
-
-      const topClubs = aggregateClubAverages(shots).slice(0, 5)
-      const { bestCarry, bestCarryClub } = bestCarryOf(shots)
-
-      setLastRecap({
-        playerName,
-        sessionDate: sess.Session_End__c,
-        totalShots: sess.Total_Shots__c,
-        topClubs,
-        bestCarry,
-        bestCarryClub,
-      })
-    } catch { /* silent — recap is nice-to-have */ }
   }
 
   // ── Start/stop polling when bay is selected ───────────────────────────
@@ -418,6 +458,14 @@ export default function App() {
 
   function selectBay(bay: Bay) {
     setSelectedBay(bay)
+    setPlayers([])
+    setSessionActive(false)
+    setActiveAppointmentId(null)
+    setMinutesRemaining(null)
+    setShowExtendPrompt(false)
+    setExtendMessage(null)
+    setActivePlayerIndex(0)
+    promptedForAppointment.current = null
     setScreen('idle')
   }
 
@@ -434,7 +482,6 @@ export default function App() {
     return (
       <IdleScreen
         bay={selectedBay!}
-        recap={lastRecap}
         onChangeBay={() => setScreen('bay-select')}
       />
     )

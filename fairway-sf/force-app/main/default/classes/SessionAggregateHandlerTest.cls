@@ -43,6 +43,7 @@ private class SessionAggregateHandlerTest {
             Session_Type__c = 'Practice',
             Status__c = 'In Progress',
             Session_Start__c = DateTime.now().addHours(-1),
+            Course_Played__c = 'Pebble Beach',
             Data_Processing_Status__c = 'Pending'
         );
         insert session;
@@ -77,6 +78,40 @@ private class SessionAggregateHandlerTest {
                 Timestamp__c = DateTime.now().addMinutes(-30 + (i * 5))
             ));
         }
+        shots.add(new Golf_Shot__c(
+            Golf_Session__c = session.Id,
+            Session_Participant__c = sp.Id,
+            Bay__c = bay.Id,
+            Shot_Number__c = 6,
+            Club__c = 'Driver',
+            Carry_Distance__c = 240,
+            Total_Distance__c = 260,
+            Ball_Speed__c = 150,
+            Launch_Angle__c = 12.0,
+            Spin_Rate__c = 2500,
+            Shot_Shape__c = 'Straight',
+            Shot_Context__c = 'Tee',
+            Data_Tier__c = 'Ball Only',
+            Is_Mulligan__c = false,
+            Timestamp__c = DateTime.now().addMinutes(-2)
+        ));
+        shots.add(new Golf_Shot__c(
+            Golf_Session__c = session.Id,
+            Session_Participant__c = sp.Id,
+            Bay__c = bay.Id,
+            Shot_Number__c = 7,
+            Club__c = 'Driver',
+            Carry_Distance__c = 250,
+            Total_Distance__c = 271,
+            Ball_Speed__c = 152,
+            Launch_Angle__c = 11.5,
+            Spin_Rate__c = 2450,
+            Shot_Shape__c = 'Straight',
+            Shot_Context__c = 'Tee',
+            Data_Tier__c = 'Ball Only',
+            Is_Mulligan__c = false,
+            Timestamp__c = DateTime.now().addMinutes(-1)
+        ));
         insert shots;
     }
 
@@ -116,12 +151,18 @@ private class SessionAggregateHandlerTest {
         Test.stopTest();
 
         Golfer_Profile__c updated = [
-            SELECT Lifetime_Sessions__c, Lifetime_Shots__c, Last_Session_Date__c
+            SELECT Lifetime_Sessions__c, Lifetime_Shots__c, Last_Session_Date__c,
+                   Average_Driver_Carry__c, Average_7_Iron_Carry__c,
+                   Favorite_Club__c, Most_Played_Course__c
             FROM Golfer_Profile__c WHERE Id = :profile.Id
         ];
         System.assertEquals(1, updated.Lifetime_Sessions__c, 'Lifetime sessions should be 1 after first session closes');
-        System.assertEquals(5, updated.Lifetime_Shots__c, 'Lifetime shots should be 5 (from @TestSetup shots)');
+        System.assertEquals(7, updated.Lifetime_Shots__c, 'Lifetime shots should be 7 (from @TestSetup shots)');
         System.assertEquals(Date.today(), updated.Last_Session_Date__c, 'Last session date should be today');
+        System.assertEquals(245, updated.Average_Driver_Carry__c, 'Average driver carry should roll up from driver shots');
+        System.assertEquals(165, updated.Average_7_Iron_Carry__c, 'Average 7-iron carry should roll up from 7-iron shots');
+        System.assertEquals('7-Iron', updated.Favorite_Club__c, 'Favorite club should be the most-used club');
+        System.assertEquals('Pebble Beach', updated.Most_Played_Course__c, 'Most played course should roll up from completed sessions');
     }
 
     @IsTest
