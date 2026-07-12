@@ -97,7 +97,9 @@ export interface LiveSession {
   sessionId: string       // Golf_Session__c Id
   bayName: string         // Bay__r.Name
   startTime: string       // Session_Start__c
+  endTime: string         // Session_End__c
   participantCount: number
+  bestCarry: number | null
 }
 
 export interface JoinPartyResult {

@@ -276,24 +276,45 @@ export default function App() {
       type SessionRow = {
         Id: string
         Session_Start__c: string
+        Session_End__c: string | null
         Bay__r: { Name: string } | null
         Session_Participants__r: { records: Array<{ Id: string }> } | null
       }
       const rows = await query<SessionRow>(
-        `SELECT Id, Session_Start__c, Bay__r.Name, (SELECT Id FROM Session_Participants__r)
+        `SELECT Id, Session_Start__c, Session_End__c, Bay__r.Name, (SELECT Id FROM Session_Participants__r)
          FROM Golf_Session__c
          WHERE Status__c = 'In Progress'
          ORDER BY Session_Start__c ASC`
       )
       const maxJoinAgeMs = 4 * 60 * 60 * 1000
-      setLiveSessions(rows
+      type ShotRow = {
+        Golf_Session__c: string
+        Carry_Distance__c: number | null
+      }
+      const activeRows = rows
         .filter(r => Date.now() - new Date(r.Session_Start__c).getTime() <= maxJoinAgeMs)
-        .map(r => ({
-          sessionId: r.Id,
-          bayName: r.Bay__r?.Name ?? 'Bay',
-          startTime: r.Session_Start__c,
-          participantCount: r.Session_Participants__r?.records?.length ?? 0,
-        })))
+      const sessionIds = activeRows.map(r => r.Id)
+      const shots = sessionIds.length ? await query<ShotRow>(
+        `SELECT Golf_Session__c, Carry_Distance__c
+         FROM Golf_Shot__c
+         WHERE Golf_Session__c IN ('${sessionIds.join("','")}')`
+      ) : []
+
+      const bestCarryBySession = new Map<string, number>()
+      for (const shot of shots) {
+        if (shot.Carry_Distance__c == null) continue
+        const current = bestCarryBySession.get(shot.Golf_Session__c)
+        bestCarryBySession.set(shot.Golf_Session__c, current == null ? shot.Carry_Distance__c : Math.max(current, shot.Carry_Distance__c))
+      }
+
+      setLiveSessions(activeRows.map(r => ({
+        sessionId: r.Id,
+        bayName: r.Bay__r?.Name ?? 'Bay',
+        startTime: r.Session_Start__c,
+        endTime: r.Session_End__c ?? new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        participantCount: r.Session_Participants__r?.records?.length ?? 0,
+        bestCarry: bestCarryBySession.get(r.Id) ?? null,
+      })))
     } catch (e) {
       console.error('Failed to load live sessions', e)
       if (e instanceof Error && e.message === 'SESSION_EXPIRED') {
@@ -306,7 +327,7 @@ export default function App() {
   }, [query, refreshAuth])
 
   useEffect(() => {
-    if (screen === 'join-party') loadLiveSessions()
+    if (screen === 'join-party' || screen === 'welcome') loadLiveSessions()
   }, [screen, loadLiveSessions])
 
   // Load the real bay list once auth is available — this is the source of truth
@@ -1186,7 +1207,15 @@ export default function App() {
     <div className="w-screen h-screen bg-[#0A0A0A] overflow-hidden select-none"
          onDoubleClick={(e) => { if ((e.target as HTMLElement).dataset.logout) handleStaffLogout() }}>
       {screen === 'welcome' && (
-        <WelcomeScreen bayName={null} sessions={scheduledSessions} bays={allBays} onStart={handleStart} />
+        <WelcomeScreen
+          sessions={liveSessions}
+          bays={allBays}
+          onStart={handleStart}
+          onSelectSession={(session) => {
+            setSelectedJoinSession(session)
+            setScreen('join-party')
+          }}
+        />
       )}
       {screen === 'check-in' && (
         <CheckInScreen

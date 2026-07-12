@@ -1,14 +1,5 @@
-import { useEffect, useState } from 'react'
-import { getEasternHour } from '../utils/time'
-import type { ScheduledSession } from '../types'
-import BackgroundSlideshow from '../components/BackgroundSlideshow'
-
-const SLIDESHOW_IMAGES = [
-  '/images/welcome-bg.jpg',
-  '/images/welcome-bg-simulator.jpg',
-  '/images/welcome-bg-lounge.jpg',
-  '/images/welcome-bg-bar.jpg',
-]
+import { useMemo } from 'react'
+import type { LiveSession } from '../types'
 
 interface BaySummary {
   bayId: string
@@ -16,187 +7,304 @@ interface BaySummary {
 }
 
 interface Props {
-  bayName: string | null
-  sessions: ScheduledSession[]
+  sessions: LiveSession[]
   bays: BaySummary[]
   onStart: () => void
+  onSelectSession: (session: LiveSession) => void
 }
 
-const BAY_WORD_NUMS: Record<string, string> = {
-  one: '1', two: '2', three: '3', four: '4', five: '5', six: '6',
+function normalizeName(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '')
 }
 
-function shortBayName(name: string): string {
-  const m = name.match(/Bay\s*(?:Number)?\s*(\w+)/i)
-  if (!m) return name
-  const raw = m[1].toLowerCase()
-  return `Bay ${BAY_WORD_NUMS[raw] ?? m[1]}`
+function formatMinutesLeft(endTime: string) {
+  const remaining = new Date(endTime).getTime() - Date.now()
+  if (remaining <= 0) return 'Ending'
+  const minutes = Math.max(1, Math.ceil(remaining / 60_000))
+  return `${minutes} min left`
 }
 
-interface BayStatus extends BaySummary {
-  active: boolean
-  golferFirstName?: string
-  minutesLeft?: number
-}
-
-function getBayStatuses(bays: BaySummary[], sessions: ScheduledSession[]): BayStatus[] {
-  const now = Date.now()
-  return bays.map(bay => {
-    const session = sessions.find(s =>
-      s.bayId === bay.bayId &&
-      (s.status === 'Dispatched' || s.status === 'In Progress') &&
-      new Date(s.endTime).getTime() > now
-    )
-    if (!session) return { ...bay, active: false }
-    const golferFirstName = session.players[0]?.displayName?.split(' ')[0] || 'Golfer'
-    const minutesLeft = Math.max(0, Math.round((new Date(session.endTime).getTime() - now) / 60_000))
-    return { ...bay, active: true, golferFirstName, minutesLeft }
-  })
-}
-
-const TAGLINES = [
-  'Every swing. Every session. Every improvement.',
-  'Your game. Your data. Your edge.',
-  'World-class bays. AI coaching. Great company.',
-]
-
-function getDrinkSuggestion(hour: number): { emoji: string; line: string } {
-  if (hour < 12) return { emoji: '☕', line: 'Fresh coffee & pastries from Creme de la Creme are at the bar.' }
-  if (hour < 17) return { emoji: '🍺', line: 'The bar is open — grab a cold one while you wait.' }
-  return { emoji: '🥃', line: 'Head to the bar for a craft cocktail.' }
-}
-
-// Only meaningful when EVERY bay is occupied — checked per bay via
-// bayStatuses, not just "is anything active anywhere." A bay with zero
-// sessions today (or one that already ended) must never be treated as
-// occupied just because some *other* bay is busy.
-function computeWaitMinutes(bays: BaySummary[], bayStatuses: BayStatus[]): number | null {
-  if (bays.length === 0) return null
-  const allOccupied = bayStatuses.every(b => b.active)
-  if (!allOccupied) return null
-  const soonest = Math.min(...bayStatuses.map(b => b.minutesLeft ?? 0))
-  return Math.max(1, soonest)
-}
-
-function formatWait(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60)
-  const s = totalSeconds % 60
-  if (m === 0) return `${s}s`
-  return s === 0 ? `${m}m` : `${m}m ${s}s`
-}
-
-export default function WelcomeScreen({ bayName, sessions, bays, onStart }: Props) {
-  const [pulse, setPulse] = useState(false)
-  const bayStatuses = getBayStatuses(bays, sessions)
-  const [tagline] = useState(() => TAGLINES[Math.floor(Date.now() / 1000) % TAGLINES.length])
-  const [waitSeconds, setWaitSeconds] = useState<number | null>(() => {
-    const mins = computeWaitMinutes(bays, bayStatuses)
-    return mins !== null ? mins * 60 : null
-  })
-
-  const hour = getEasternHour()
-  const drink = getDrinkSuggestion(hour)
-  const hasBaysAvailable = bays.length === 0 || bayStatuses.some(b => !b.active)
-
-  // Pulse the CTA
-  useEffect(() => {
-    const t = setInterval(() => setPulse(p => !p), 1800)
-    return () => clearInterval(t)
-  }, [])
-
-  // Count down the wait timer in real-time
-  useEffect(() => {
-    if (waitSeconds === null || waitSeconds <= 0) return
-    const t = setInterval(() => {
-      setWaitSeconds(w => {
-        if (w === null || w <= 1) return null
-        return w - 1
-      })
-    }, 1000)
-    return () => clearInterval(t)
-  }, [waitSeconds === null])
-
-  // Re-compute when sessions/bays props change
-  useEffect(() => {
-    const mins = computeWaitMinutes(bays, getBayStatuses(bays, sessions))
-    setWaitSeconds(mins !== null ? mins * 60 : null)
-  }, [sessions, bays])
+function PeopleIcons({ count }: { count: number }) {
+  const visible = Math.min(count, 4)
+  const extra = count - visible
 
   return (
-    <div className="relative w-full h-full cursor-pointer select-none" onClick={onStart}>
-      {/* Full-bleed clubroom photography — auto-rotating slideshow */}
-      <div className="absolute inset-0 z-0">
-        <BackgroundSlideshow images={SLIDESHOW_IMAGES} />
-        <div className="absolute inset-0 bg-black/65" />
-        <div className="absolute inset-0 hg-vignette" />
+    <div className="flex items-center gap-2">
+      {Array.from({ length: visible }).map((_, index) => (
+        <div
+          key={index}
+          className="flex h-9 w-9 items-center justify-center rounded-full border text-sm"
+          style={{
+            borderColor: 'rgba(255,255,255,0.16)',
+            background: 'rgba(255,255,255,0.08)',
+          }}
+        >
+          👤
+        </div>
+      ))}
+      {extra > 0 ? (
+        <div
+          className="flex h-9 min-w-9 items-center justify-center rounded-full border px-2 text-sm font-semibold"
+          style={{
+            borderColor: 'rgba(201,168,76,0.45)',
+            background: 'rgba(201,168,76,0.12)',
+            color: 'var(--gold-light)',
+          }}
+        >
+          +{extra}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function BayCard({
+  bayName,
+  session,
+  onOccupiedSelect,
+  onOpenBay,
+}: {
+  bayName: string
+  session: LiveSession | null
+  onOccupiedSelect: (session: LiveSession) => void
+  onOpenBay: () => void
+}) {
+  const occupied = !!session
+
+  return (
+    <button
+      type="button"
+      onClick={occupied ? () => onOccupiedSelect(session) : onOpenBay}
+      className="flex min-h-[220px] flex-col justify-between rounded-[1.75rem] border p-5 text-left transition-transform duration-200 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
+      style={{
+        background: occupied
+          ? 'linear-gradient(180deg, rgba(31,31,31,0.98), rgba(16,16,16,0.98))'
+          : 'linear-gradient(180deg, rgba(20,20,20,0.98), rgba(11,11,11,0.98))',
+        borderColor: occupied ? 'rgba(201,168,76,0.45)' : 'rgba(255,255,255,0.10)',
+        boxShadow: occupied ? '0 18px 40px rgba(201,168,76,0.10)' : '0 14px 34px rgba(0,0,0,0.35)',
+      }}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-xs uppercase tracking-[0.35em] text-white/35">Bay</div>
+          <div className="mt-2 text-3xl font-black tracking-tight text-white">{bayName}</div>
+        </div>
+        <div
+          className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em]"
+          style={{
+            borderColor: occupied ? 'rgba(201,168,76,0.35)' : 'rgba(76,201,115,0.30)',
+            background: occupied ? 'rgba(201,168,76,0.12)' : 'rgba(76,201,115,0.12)',
+            color: occupied ? 'var(--gold-light)' : '#8AF0A0',
+          }}
+        >
+          {occupied ? 'In Use' : 'Available'}
+        </div>
       </div>
 
-      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center gap-8 px-10">
-        {/* Logo */}
-        <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-24 w-auto hg-logo-white" />
-
-        {/* Headline */}
-        <div className="text-center flex flex-col gap-3">
-          <h1 className="font-[family-name:var(--font-display)] text-6xl font-bold text-white tracking-tight leading-[1.1]">
-            Welcome,<br />
-            <span className="hg-gold-shimmer">Golfer.</span>
-          </h1>
-          <p className="text-[#ccc] text-base max-w-xs mx-auto leading-relaxed">{tagline}</p>
-          {bayName && <p className="text-[#aaa] text-sm mt-1">{bayName}</p>}
-        </div>
-
-        {/* Bay availability / wait block */}
-        {hasBaysAvailable ? (
-          <div className="hg-glass-panel rounded-full px-6 py-3 flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
-            <p className="text-white text-xs font-semibold uppercase tracking-wider">Bays Available — Tap to Check In</p>
-          </div>
-        ) : waitSeconds !== null && waitSeconds > 0 ? (
-          <div className="flex flex-col items-center gap-4 w-full max-w-xs">
-            {/* Countdown */}
-            <div className="hg-glass-panel rounded-2xl px-8 py-5 flex flex-col items-center gap-1 w-full">
-              <p className="text-[#C9A84C]/80 text-xs uppercase tracking-widest">Next bay available in</p>
-              <p className="font-[family-name:var(--font-display)] text-4xl font-bold text-[#C9A84C] tabular-nums">{formatWait(waitSeconds)}</p>
-            </div>
-
-            {/* Drink suggestion */}
-            <div className="hg-glass-panel rounded-2xl px-5 py-4 flex gap-3 items-start w-full">
-              <span className="text-2xl flex-shrink-0">{drink.emoji}</span>
-              <div>
-                <p className="text-white text-sm font-medium">While you wait…</p>
-                <p className="text-[#ccc] text-xs mt-0.5 leading-relaxed">{drink.line}</p>
-              </div>
+      <div className="mt-5 flex flex-col gap-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="text-xs uppercase tracking-[0.3em] text-white/35">Players</div>
+            <div className="mt-2">
+              {occupied ? <PeopleIcons count={Math.max(session.participantCount, 1)} /> : <div className="text-2xl font-bold text-white/15">Open</div>}
             </div>
           </div>
-        ) : null}
 
-        {/* Active sessions — live status per bay */}
-        {bayStatuses.length > 0 && (
-          <div className="flex gap-3 flex-wrap justify-center max-w-lg">
-            {bayStatuses.map(b => (
-              <div
-                key={b.bayId}
-                className="hg-glass-panel rounded-xl px-4 py-2 flex items-center gap-2"
-              >
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${b.active ? 'bg-[#C9A84C]' : 'bg-green-400'}`} />
-                <span className="text-white text-xs font-medium">{shortBayName(b.bayName)}</span>
-                {b.active ? (
-                  <span className="text-[#ccc] text-xs">{b.golferFirstName} · {b.minutesLeft}m left</span>
-                ) : (
-                  <span className="text-green-400 text-xs">Open</span>
-                )}
-              </div>
-            ))}
+          <div className="text-right">
+            <div className="text-xs uppercase tracking-[0.3em] text-white/35">Time</div>
+            <div className="mt-2 text-xl font-bold text-white">
+              {occupied ? formatMinutesLeft(session.endTime) : '—'}
+            </div>
           </div>
-        )}
-
-        {/* Tap CTA */}
-        <div className={`flex flex-col items-center gap-3 transition-opacity duration-700 ${pulse ? 'opacity-100' : 'opacity-60'}`}>
-          <div className="hg-glass-button rounded-xl px-10 py-5 flex items-center gap-3">
-            <span className="font-[family-name:var(--font-display)] text-[#C9A84C] text-2xl font-semibold tracking-widest uppercase">Tap to Start</span>
-          </div>
-          <p className="text-[#999] text-xs uppercase tracking-[0.25em]">Touch screen anywhere to begin</p>
         </div>
+
+        <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+          <div className="text-xs uppercase tracking-[0.3em] text-white/35">Current farthest shot</div>
+          <div className="mt-2 text-2xl font-black text-white">
+            {occupied ? (session.bestCarry == null ? 'No shot yet' : `${session.bestCarry} yd`) : '—'}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-sm text-white/45">
+            {occupied ? 'Tap to join this party.' : 'Tap check-in to start a new session.'}
+          </div>
+          <div
+            className="rounded-full px-4 py-2 text-sm font-semibold"
+            style={{
+              background: occupied ? 'var(--gold)' : 'rgba(255,255,255,0.08)',
+              color: occupied ? '#111' : '#fff',
+            }}
+          >
+            {occupied ? 'Join Party' : 'Open Bay'}
+          </div>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+export default function WelcomeScreen({ sessions, bays, onStart, onSelectSession }: Props) {
+  const bayCards = useMemo(() => {
+    return bays.map(bay => {
+      const session = sessions.find(item => normalizeName(item.bayName) === normalizeName(bay.bayName)) ?? null
+      return { ...bay, session }
+    })
+  }, [bays, sessions])
+
+  const occupiedCount = bayCards.filter(card => card.session).length
+  const availableCount = bayCards.length - occupiedCount
+  const currentBestCarry = bayCards.reduce<number | null>((best, card) => {
+    const carry = card.session?.bestCarry
+    if (carry == null) return best
+    return best == null ? carry : Math.max(best, carry)
+  }, null)
+
+  return (
+    <div className="flex h-full flex-col gap-5 overflow-hidden bg-[var(--dark)] p-5 md:p-6">
+      <div className="flex flex-col gap-4 rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(17,17,17,0.98),rgba(10,10,10,0.98))] p-5 md:p-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <img src="/images/logo-text.png" alt="Fairway Golf Club" className="hg-logo-white h-20 w-auto md:h-24" />
+            <div className="mt-3 text-xs uppercase tracking-[0.42em] text-white/40">Welcome screen</div>
+            <div className="mt-2 max-w-3xl text-2xl font-black tracking-tight text-white md:text-4xl">
+              Tap an occupied bay to join the party. Use check-in to start a new session.
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[420px]">
+            <StatCard label="In use" value={`${occupiedCount}`} tone="occupied" />
+            <StatCard label="Available" value={`${availableCount}`} tone="available" />
+            <StatCard label="Longest shot" value={currentBestCarry == null ? '—' : `${currentBestCarry} yd`} tone="accent" />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-h-0 overflow-y-auto rounded-[2rem] border border-white/10 bg-[rgba(17,17,17,0.92)] p-4 md:p-5">
+          {bayCards.length === 0 ? (
+            <div className="flex h-full items-center justify-center rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-10 text-center text-white/45">
+              Loading bays…
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {bayCards.map(card => (
+                <BayCard
+                  key={card.bayId}
+                  bayName={card.bayName}
+                  session={card.session}
+                  onOccupiedSelect={onSelectSession}
+                  onOpenBay={onStart}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <aside className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-[rgba(17,17,17,0.92)] p-5">
+          <div>
+            <div className="text-xs uppercase tracking-[0.35em] text-white/35">Privacy first</div>
+            <div className="mt-2 text-2xl font-black text-white">No names shown</div>
+            <div className="mt-3 text-sm leading-6 text-white/60">
+              This overview only shows occupancy, player count, time remaining, and the farthest shot.
+              Member identity stays hidden until the party flow opens.
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+            <div className="text-xs uppercase tracking-[0.35em] text-white/35">Legend</div>
+            <div className="mt-4 space-y-3 text-sm">
+              <LegendRow tone="available" label="Available" detail="Bay is open and ready." />
+              <LegendRow tone="occupied" label="In use" detail="Tap to join the active party." />
+              <LegendRow tone="accent" label="Longest shot" detail="Best carry recorded in the current session." />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+            <div className="text-xs uppercase tracking-[0.35em] text-white/35">New session</div>
+            <div className="mt-3 text-sm leading-6 text-white/60">
+              Use this when you want to start fresh at an open bay.
+            </div>
+            <button
+              type="button"
+              onClick={onStart}
+              className="mt-4 w-full rounded-2xl px-4 py-3 text-sm font-semibold"
+              style={{ background: 'var(--gold)', color: '#111' }}
+            >
+              Check In / Start Playing
+            </button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+function StatCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: string
+  tone: 'available' | 'occupied' | 'accent'
+}) {
+  const styles: Record<typeof tone, { border: string; background: string; value: string }> = {
+    available: {
+      border: 'rgba(76,201,115,0.24)',
+      background: 'rgba(76,201,115,0.10)',
+      value: '#8AF0A0',
+    },
+    occupied: {
+      border: 'rgba(201,168,76,0.28)',
+      background: 'rgba(201,168,76,0.10)',
+      value: 'var(--gold-light)',
+    },
+    accent: {
+      border: 'rgba(255,255,255,0.14)',
+      background: 'rgba(255,255,255,0.05)',
+      value: '#fff',
+    },
+  }
+
+  return (
+    <div
+      className="rounded-2xl border p-4"
+      style={{
+        borderColor: styles[tone].border,
+        background: styles[tone].background,
+      }}
+    >
+      <div className="text-[11px] uppercase tracking-[0.32em] text-white/40">{label}</div>
+      <div className="mt-2 text-2xl font-black" style={{ color: styles[tone].value }}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function LegendRow({
+  tone,
+  label,
+  detail,
+}: {
+  tone: 'available' | 'occupied' | 'accent'
+  label: string
+  detail: string
+}) {
+  const dot =
+    tone === 'available'
+      ? '#8AF0A0'
+      : tone === 'occupied'
+        ? 'var(--gold-light)'
+        : '#ffffff'
+
+  return (
+    <div className="flex items-start gap-3">
+      <div className="mt-1 h-3 w-3 rounded-full" style={{ background: dot }} />
+      <div>
+        <div className="font-semibold text-white">{label}</div>
+        <div className="text-white/55">{detail}</div>
       </div>
     </div>
   )
