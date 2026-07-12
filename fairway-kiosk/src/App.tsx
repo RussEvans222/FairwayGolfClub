@@ -88,6 +88,27 @@ export default function App() {
     await patch('ServiceAppointment', appointmentId, { Status: 'Dispatched' })
   }, [patch])
 
+  // Best-effort: creates the Golf_Session__c/Session_Participant__c tracking
+  // records for this check-in (see FairwaySessionCheckinApi.cls), so staff
+  // can see who's checked into a bay session's ServiceAppointment. Never
+  // blocks or errors out the check-in flow — this is a tracking enhancement,
+  // not core to getting the golfer to their bay. Swallows all failures
+  // internally so every call site can just `await` it with no try/catch.
+  const ensureKioskSession = useCallback(async (
+    serviceAppointmentId: string,
+    golferProfileId: string | null,
+    displayName: string,
+    isGuest: boolean,
+  ): Promise<void> => {
+    try {
+      await postApexRest('/FairwaySessionCheckin/', {
+        serviceAppointmentId, golferProfileId, displayName, isGuest,
+      })
+    } catch (e) {
+      console.error('[FairwaySessionCheckin] failed to ensure session for', serviceAppointmentId, e)
+    }
+  }, [postApexRest])
+
   // ── Handle OAuth implicit callback (token in URL hash) ──────────────────
   useEffect(() => {
     const hash = window.location.hash
@@ -335,13 +356,15 @@ export default function App() {
         setSelectedSession(s => s ? { ...s, status: 'Dispatched' } : s)
       }
 
+      await ensureKioskSession(selectedSession.reservationId, player.profileId, player.displayName ?? 'Golfer', player.isGuest)
+
       setScreen('bay-direction')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Check-in failed.')
     } finally {
       setLoading(false)
     }
-  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn])
+  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn, ensureKioskSession])
 
   const handlePinSetup = useCallback(async (pin: string) => {
     if (!selectedSession) return
@@ -362,13 +385,16 @@ export default function App() {
         await markCheckedIn(selectedSession.reservationId)
         setSelectedSession(s => s ? { ...s, status: 'Dispatched' } : s)
       }
+
+      await ensureKioskSession(selectedSession.reservationId, player.profileId, player.displayName ?? 'Golfer', player.isGuest)
+
       setScreen('bay-direction')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'PIN setup failed.')
     } finally {
       setLoading(false)
     }
-  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn])
+  }, [selectedSession, selectedPlayerIndex, patch, markCheckedIn, ensureKioskSession])
 
   // Tiered pricing: golfers with an Active/Complimentary Membership__c record
   // get the "Member Pricing" Pricebook; everyone else gets the org's Standard
@@ -598,6 +624,7 @@ export default function App() {
       if (new Date(s.endTime).getTime() <= now) continue
       const playerIndex = s.players.findIndex(p => p.contactId === contactId && !p.checkedIn)
       if (playerIndex === -1) continue
+      const player = s.players[playerIndex]
       try {
         setSelectedSession(s)
         setSelectedPlayerIndex(playerIndex)
@@ -611,6 +638,7 @@ export default function App() {
           await markCheckedIn(s.reservationId)
           setSelectedSession(sel => sel ? { ...sel, status: 'Dispatched' } : sel)
         }
+        await ensureKioskSession(s.reservationId, player.profileId, player.displayName ?? 'Golfer', player.isGuest)
         setScreen('bay-direction')
         return null
       } catch (e) {
@@ -644,7 +672,7 @@ export default function App() {
     } catch (e) {
       return e instanceof Error ? e.message : "We couldn't look up that code."
     }
-  }, [scheduledSessions, patch, query, resolvePersonAccount, markCheckedIn])
+  }, [scheduledSessions, patch, query, resolvePersonAccount, markCheckedIn, ensureKioskSession])
 
   // Called when member is identified — route to PIN screen first
   function handleMemberWalkInFound(data: { contactId: string; accountId?: string | null; profileId: string | null; firstName: string; lastName: string; email: string; pin?: string | null }) {
@@ -699,6 +727,7 @@ export default function App() {
         const appointmentId = await createWalkInAppointment(
           pendingMember.contactId, personAccountId, bay.bayId, now, endTime
         )
+        await ensureKioskSession(appointmentId, pendingMember.profileId, `${pendingMember.firstName} ${pendingMember.lastName}`, false)
         const syntheticSession: ScheduledSession = {
           reservationId: appointmentId,
           sessionId: null,
@@ -741,7 +770,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingMember, scheduledSessions, allBays, createWalkInAppointment])
+  }, [pendingMember, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession])
 
   // Walk-in flow handlers
 
@@ -819,6 +848,7 @@ export default function App() {
         const appointmentId = await createWalkInAppointment(
           contact.Id, personAccountId, bay.bayId, now, endTime
         )
+        await ensureKioskSession(appointmentId, profile.Id, `${data.firstName} ${data.lastName}`, true)
         const syntheticSession: ScheduledSession = {
           reservationId: appointmentId,
           sessionId: null,
@@ -862,7 +892,7 @@ export default function App() {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolveGuestIdentity, session.players.length, addPlayer, scheduledSessions, allBays, createWalkInAppointment])
+  }, [resolveGuestIdentity, session.players.length, addPlayer, scheduledSessions, allBays, createWalkInAppointment, ensureKioskSession])
 
   // ── Join an in-progress party ──────────────────────────────────────────
   // Reuses the exact same identity-collection screens as a normal walk-in

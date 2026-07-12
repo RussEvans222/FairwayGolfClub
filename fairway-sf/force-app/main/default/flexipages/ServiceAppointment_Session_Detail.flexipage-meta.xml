@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Golfer check-in roster for a bay session. Assign as App Default for Fairway Ops only — see SESSION_SYNC.md.</description>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentName>c:fairwaySessionParticipants</componentName>
+                <identifier>c_fairwaySessionParticipants</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>main</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <masterLabel>ServiceAppointment Session Detail</masterLabel>
+    <sobjectType>ServiceAppointment</sobjectType>
+    <template>
+        <name>flexipage:recordHomeTemplateDesktop</name>
+    </template>
+    <type>RecordPage</type>
+</FlexiPage>
