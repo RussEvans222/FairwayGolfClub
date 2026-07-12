@@ -16,9 +16,8 @@ export interface PlayerSession {
   lastShot: Shot | null
   clubAverages: ClubAverage[]
   bestCarry: number | null
-  // This golfer's own last completed session, on any bay — shown while
-  // shotCount is still 0 for today, i.e. right as they check in.
-  lastSessionRecap: LastSessionRecap | null
+  // Lifetime rollups sourced from Golfer_Profile__c.
+  lifetimeSummary: GolferLifetimeSummary | null
 }
 
 export interface Shot {
@@ -47,6 +46,18 @@ export interface LastSessionRecap {
   topClubs: ClubAverage[]
   bestCarry: number | null
   bestCarryClub: string | null
+}
+
+export interface GolferLifetimeSummary {
+  lifetimeSessions: number | null
+  lifetimeShots: number | null
+  avgHandicapTrend: number | null
+  averageDriverCarry: number | null
+  average7IronCarry: number | null
+  favoriteClub: string | null
+  currentFocus: string | null
+  mostPlayedCourse: string | null
+  lastSessionDate: string | null
 }
 
 export type Screen = 'login' | 'bay-select' | 'idle' | 'active'

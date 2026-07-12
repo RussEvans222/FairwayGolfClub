@@ -4,7 +4,16 @@ import { LoginScreen } from './screens/LoginScreen'
 import { BaySelectScreen } from './screens/BaySelectScreen'
 import { IdleScreen } from './screens/IdleScreen'
 import { ActiveScreen } from './screens/ActiveScreen'
-import type { Bay, PlayerSession, LastSessionRecap, Shot, ClubAverage, Screen, ExtendResult } from './types'
+import type {
+  Bay,
+  PlayerSession,
+  LastSessionRecap,
+  Shot,
+  ClubAverage,
+  Screen,
+  ExtendResult,
+  GolferLifetimeSummary,
+} from './types'
 
 const EXTEND_PROMPT_THRESHOLD_MIN = 10
 
@@ -218,7 +227,7 @@ export default function App() {
           lastShot: null,
           clubAverages: [],
           bestCarry: null,
-          lastSessionRecap: null,
+          lifetimeSummary: null,
         }]
       }
 
@@ -301,52 +310,50 @@ export default function App() {
 
     const clubAverages = aggregateClubAverages(shots)
     const { bestCarry } = bestCarryOf(shots)
-    const lastSessionRecap = profileId ? await loadPlayerRecap(profileId, displayName) : null
+    const lifetimeSummary = profileId ? await loadLifetimeSummary(profileId) : null
 
     return {
       participantId, profileId, displayName, isGuest, slotNumber,
-      shotCount: shots.length, lastShot, clubAverages, bestCarry, lastSessionRecap,
+      shotCount: shots.length, lastShot, clubAverages, bestCarry, lifetimeSummary,
     }
   }
 
-  // A golfer's own last COMPLETED session, on any bay — used to welcome them
-  // back on the active screen before they've hit a shot in today's session.
-  async function loadPlayerRecap(profileId: string, displayName: string): Promise<LastSessionRecap | null> {
+  async function loadLifetimeSummary(profileId: string): Promise<GolferLifetimeSummary | null> {
     try {
-      type SessRow = { Id: string; Session_End__c: string; Total_Shots__c: number }
-      const sessions = await query<SessRow>(
-        `SELECT Id, Session_End__c, Total_Shots__c
-         FROM Golf_Session__c
-         WHERE Status__c = 'Completed'
-           AND Id IN (SELECT Golf_Session__c FROM Session_Participant__c WHERE Golfer_Profile__c = '${profileId}')
-         ORDER BY Session_End__c DESC LIMIT 1`
+      type ProfileRow = {
+        Lifetime_Sessions__c: number | null
+        Lifetime_Shots__c: number | null
+        Avg_Handicap_Trend__c: number | null
+        Average_Driver_Carry__c: number | null
+        Average_7_Iron_Carry__c: number | null
+        Favorite_Club__c: string | null
+        Current_Focus__c: string | null
+        Most_Played_Course__c: string | null
+        Last_Session_Date__c: string | null
+      }
+      const profiles = await query<ProfileRow>(
+        `SELECT Lifetime_Sessions__c, Lifetime_Shots__c, Avg_Handicap_Trend__c,
+                Average_Driver_Carry__c, Average_7_Iron_Carry__c, Favorite_Club__c,
+                Current_Focus__c, Most_Played_Course__c, Last_Session_Date__c
+         FROM Golfer_Profile__c
+         WHERE Id = '${profileId}'
+         LIMIT 1`
       )
-      if (!sessions.length) return null
-      const sess = sessions[0]
-
-      type PartRow = { Id: string }
-      const parts = await query<PartRow>(
-        `SELECT Id FROM Session_Participant__c
-         WHERE Golf_Session__c = '${sess.Id}' AND Golfer_Profile__c = '${profileId}' LIMIT 1`
-      )
-      if (!parts.length) return null
-
-      const shots = await query<CarryShot>(
-        `SELECT Club__c, Carry_Distance__c FROM Golf_Shot__c
-         WHERE Golf_Session__c = '${sess.Id}' AND Session_Participant__c = '${parts[0].Id}'`
-      )
-
-      const topClubs = aggregateClubAverages(shots).slice(0, 5)
-      const { bestCarry, bestCarryClub } = bestCarryOf(shots)
-
+      if (!profiles.length) return null
+      const profile = profiles[0]
       return {
-        playerName: displayName,
-        sessionDate: sess.Session_End__c,
-        totalShots: sess.Total_Shots__c,
-        topClubs, bestCarry, bestCarryClub,
+        lifetimeSessions: profile.Lifetime_Sessions__c,
+        lifetimeShots: profile.Lifetime_Shots__c,
+        avgHandicapTrend: profile.Avg_Handicap_Trend__c,
+        averageDriverCarry: profile.Average_Driver_Carry__c,
+        average7IronCarry: profile.Average_7_Iron_Carry__c,
+        favoriteClub: profile.Favorite_Club__c,
+        currentFocus: profile.Current_Focus__c,
+        mostPlayedCourse: profile.Most_Played_Course__c,
+        lastSessionDate: profile.Last_Session_Date__c,
       }
     } catch {
-      return null // recap is nice-to-have — never block the live session on it
+      return null // profile stats are nice-to-have — never block the live session on them
     }
   }
 
