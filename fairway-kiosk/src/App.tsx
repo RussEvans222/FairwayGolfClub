@@ -320,11 +320,12 @@ export default function App() {
         Id: string
         Session_Start__c: string
         Session_End__c: string | null
-        Bay__r: { Name: string } | null
+        Bay__c: string | null
+        Bay__r: { Name: string; Service_Resource__c: string | null } | null
         Session_Participants__r: { records: Array<{ Id: string }> } | null
       }
       const rows = await query<SessionRow>(
-        `SELECT Id, Session_Start__c, Session_End__c, Bay__r.Name, (SELECT Id FROM Session_Participants__r)
+        `SELECT Id, Session_Start__c, Session_End__c, Bay__c, Bay__r.Name, Bay__r.Service_Resource__c, (SELECT Id FROM Session_Participants__r)
          FROM Golf_Session__c
          WHERE Status__c = 'In Progress'
          ORDER BY Session_Start__c ASC`
@@ -352,6 +353,7 @@ export default function App() {
 
       setLiveSessions(activeRows.map(r => ({
         sessionId: r.Id,
+        resourceId: r.Bay__r?.Service_Resource__c ?? null,
         bayName: r.Bay__r?.Name ?? 'Bay',
         startTime: r.Session_Start__c,
         endTime: r.Session_End__c ?? new Date(Date.now() + 60 * 60 * 1000).toISOString(),

@@ -95,6 +95,7 @@ export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Competitive
 // ServiceAppointment/single-player semantics that don't apply here.
 export interface LiveSession {
   sessionId: string       // Golf_Session__c Id
+  resourceId: string | null
   bayName: string         // Bay__r.Name
   startTime: string       // Session_Start__c
   endTime: string         // Session_End__c

@@ -147,7 +147,7 @@ function BayCard({
 export default function WelcomeScreen({ sessions, bays, onStart, onSelectSession }: Props) {
   const bayCards = useMemo(() => {
     return bays.map(bay => {
-      const session = sessions.find(item => normalizeName(item.bayName) === normalizeName(bay.bayName)) ?? null
+      const session = sessions.find(item => item.resourceId === bay.bayId) ?? sessions.find(item => normalizeName(item.bayName) === normalizeName(bay.bayName)) ?? null
       return { ...bay, session }
     })
   }, [bays, sessions])
