@@ -11,7 +11,7 @@ export function IdleScreen({ bay, onChangeBay }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between px-10 pt-8 pb-4">
         <div>
-          <img src="/images/logo-text.png" alt="Fairway Golf Club" className="h-10 w-auto" />
+          <img src="/images/logo-text.png" alt="Fairway Golf Club" className="bay-logo-white h-40 w-auto" />
         </div>
         <div className="text-right">
           <div className="text-white font-semibold text-lg">{bay.name}</div>
