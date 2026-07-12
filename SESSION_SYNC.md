@@ -1,7 +1,7 @@
 # Fairway Golf Club — Session Sync
 
 **Last updated:** 2026-07-12 (check-in funnel rework + join-a-party feature, see "Session Update — 2026-07-12" immediately below)  
-**Last commit:** not yet committed/pushed this session — see that section for exactly what's staged vs. deployed
+**Last commit:** `c1f4e01` on `main` (RussEvans222/FairwayGolfClub) — kiosk changes pushed; Salesforce/Apex changes were deployed straight to the org earlier in the session and are also included in this commit for source control
 
 **For whoever picks this up next:** the kiosk's Welcome screen is now a rotating photo slideshow, and the old two-step ScheduledSessionsScreen→PlayerTypeScreen chain after tapping it was collapsed into one new `CheckInScreen` (embedded live QR scanner + New User / Walk-In Check-In / Join a Party tiles). A brand-new, for-real "join an in-progress party" feature was also built end-to-end (kiosk + a new Apex REST endpoint) — silently adds a late arrival as a real `Session_Participant__c`, no approval step, and `fairway-bay` needed zero changes to display it. Deployed to the live org and verified end-to-end against real data, including cleanup of all test records afterward. See that section for the full detail, including a payment-model correction mid-session (each joiner gets their own Order, not paid at the kiosk — settled at a not-yet-designed bay checkout). See prior entries below for the still-outstanding Salesforce backend/kiosk items (Checked In status ladder live-test, PaymentLink checkout error, etc.) — none of that was touched this session.
 
@@ -31,7 +31,7 @@ Two changes requested together: (1) turn the Welcome screen's background into a 
 
 **Explicitly out of scope this pass** (per the user's own scoping during planning): no SMS/texting, no approve/deny UI in `fairway-bay` (`BOOKING_CHECKIN_PROCESS.md` Case 2's fuller design — this implements Pending Task #7's original *silent-join* version instead, see that entry above), no join-code/party-pre-registration mechanism, no change to the 1–4 `Simulator_Player_Slot__c` ceiling (6-player question stays unresolved), no bay checkout UX.
 
-**Not yet done as of this entry:** the kiosk-side changes (all of `fairway-kiosk/`) are complete and locally verified but **not yet committed or pushed** — only the Salesforce/Apex side is live in the org. This file's own "Pending Task #7" entry above was updated to match (`CLAUDE.md` doesn't reference these specific kiosk screens, so nothing there needed changing). Verify `git status` before assuming the kiosk changes are on `main`.
+**Status as of end of session:** everything above is committed and pushed (`c1f4e01` on `main`) — Cloudflare Pages will auto-deploy the kiosk changes from this push. The Salesforce/Apex side was deployed straight to the org earlier in the session, independent of this commit. This file's own "Pending Task #7" entry above was updated to match (`CLAUDE.md` doesn't reference these specific kiosk screens, so nothing there needed changing).
 
 ---
 
