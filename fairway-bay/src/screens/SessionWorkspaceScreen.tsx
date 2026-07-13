@@ -118,6 +118,8 @@ export function SessionWorkspaceScreen({
 
   const player = players[activeIndex] ?? players[0] ?? null
   const playerName = player?.displayName ?? 'Golfer'
+  const hasPrevPlayer = activeIndex > 0
+  const hasNextPlayer = activeIndex < players.length - 1
   const lastTelemetryShot = telemetry.shots[telemetry.shots.length - 1] ?? null
   const lastShot = lastTelemetryShot ?? (player?.lastShot ? {
     source: 'salesforce',
@@ -183,6 +185,61 @@ export function SessionWorkspaceScreen({
             </div>
             <button onClick={onChangeBay} className="text-[#666] text-xs hover:text-white transition-colors">Change Bay</button>
           </div>
+
+          {players.length > 1 && (
+            <div className="rounded-[1.5rem] border border-[#2A2A2A] bg-[#111] p-3 flex-shrink-0">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0 overflow-x-auto">
+                  <div className="flex gap-2 min-w-max">
+                    {players.map((entry, index) => {
+                      const isActive = index === activeIndex
+                      return (
+                        <button
+                          key={entry.participantId || `${entry.displayName}-${index}`}
+                          type="button"
+                          onClick={() => onChangeIndex(index)}
+                          className="rounded-2xl border px-4 py-3 text-left transition-colors"
+                          style={{
+                            borderColor: isActive ? 'rgba(201,168,76,0.45)' : '#2A2A2A',
+                            background: isActive ? 'rgba(201,168,76,0.10)' : '#0D0D0D',
+                          }}
+                        >
+                          <div className="text-[10px] uppercase tracking-[0.35em] text-white/35">
+                            Player {index + 1}
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-white">{entry.displayName}</div>
+                          <div className="mt-1 text-xs text-white/45">
+                            {isActive ? 'Active player' : 'Tap to switch'}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => onChangeIndex(Math.max(0, activeIndex - 1))}
+                    disabled={!hasPrevPlayer}
+                    className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] transition-opacity disabled:opacity-20"
+                    style={{ borderColor: '#2A2A2A', color: '#fff' }}
+                  >
+                    Prev
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onChangeIndex(Math.min(players.length - 1, activeIndex + 1))}
+                    disabled={!hasNextPlayer}
+                    className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] transition-opacity disabled:opacity-20"
+                    style={{ borderColor: '#2A2A2A', color: '#fff' }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="rounded-[1.5rem] border border-[#2A2A2A] bg-[#111] p-5 flex-shrink-0">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
