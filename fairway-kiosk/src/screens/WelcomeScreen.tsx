@@ -161,18 +161,18 @@ export default function WelcomeScreen({ sessions, bays, onStart, onSelectSession
   }, null)
 
   return (
-    <div className="flex h-full flex-col gap-5 overflow-hidden bg-[var(--dark)] p-5 md:p-6">
-      <div className="flex flex-col gap-4 rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(17,17,17,0.98),rgba(10,10,10,0.98))] p-5 md:p-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <div className="grid h-full min-h-0 grid-rows-[auto,minmax(0,1fr),auto] gap-4 overflow-hidden bg-[var(--dark)] p-4 md:p-6">
+      <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(145deg,rgba(17,17,17,0.98),rgba(10,10,10,0.98))] p-4 md:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <img src="/images/logo-text.png" alt="Fairway Golf Club" className="hg-logo-white h-20 w-auto md:h-24" />
-            <div className="mt-3 text-xs uppercase tracking-[0.42em] text-white/40">Welcome screen</div>
+            <img src="/images/logo-text.png" alt="Fairway Golf Club" className="hg-logo-white h-14 w-auto md:h-16" />
+            <div className="mt-2 text-[10px] uppercase tracking-[0.42em] text-white/40">Welcome screen</div>
             <div className="mt-2 max-w-3xl text-2xl font-black tracking-tight text-white md:text-4xl">
-              Tap an occupied bay to join the party. Use check-in to start a new session.
+              Tap an occupied bay to join the party.
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[420px]">
+          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[360px]">
             <StatCard label="In use" value={`${occupiedCount}`} tone="occupied" />
             <StatCard label="Available" value={`${availableCount}`} tone="available" />
             <StatCard label="Longest shot" value={currentBestCarry == null ? '—' : `${currentBestCarry} yd`} tone="accent" />
@@ -180,32 +180,30 @@ export default function WelcomeScreen({ sessions, bays, onStart, onSelectSession
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-h-0 overflow-y-auto rounded-[2rem] border border-white/10 bg-[rgba(17,17,17,0.92)] p-4 md:p-5">
+      <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="grid min-h-0 gap-4 md:grid-cols-2">
           {bayCards.length === 0 ? (
-            <div className="flex h-full items-center justify-center rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-10 text-center text-white/45">
+            <div className="flex min-h-[220px] items-center justify-center rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-8 text-center text-white/45">
               Loading bays…
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {bayCards.map(card => (
-                <BayCard
-                  key={card.bayId}
-                  bayName={card.bayName}
-                  session={card.session}
-                  onOccupiedSelect={onSelectSession}
-                  onOpenBay={onStart}
-                />
-              ))}
-            </div>
+            bayCards.map(card => (
+              <BayCard
+                key={card.bayId}
+                bayName={card.bayName}
+                session={card.session}
+                onOccupiedSelect={onSelectSession}
+                onOpenBay={onStart}
+              />
+            ))
           )}
         </div>
 
-        <aside className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-[rgba(17,17,17,0.92)] p-5">
+        <aside className="flex min-h-0 flex-col gap-4 rounded-[2rem] border border-white/10 bg-[rgba(17,17,17,0.92)] p-4 md:p-5">
           <div>
             <div className="text-xs uppercase tracking-[0.35em] text-white/35">Privacy first</div>
-            <div className="mt-2 text-2xl font-black text-white">No names shown</div>
-            <div className="mt-3 text-sm leading-6 text-white/60">
+            <div className="mt-2 text-xl font-black text-white">No names shown</div>
+            <div className="mt-2 text-sm leading-6 text-white/60">
               This overview only shows occupancy, player count, time remaining, and the farthest shot.
               Member identity stays hidden until the party flow opens.
             </div>
@@ -235,6 +233,11 @@ export default function WelcomeScreen({ sessions, bays, onStart, onSelectSession
             </button>
           </div>
         </aside>
+      </div>
+
+      <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.32em] text-white/30">
+        <span>Live kiosk feed</span>
+        <span>Names remain private on this screen</span>
       </div>
     </div>
   )
