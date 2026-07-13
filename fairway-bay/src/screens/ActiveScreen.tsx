@@ -27,20 +27,6 @@ function sortClubs(averages: PlayerSession['clubAverages']) {
   })
 }
 
-function fmtDate(date: string) {
-  return new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
-function formatNumber(value: number | null | undefined, suffix = '') {
-  if (value == null) return '—'
-  return `${value.toLocaleString()}${suffix}`
-}
-
-function formatDecimal(value: number | null | undefined) {
-  if (value == null) return '—'
-  return Number.isInteger(value) ? `${value}` : value.toFixed(1)
-}
-
 function shotShapeColor(shape: string | null): string {
   if (!shape) return '#ffffff40'
   if (shape === 'Straight') return '#4ade80'
@@ -65,39 +51,78 @@ export function ActiveScreen({
   const sorted = sortClubs(player.clubAverages)
   const hasPrev = activeIndex > 0
   const hasNext = activeIndex < players.length - 1
-  const lifetimeSummary = player.lifetimeSummary
-  const hasWelcomeHero = player.shotCount === 0
 
   return (
     <div className="w-full h-full flex flex-col" style={{ background: 'var(--dark)' }}>
-
-      {/* Header */}
-      <div className="flex items-center justify-between px-10 pt-8 pb-4">
-        <div>
-          <img src="/images/logo-text.png" alt="Fairway Golf Club" className="bay-logo-white h-40 w-auto" />
-        </div>
-        <div className="text-center">
-          <div className="text-white font-semibold">{bay.name}</div>
-          {players.length > 1 && (
-            <div className="flex items-center gap-2 mt-1 justify-center">
-              {players.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => onChangeIndex(i)}
-                  className="w-2 h-2 rounded-full transition-all"
-                  style={{ background: i === activeIndex ? 'var(--gold)' : '#ffffff30' }}
-                />
-              ))}
-            </div>
-          )}
+      <div className="flex items-center justify-between gap-4 px-8 pt-6 pb-3">
+        <div className="flex items-center gap-4">
+          <img src="/images/logo-text.png" alt="Fairway Golf Club" className="bay-logo-white h-14 w-auto" />
+          <div>
+            <div className="text-white font-semibold text-lg">{bay.name}</div>
+            <div className="text-white/35 text-xs uppercase tracking-[0.3em]">Live bay session</div>
+          </div>
         </div>
         <button onClick={onChangeBay} className="text-white/20 text-xs hover:text-white/40 transition-colors">
           Change Bay
         </button>
       </div>
 
-      {/* Player name + shot count */}
-      <div className="flex items-center justify-between px-10 pb-2">
+      <div className="px-8 pb-4">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="text-white/35 text-[11px] uppercase tracking-[0.35em]">Current player</div>
+              <div className="mt-1 text-2xl font-semibold text-white truncate">{player.displayName}</div>
+              <div className="text-white/40 text-sm">
+                {player.shotCount} shot{player.shotCount !== 1 ? 's' : ''} this session
+                {player.isGuest && <span className="ml-2 text-white/30">· Guest</span>}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onChangeIndex(Math.max(0, activeIndex - 1))}
+                disabled={!hasPrev}
+                className="h-11 w-11 rounded-full text-lg font-semibold transition-opacity disabled:opacity-20"
+                style={{ background: 'rgba(255,255,255,0.08)', color: '#fff' }}
+              >
+                ←
+              </button>
+              <div className="text-center px-2">
+                <div className="text-white/30 text-[10px] uppercase tracking-[0.3em]">Player</div>
+                <div className="text-white text-sm font-semibold">{activeIndex + 1} of {players.length}</div>
+              </div>
+              <button
+                onClick={() => onChangeIndex(Math.min(players.length - 1, activeIndex + 1))}
+                disabled={!hasNext}
+                className="h-11 w-11 rounded-full text-lg font-semibold transition-opacity disabled:opacity-20"
+                style={{ background: 'var(--gold)', color: '#111' }}
+              >
+                →
+              </button>
+            </div>
+          </div>
+          {players.length > 1 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {players.map((entry, index) => (
+                <button
+                  key={entry.participantId}
+                  onClick={() => onChangeIndex(index)}
+                  className="rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
+                  style={{
+                    background: index === activeIndex ? 'var(--gold)' : 'rgba(255,255,255,0.08)',
+                    color: index === activeIndex ? '#111' : 'rgba(255,255,255,0.8)',
+                  }}
+                >
+                  {entry.displayName}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main body */}
+      <div className="flex-1 flex gap-5 px-8 pb-6 min-h-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-black font-bold text-sm"
                style={{ background: 'var(--gold)' }}>
@@ -105,10 +130,7 @@ export function ActiveScreen({
           </div>
           <div>
             <div className="text-white font-semibold text-xl">{player.displayName}</div>
-            <div className="text-white/40 text-sm">
-              {player.shotCount} shot{player.shotCount !== 1 ? 's' : ''} this session
-              {player.isGuest && <span className="ml-2 text-white/30">· Guest</span>}
-            </div>
+            <div className="text-white/40 text-sm">{player.isGuest ? 'Guest' : 'Member'} · slot {player.slotNumber}</div>
           </div>
         </div>
         {player.bestCarry != null && (
@@ -119,85 +141,7 @@ export function ActiveScreen({
         )}
       </div>
 
-      {/* Main body */}
-      {hasWelcomeHero ? (
-        <div className="flex-1 px-10 pb-6 min-h-0 overflow-y-auto">
-          <div
-            className="relative h-full overflow-hidden rounded-[2rem] border"
-            style={{
-              borderColor: '#ffffff14',
-              background:
-                'radial-gradient(circle at 18% 18%, rgba(201, 168, 76, 0.24), transparent 28%), radial-gradient(circle at 82% 0%, rgba(255, 255, 255, 0.10), transparent 25%), linear-gradient(145deg, #121212 0%, #0b0b0b 45%, #151515 100%)',
-              boxShadow: '0 24px 80px rgba(0, 0, 0, 0.45)',
-            }}
-          >
-            <div className="absolute inset-0 opacity-20" style={{
-              backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)',
-              backgroundSize: '72px 72px',
-            }} />
-            <div className="absolute -left-24 top-16 h-64 w-64 rounded-full blur-3xl" style={{ background: 'rgba(201, 168, 76, 0.18)' }} />
-            <div className="absolute right-0 bottom-0 h-80 w-80 rounded-full blur-3xl" style={{ background: 'rgba(255, 255, 255, 0.08)' }} />
-
-            <div className="relative z-10 flex h-full flex-col justify-between p-10">
-              <div className="max-w-4xl">
-                <div className="text-white/55 text-xs uppercase tracking-[0.45em]">Salesforce lifetime stats</div>
-                <div className="mt-4 text-6xl md:text-8xl font-black leading-[0.9] tracking-tight text-white">
-                  Welcome, {player.displayName}
-                </div>
-                <div className="mt-6 max-w-2xl text-lg md:text-xl text-white/72">
-                  Your lifetime performance summary is ready before your first shot.
-                </div>
-
-                {lifetimeSummary?.currentFocus && (
-                  <div className="mt-6 inline-flex items-center rounded-full border px-4 py-2 text-sm text-white/85"
-                       style={{ borderColor: '#ffffff18', background: '#ffffff08' }}>
-                    Focus: {lifetimeSummary.currentFocus}
-                  </div>
-                )}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-                <HeroStat label="Lifetime Sessions" value={formatNumber(lifetimeSummary?.lifetimeSessions)} />
-                <HeroStat label="Lifetime Shots" value={formatNumber(lifetimeSummary?.lifetimeShots)} />
-                <HeroStat label="Avg Handicap" value={formatDecimal(lifetimeSummary?.avgHandicapTrend)} />
-                <HeroStat label="Driver Carry" value={formatNumber(lifetimeSummary?.averageDriverCarry, ' yds')} />
-                <HeroStat label="7-Iron Carry" value={formatNumber(lifetimeSummary?.average7IronCarry, ' yds')} />
-                <HeroStat label="Favorite Club" value={lifetimeSummary?.favoriteClub ?? '—'} />
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-white/65">
-                {lifetimeSummary?.mostPlayedCourse && (
-                  <span className="rounded-full border px-4 py-2" style={{ borderColor: '#ffffff18', background: '#ffffff08' }}>
-                    Most played: {lifetimeSummary.mostPlayedCourse}
-                  </span>
-                )}
-                {lifetimeSummary?.lastSessionDate && (
-                  <span className="rounded-full border px-4 py-2" style={{ borderColor: '#ffffff18', background: '#ffffff08' }}>
-                    Last session: {fmtDate(lifetimeSummary.lastSessionDate)}
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-8 flex items-center justify-between gap-4 flex-wrap">
-                <button
-                  type="button"
-                  className="rounded-full px-8 py-4 text-lg font-semibold tracking-wide transition-transform hover:scale-[1.02]"
-                  style={{ background: 'var(--gold)', color: '#111' }}
-                  onClick={() => {}}
-                >
-                  Click to start playing
-                </button>
-                <div className="text-white/35 text-sm">
-                  {player.isGuest ? 'Guest walk-up' : 'Member welcome'} · live shots appear after the first swing
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-      <div className="flex-1 flex gap-6 px-10 pb-6 min-h-0">
-
+      <div className="flex-1 flex gap-5 px-8 pb-6 min-h-0">
         {/* Last shot card */}
         <div className="w-72 flex-shrink-0 rounded-2xl p-6 flex flex-col gap-4"
              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
@@ -263,32 +207,6 @@ export function ActiveScreen({
           )}
         </div>
       </div>
-      )}
-
-      {/* Player nav arrows — only shown with multiple players */}
-      {players.length > 1 && (
-        <div className="flex items-center justify-center gap-6 pb-6">
-          <button
-            onClick={() => onChangeIndex(activeIndex - 1)}
-            disabled={!hasPrev}
-            className="w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all disabled:opacity-20"
-            style={{ background: hasPrev ? 'var(--gold)' : 'var(--surface2)', color: hasPrev ? '#000' : '#fff' }}
-          >
-            ←
-          </button>
-          <div className="text-white/40 text-sm">
-            Player {activeIndex + 1} of {players.length}
-          </div>
-          <button
-            onClick={() => onChangeIndex(activeIndex + 1)}
-            disabled={!hasNext}
-            className="w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all disabled:opacity-20"
-            style={{ background: hasNext ? 'var(--gold)' : 'var(--surface2)', color: hasNext ? '#000' : '#fff' }}
-          >
-            →
-          </button>
-        </div>
-      )}
 
       {showExtendPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-8" style={{ background: '#000000b0' }}>
@@ -343,16 +261,6 @@ export function ActiveScreen({
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-function HeroStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl p-4 backdrop-blur-sm"
-         style={{ background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-      <div className="text-white/45 text-[11px] uppercase tracking-[0.32em]">{label}</div>
-      <div className="mt-3 text-2xl md:text-3xl font-bold text-white leading-none">{value}</div>
     </div>
   )
 }

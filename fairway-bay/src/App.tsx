@@ -483,7 +483,7 @@ export default function App() {
   // ── Switch idle ↔ workspace based on session state ───────────────────
   useEffect(() => {
     if (screen !== 'idle' && screen !== 'workspace') return
-    setScreen(sessionActive || workspaceStarted ? 'workspace' : 'idle')
+    setScreen(sessionActive && workspaceStarted ? 'workspace' : 'idle')
   }, [sessionActive, workspaceStarted, screen])
 
   function selectBay(bay: Bay) {
@@ -511,6 +511,9 @@ export default function App() {
     return (
       <IdleScreen
         bay={selectedBay!}
+        players={players}
+        activeIndex={activePlayerIndex}
+        onChangeIndex={setActivePlayerIndex}
         onStartPlaying={() => {
           setWorkspaceStarted(true)
           setScreen('workspace')
