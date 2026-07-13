@@ -316,39 +316,22 @@ export default function App() {
   const loadLiveSessions = useCallback(async () => {
     setLiveSessionsLoading(true)
     try {
-      type SessionRow = {
-        Id: string
-        Status: string
-        Session_Start__c: string
-        Session_End__c: string | null
-        Party_Size__c: number | null
-        Contact: { Name: string } | null
-        ServiceResources: {
-          records: Array<{
-            ServiceResource: { Id: string; Name: string } | null
-          }>
-        } | null
-      }
-      const rows = await query<SessionRow>(
-        `SELECT Id, Status, Session_Start__c, Session_End__c, Party_Size__c, Contact.Name,
-                (SELECT ServiceResource.Id, ServiceResource.Name FROM ServiceResources LIMIT 1)
-         FROM ServiceAppointment
-         WHERE Status IN ('Checked In','Dispatched','In Progress')
-         ORDER BY Session_Start__c ASC`
-      )
-      const activeRows = rows.filter(row => row.ServiceResources?.records?.[0]?.ServiceResource?.Id)
-      const appointmentIds = activeRows.map(row => row.Id)
-
       type GolfSessionRow = {
         Id: string
         Service_Appointment__c: string | null
+        Bay__c: string | null
+        Bay__r: { Name: string | null; Service_Resource__c: string | null } | null
+        Session_Start__c: string | null
+        Session_End__c: string | null
+        Session_Participants__r: { records: Array<{ Id: string }> } | null
       }
-      const golfSessions = appointmentIds.length ? await query<GolfSessionRow>(
-        `SELECT Id, Service_Appointment__c
+      const golfSessions = await query<GolfSessionRow>(
+        `SELECT Id, Service_Appointment__c, Bay__c, Bay__r.Name, Bay__r.Service_Resource__c,
+                Session_Start__c, Session_End__c, (SELECT Id FROM Session_Participants__r)
          FROM Golf_Session__c
-         WHERE Service_Appointment__c IN ('${appointmentIds.join("','")}')
-           AND Status__c = 'In Progress'`
-      ) : []
+         WHERE Status__c = 'In Progress'
+         ORDER BY Session_Start__c ASC`
+      )
 
       const sessionIds = golfSessions.map(session => session.Id)
 
@@ -369,24 +352,16 @@ export default function App() {
         bestCarryBySession.set(shot.Golf_Session__c, current == null ? shot.Carry_Distance__c : Math.max(current, shot.Carry_Distance__c))
       }
 
-      const appointmentToSession = new Map<string, string>()
-      for (const golfSession of golfSessions) {
-        if (golfSession.Service_Appointment__c) {
-          appointmentToSession.set(golfSession.Service_Appointment__c, golfSession.Id)
-        }
-      }
-
-      setLiveSessions(activeRows.map(r => {
-        const serviceResource = r.ServiceResources?.records?.[0]?.ServiceResource ?? null
-        const sessionId = appointmentToSession.get(r.Id) ?? null
+      setLiveSessions(golfSessions.map(session => {
+        const serviceResourceId = session.Bay__r?.Service_Resource__c ?? null
         return {
-          sessionId: sessionId ?? r.Id,
-          resourceId: serviceResource?.Id ?? null,
-          bayName: serviceResource?.Name ?? 'Bay',
-          startTime: r.Session_Start__c,
-          endTime: r.Session_End__c ?? new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-          participantCount: Math.max(1, r.Party_Size__c ?? 1),
-          bestCarry: sessionId ? (bestCarryBySession.get(sessionId) ?? null) : null,
+          sessionId: session.Id,
+          resourceId: serviceResourceId,
+          bayName: session.Bay__r?.Name ?? 'Bay',
+          startTime: session.Session_Start__c ?? new Date().toISOString(),
+          endTime: session.Session_End__c ?? new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          participantCount: Math.max(1, session.Session_Participants__r?.records?.length ?? 0),
+          bestCarry: bestCarryBySession.get(session.Id) ?? null,
         }
       }))
     } catch (e) {

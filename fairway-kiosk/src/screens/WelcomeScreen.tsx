@@ -1,5 +1,13 @@
 import { useMemo } from 'react'
 import type { LiveSession } from '../types'
+import BackgroundSlideshow from '../components/BackgroundSlideshow'
+
+const SLIDESHOW_IMAGES = [
+  '/images/welcome-bg.jpg',
+  '/images/welcome-bg-simulator.jpg',
+  '/images/welcome-bg-lounge.jpg',
+  '/images/welcome-bg-bar.jpg',
+]
 
 interface BaySummary {
   bayId: string
@@ -78,10 +86,12 @@ function BayCard({
       className="flex min-h-[190px] flex-col justify-between rounded-[1.5rem] border p-4 text-left transition-transform duration-200 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[var(--gold)]"
       style={{
         background: occupied
-          ? 'linear-gradient(180deg, rgba(31,31,31,0.98), rgba(16,16,16,0.98))'
-          : 'linear-gradient(180deg, rgba(20,20,20,0.98), rgba(11,11,11,0.98))',
-        borderColor: occupied ? 'rgba(201,168,76,0.45)' : 'rgba(255,255,255,0.10)',
-        boxShadow: occupied ? '0 18px 40px rgba(201,168,76,0.10)' : '0 14px 34px rgba(0,0,0,0.35)',
+          ? 'rgba(255,255,255,0.10)'
+          : 'rgba(255,255,255,0.08)',
+        backdropFilter: 'blur(22px)',
+        WebkitBackdropFilter: 'blur(22px)',
+        borderColor: occupied ? 'rgba(201,168,76,0.35)' : 'rgba(255,255,255,0.16)',
+        boxShadow: occupied ? '0 18px 40px rgba(0,0,0,0.25)' : '0 14px 34px rgba(0,0,0,0.22)',
       }}
     >
       <div className="flex items-start justify-between gap-4">
@@ -153,15 +163,23 @@ export default function WelcomeScreen({ sessions, bays, onStart, onSelectSession
   }, [bays, sessions])
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto,minmax(0,1fr)] gap-3 overflow-hidden bg-[var(--dark)] p-3 md:p-4">
-      <div className="rounded-[1.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(17,17,17,0.98),rgba(10,10,10,0.98))] px-4 py-3">
-        <img src="/images/logo-text.png" alt="Fairway Golf Club" className="hg-logo-white h-10 w-auto" />
+    <div className="relative h-full min-h-0 overflow-hidden">
+      <div className="absolute inset-0">
+        <BackgroundSlideshow images={SLIDESHOW_IMAGES} />
+        <div className="absolute inset-0 bg-black/50" />
       </div>
 
-      <div className="grid min-h-0 gap-3 lg:grid-cols-[minmax(0,1fr)_240px]">
+      <div className="relative z-10 grid h-full min-h-0 gap-3 p-3 md:p-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="absolute left-5 top-5 z-20 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-xl">
+          <img src="/images/logo-text.png" alt="Fairway Golf Club" className="hg-logo-white h-8 w-auto" />
+        </div>
+
         <div className="grid min-h-0 gap-3 md:grid-cols-2">
           {bayCards.length === 0 ? (
-            <div className="flex min-h-[180px] items-center justify-center rounded-[1.5rem] border border-dashed border-white/10 bg-white/[0.03] p-6 text-center text-white/45">
+            <div
+              className="flex min-h-[180px] items-center justify-center rounded-[1.5rem] border border-dashed border-white/20 bg-white/10 p-6 text-center text-white/70 backdrop-blur-2xl"
+              style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
+            >
               Loading bays…
             </div>
           ) : (
@@ -177,8 +195,11 @@ export default function WelcomeScreen({ sessions, bays, onStart, onSelectSession
           )}
         </div>
 
-        <aside className="flex min-h-0 flex-col gap-3 rounded-[1.5rem] border border-white/10 bg-[rgba(17,17,17,0.92)] p-4">
-          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+        <aside
+          className="flex min-h-0 flex-col gap-3 rounded-[1.5rem] border border-white/15 bg-white/10 p-4 backdrop-blur-2xl"
+          style={{ backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
+        >
+          <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-2xl">
             <div className="text-xs uppercase tracking-[0.35em] text-white/35">New session</div>
             <div className="mt-2 text-xs leading-5 text-white/60">
               Use this when you want to start fresh at an open bay.
