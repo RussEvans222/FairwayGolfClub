@@ -152,32 +152,10 @@ export default function WelcomeScreen({ sessions, bays, onStart, onSelectSession
     })
   }, [bays, sessions])
 
-  const occupiedCount = bayCards.filter(card => card.session).length
-  const availableCount = bayCards.length - occupiedCount
-  const currentBestCarry = bayCards.reduce<number | null>((best, card) => {
-    const carry = card.session?.bestCarry
-    if (carry == null) return best
-    return best == null ? carry : Math.max(best, carry)
-  }, null)
-
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto,minmax(0,1fr)] gap-3 overflow-hidden bg-[var(--dark)] p-3 md:p-4">
-      <div className="rounded-[1.75rem] border border-white/10 bg-[linear-gradient(145deg,rgba(17,17,17,0.98),rgba(10,10,10,0.98))] p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <img src="/images/logo-text.png" alt="Fairway Golf Club" className="hg-logo-white h-12 w-auto md:h-14" />
-            <div className="mt-2 text-[10px] uppercase tracking-[0.42em] text-white/40">Welcome</div>
-            <div className="mt-2 max-w-3xl text-xl font-black tracking-tight text-white md:text-3xl">
-              Tap an occupied bay to join.
-            </div>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[320px]">
-            <StatCard label="In use" value={`${occupiedCount}`} tone="occupied" />
-            <StatCard label="Available" value={`${availableCount}`} tone="available" />
-            <StatCard label="Longest shot" value={currentBestCarry == null ? '—' : `${currentBestCarry} yd`} tone="accent" />
-          </div>
-        </div>
+      <div className="rounded-[1.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(17,17,17,0.98),rgba(10,10,10,0.98))] px-4 py-3">
+        <img src="/images/logo-text.png" alt="Fairway Golf Club" className="hg-logo-white h-10 w-auto" />
       </div>
 
       <div className="grid min-h-0 gap-3 lg:grid-cols-[minmax(0,1fr)_240px]">
@@ -214,53 +192,7 @@ export default function WelcomeScreen({ sessions, bays, onStart, onSelectSession
               Check In / Start Playing
             </button>
           </div>
-          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-3 text-[11px] uppercase tracking-[0.28em] text-white/40">
-            Live feed
-          </div>
         </aside>
-      </div>
-    </div>
-  )
-}
-
-function StatCard({
-  label,
-  value,
-  tone,
-}: {
-  label: string
-  value: string
-  tone: 'available' | 'occupied' | 'accent'
-}) {
-  const styles: Record<typeof tone, { border: string; background: string; value: string }> = {
-    available: {
-      border: 'rgba(76,201,115,0.24)',
-      background: 'rgba(76,201,115,0.10)',
-      value: '#8AF0A0',
-    },
-    occupied: {
-      border: 'rgba(201,168,76,0.28)',
-      background: 'rgba(201,168,76,0.10)',
-      value: 'var(--gold-light)',
-    },
-    accent: {
-      border: 'rgba(255,255,255,0.14)',
-      background: 'rgba(255,255,255,0.05)',
-      value: '#fff',
-    },
-  }
-
-  return (
-    <div
-      className="rounded-2xl border p-4"
-      style={{
-        borderColor: styles[tone].border,
-        background: styles[tone].background,
-      }}
-    >
-      <div className="text-[11px] uppercase tracking-[0.32em] text-white/40">{label}</div>
-      <div className="mt-2 text-2xl font-black" style={{ color: styles[tone].value }}>
-        {value}
       </div>
     </div>
   )
