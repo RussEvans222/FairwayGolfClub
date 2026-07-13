@@ -75,21 +75,26 @@ Salesforce Scheduler has a proper **`Checked In`** status category built in. Cur
 - No login required
 - **Fairway use case:** Let members manage reservations without logging into Experience Cloud
 
-### 6. `AppointmentSchedulingEvent` Platform Event
+### 6. Reservation-site test user
+- The reservation flow should be verified with a real Experience Cloud site member, not only an internal admin.
+- Use a `Customer Community Plus` user attached to a Person Account so the test matches the live reservation path and permission model.
+- This catches sharing/FLS issues that admin testing can hide.
+
+### 7. `AppointmentSchedulingEvent` Platform Event
 - SF fires this platform event when appointment status changes
 - The bay display currently polls every 20s — subscribing to this event would make it **instant/push-based**
 - **Recommendation:** Upgrade `fairway-bay` from polling to CometD/Platform Event subscription in a future phase
 
-### 7. Multi-Resource Scheduling
+### 8. Multi-Resource Scheduling
 - Book multiple bays in a single appointment (e.g., two bays for a large group)
 - **Fairway use case:** Tournament day, corporate buyouts
 
-### 8. LMS Event for Greeter Dashboard
+### 9. LMS Event for Greeter Dashboard
 - `lightning__appointmentBooking_greeterDashboard` LMS event
 - Custom LWC components can subscribe to territory changes in the greeter dashboard
 - **Fairway use case:** Real-time bay status widget in Fairway Ops Lightning app
 
-### 9. Email Prompt Template (AI)
+### 10. Email Prompt Template (AI)
 - LLM-generated appointment invitation emails using Salesforce prompt templates
 - **Fairway use case:** AI-personalized booking confirmations referencing golfer's last session stats
 

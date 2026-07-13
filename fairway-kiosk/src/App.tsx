@@ -316,22 +316,54 @@ export default function App() {
   const loadLiveSessions = useCallback(async () => {
     setLiveSessionsLoading(true)
     try {
+      type AppointmentRow = {
+        Id: string
+        Status: string
+        SchedStartTime: string
+        SchedEndTime: string | null
+        Party_Size__c: number | null
+        Contact: { Name: string } | null
+        ServiceResources: {
+          records: Array<{
+            ServiceResource: { Id: string; Name: string } | null
+          }>
+        } | null
+      }
+      const appointments = await query<AppointmentRow>(
+        `SELECT Id, Status, SchedStartTime, SchedEndTime, Party_Size__c, Contact.Name,
+                (SELECT ServiceResource.Id, ServiceResource.Name FROM ServiceResources LIMIT 1)
+         FROM ServiceAppointment
+         WHERE SchedStartTime >= TODAY
+           AND SchedStartTime < TOMORROW
+           AND Status NOT IN ('Completed', 'Canceled')
+         ORDER BY SchedStartTime ASC`
+      )
+
+      const activeAppointments = appointments.filter(appt => appt.ServiceResources?.records?.[0]?.ServiceResource?.Id)
+      const appointmentIds = activeAppointments.map(appt => appt.Id)
+
+      type AssignedResourceRow = {
+        ServiceAppointmentId: string
+        ServiceResourceId: string
+        ServiceResource: { Id: string; Name: string } | null
+      }
+      const assignments = appointmentIds.length ? await query<AssignedResourceRow>(
+        `SELECT ServiceAppointmentId, ServiceResourceId, ServiceResource.Id, ServiceResource.Name
+         FROM AssignedResource
+         WHERE ServiceAppointmentId IN ('${appointmentIds.join("','")}')`
+      ) : []
+
       type GolfSessionRow = {
         Id: string
         Service_Appointment__c: string | null
-        Bay__c: string | null
-        Bay__r: { Name: string | null; Service_Resource__c: string | null } | null
-        Session_Start__c: string | null
-        Session_End__c: string | null
         Session_Participants__r: { records: Array<{ Id: string }> } | null
       }
-      const golfSessions = await query<GolfSessionRow>(
-        `SELECT Id, Service_Appointment__c, Bay__c, Bay__r.Name, Bay__r.Service_Resource__c,
-                Session_Start__c, Session_End__c, (SELECT Id FROM Session_Participants__r)
+      const golfSessions = appointmentIds.length ? await query<GolfSessionRow>(
+        `SELECT Id, Service_Appointment__c, (SELECT Id FROM Session_Participants__r)
          FROM Golf_Session__c
-         WHERE Status__c = 'In Progress'
-         ORDER BY Session_Start__c ASC`
-      )
+         WHERE Service_Appointment__c IN ('${appointmentIds.join("','")}')
+           AND Status__c = 'In Progress'`
+      ) : []
 
       const sessionIds = golfSessions.map(session => session.Id)
 
@@ -352,16 +384,25 @@ export default function App() {
         bestCarryBySession.set(shot.Golf_Session__c, current == null ? shot.Carry_Distance__c : Math.max(current, shot.Carry_Distance__c))
       }
 
-      setLiveSessions(golfSessions.map(session => {
-        const serviceResourceId = session.Bay__r?.Service_Resource__c ?? null
+      const appointmentToSession = new Map<string, string>()
+      for (const golfSession of golfSessions) {
+        if (golfSession.Service_Appointment__c) {
+          appointmentToSession.set(golfSession.Service_Appointment__c, golfSession.Id)
+        }
+      }
+
+      setLiveSessions(activeAppointments.map(appt => {
+        const assignment = assignments.find(item => item.ServiceAppointmentId === appt.Id) ?? null
+        const sessionId = appointmentToSession.get(appt.Id) ?? appt.Id
+        const serviceResource = assignment?.ServiceResource ?? null
         return {
-          sessionId: session.Id,
-          resourceId: serviceResourceId,
-          bayName: session.Bay__r?.Name ?? 'Bay',
-          startTime: session.Session_Start__c ?? new Date().toISOString(),
-          endTime: session.Session_End__c ?? new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-          participantCount: Math.max(1, session.Session_Participants__r?.records?.length ?? 0),
-          bestCarry: bestCarryBySession.get(session.Id) ?? null,
+          sessionId,
+          resourceId: serviceResource?.Id ?? null,
+          bayName: serviceResource?.Name ?? 'Bay',
+          startTime: appt.SchedStartTime,
+          endTime: appt.SchedEndTime ?? new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          participantCount: Math.max(1, appt.Party_Size__c ?? 1),
+          bestCarry: bestCarryBySession.get(sessionId) ?? null,
         }
       }))
     } catch (e) {

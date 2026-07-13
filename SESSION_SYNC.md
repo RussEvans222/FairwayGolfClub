@@ -531,6 +531,15 @@ Then redeploy `fairway-bay` (push to its Cloudflare Pages project, or trigger a 
 | Bay ↔ Territory link | `ServiceTerritoryMember` | Connects each bay to the territory |
 | Hours of operation | `OperatingHours` + `TimeSlot` | Linked to ServiceTerritory |
 
+## Reservation / Check-In Source of Truth
+
+- `ServiceAppointment` is the reservation and check-in record the kiosk and reservation site both work from.
+- `AssignedResource` is the live bay assignment junction; if a bay is occupied, it should be visible here.
+- `Golf_Session__c` is the live play/session header created when a golfer checks in.
+- `Session_Participant__c` is one row per golfer in the session.
+- `Bay_Reservation__c` stays dormant unless we explicitly revive it later; it is not the current booking/check-in path.
+- The kiosk welcome screen should read from the same `ServiceAppointment` + `AssignedResource` source of truth that `FairwaySessionConsoleController.getActiveSessions()` uses.
+
 **ServiceAppointment status lifecycle:**
 `Scheduled` → `Dispatched` (checked in) → `In Progress` → `Completed`
 

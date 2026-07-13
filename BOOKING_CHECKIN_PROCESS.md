@@ -11,6 +11,7 @@ There are three ways a golfer ends up at a bay. All three converge on the same u
 A member books ahead of time through the Experience Cloud portal.
 
 1. **Booking.** Done through the Experience Cloud site's booking page — today this is the `Fairway Bay Booking` Flow (cloned from Salesforce's "Inbound New Appointment" template; see `SESSION_SYNC.md` → "Manual Salesforce steps" #6/#7). It lives only in the org (Setup → Flows), not in this repo's metadata — any change to the booking step itself happens in Setup, not here, unless someone retrieves it into `force-app/`.
+   - Test this path with a real community-site member user, not only an internal admin. The reservation site is an Experience Cloud entry point, so a `Customer Community Plus` user attached to a Person Account is the closest match to the live flow.
 2. **Host + party size.** The member setting up the session becomes the **host**. They specify how many additional players will join them. **Proposed max: 6 per bay** — not yet confirmed technically feasible, see "Open Questions" below (the 4-slot `Session_Participant__c.Simulator_Player_Slot__c` ceiling).
 3. **Scheduled buffer.** Every scheduled session should carry a **30-minute buffer** to allow for spillover, protecting the booking from being bumped by whatever's booked next on that bay. **This does not exist today** — there's no buffer/padding field or logic anywhere in the scheduling model. It's a different mechanism from the already-built *reactive* smart-extend/reassign feature (`FairwaySessionConsoleController.extendSessionSmart`), which moves a *later* booking to another bay only after a golfer asks to extend mid-session. A buffer would instead be baked into the booking itself upfront, so the next slot is never scheduled back-to-back with zero gap in the first place.
 4. **Night-before confirmation.** The night before the session, all party members are texted to confirm they're set for the tee time. **No SMS/texting integration exists anywhere in this codebase** (confirmed via repo-wide grep — zero hits for Twilio, SMS, or "text message" in `fairway-kiosk`, `fairway-bay`, `fairway-sf`, or `fairway-website`). Vendor undecided.
@@ -54,6 +55,15 @@ Someone calls the club (or a staff member books on a member's behalf) instead of
 
 - Same underlying booking mechanics as Case 1 (`ServiceAppointment` via Salesforce Scheduler) and the same eventual kiosk QR-check-in / partial-check-in flow — but **no self-service portal step**, and (implicitly) **no night-before/hour-before SMS confirmation loop**, since staff is coordinating directly with the customer on the phone at booking time.
 - **Open question, not yet resolved:** does this golfer get a permanent QR code generated proactively at booking time (e.g. emailed by staff) so they can show it on arrival, or do they go through the same "generate on first kiosk visit" path as today's walk-in flow? Case 1 assumes the golfer already has portal/kiosk history to draw a QR from; a phone-in booking might be this person's very first contact with the system.
+
+---
+
+## Reservation Site Testing Notes
+
+- Use a `Customer Community Plus` site member when testing the reservation portal.
+- The test user should be attached to a Person Account and granted the Fairway member access set, so the permissions match the live Experience Cloud path.
+- Internal admin access can hide sharing and object-access problems that the reservation site will hit.
+- The important records are the same ones the kiosk reads: `ServiceAppointment` for the reservation, `AssignedResource` for the bay assignment, and `Party_Size__c` for the expected headcount.
 
 ---
 
