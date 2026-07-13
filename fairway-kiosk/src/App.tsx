@@ -367,6 +367,14 @@ export default function App() {
 
       const sessionIds = golfSessions.map(session => session.Id)
 
+      const participantsBySession = new Map<string, number>()
+      for (const golfSession of golfSessions) {
+        participantsBySession.set(
+          golfSession.Id,
+          Math.max(1, golfSession.Session_Participants__r?.records?.length ?? 0)
+        )
+      }
+
       type ShotRow = {
         Golf_Session__c: string
         Carry_Distance__c: number | null
@@ -394,14 +402,16 @@ export default function App() {
       setLiveSessions(activeAppointments.map(appt => {
         const assignment = assignments.find(item => item.ServiceAppointmentId === appt.Id) ?? null
         const sessionId = appointmentToSession.get(appt.Id) ?? appt.Id
+        const participantCount = participantsBySession.get(sessionId) ?? Math.max(1, appt.Party_Size__c ?? 1)
         const serviceResource = assignment?.ServiceResource ?? null
         return {
+          appointmentId: appt.Id,
           sessionId,
           resourceId: serviceResource?.Id ?? null,
           bayName: serviceResource?.Name ?? 'Bay',
           startTime: appt.SchedStartTime,
           endTime: appt.SchedEndTime ?? new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-          participantCount: Math.max(1, appt.Party_Size__c ?? 1),
+          participantCount,
           bestCarry: bestCarryBySession.get(sessionId) ?? null,
         }
       }))
@@ -1131,7 +1141,7 @@ export default function App() {
         return
       }
 
-      await createSessionOrder(contactId, accountId, new Date().toISOString())
+      await createSessionOrder(contactId, accountId, new Date().toISOString(), selectedJoinSession.appointmentId)
 
       const result = await postApexRest<JoinPartyResult>('/FairwaySessionJoin/', {
         sessionId: selectedJoinSession.sessionId,

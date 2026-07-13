@@ -94,6 +94,7 @@ export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Competitive
 // a variant of ScheduledSession, since that type is shaped around
 // ServiceAppointment/single-player semantics that don't apply here.
 export interface LiveSession {
+  appointmentId: string
   sessionId: string       // Golf_Session__c Id
   resourceId: string | null
   bayName: string         // Bay__r.Name
