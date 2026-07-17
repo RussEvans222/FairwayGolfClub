@@ -175,7 +175,9 @@ sf project deploy start --source-dir force-app/main/default/staticresources --ta
 
 ## Golfer360 Data Model (operational side — bookings, bays, shot data)
 
-**Status as of 2026-07-05: metadata is built and committed to this repo, but NOT YET DEPLOYED to the org.** It was built on a machine without the Salesforce CLI installed. Before treating any of this as "live," deploy it first:
+**⚠️ This section describes the original 9-object design. It is now deployed to the org, but it is NOT the whole picture of how bookings/check-in actually work today — that evolved substantially in `fairway-kiosk`/`fairway-bay`/Apex work that this section predates. For the current, accurate, frequently-updated state of the live system (kiosk, bay display, Salesforce Scheduler integration, Person Accounts, Membership, revenue model), treat [`SESSION_SYNC.md`](SESSION_SYNC.md) as the source of truth, not this section. This section is kept for the original data-model rationale and schema reference only.**
+
+**Status: deployed to the org 2026-07-10** (139 components, 0 errors — see `SESSION_SYNC.md`'s "Session Update — 2026-07-10" for the deploy log). If you need to redeploy after a metadata change:
 
 ```bash
 sf project deploy start --source-dir force-app/main/default/objects --target-org FairwayGolfClub
@@ -188,22 +190,29 @@ sf org assign permset --name Fairway_Admin --target-org FairwayGolfClub
 ### Why this exists
 Russell wants to know which physical golfer hit which physical shot, in which bay, during which reservation — turning simulator "Player 1/Player 2" slots into permanent Golfer360 history. `Session_Participant__c` is the bridge object that makes this possible: every shot/hole-result/game-result attributes back to a golfer through it. See `fairway-sf`'s git history (commit adding this section) for the full architecture memo this was designed from — it covers vendor API reality (TrackMan/Foresight/Uneekor), a 3-phase integration model (native API → session export → console-owned player mapping), and a Data Cloud/middleware plan for later phases.
 
-### Objects (9, all custom, no Data Cloud/middleware yet — mock data only for now)
+### What actually changed since this was designed (read `SESSION_SYNC.md` for full detail)
+- **The real booking/check-in system is Salesforce Scheduler** (`ServiceAppointment` — relabeled "Bay Session" in the org UI — plus `AssignedResource`/`ServiceResource`/`WorkType`/`ServiceTerritory`), not `Bay_Reservation__c`. **`Bay_Reservation__c` is deliberately dormant** — the live kiosk/bay apps never create one. `Golf_Session__c` now has a `Service_Appointment__c` lookup tying it back to the real booking; `Simulator_Bay__c` has a `Service_Resource__c` lookup for the same reason.
+- **Person Accounts are in active use** — required for Experience Cloud community member access. Every member/guest gets a Person Account, resolved/created by the kiosk (`resolvePersonAccount()`).
+- **`Membership__c` exists and is live** (contradicts the "deferred" note below, which is now stale for that one object) — drives which `Pricebook2` (Member Pricing vs. Standard) a walk-in's `Order` opens on.
+- **Real revenue tracking via `Order`/`OrderItem`**, at flat per-visit rates ($35 member / $45 walk-in per Bay Session, plus scaled rates for 30-min extensions) — see `SESSION_SYNC.md`'s "Revenue tracking" section. **`Fairway_Golf_Club_Business_Plan.docx`'s Pricing Structure now reflects these live per-visit rates** (updated 2026-07-16, replacing the earlier hourly bay-rental figures) — but its Revenue Projections (Year 1–5) haven't been recalculated against this model yet, see that file's own note.
+- Every kiosk check-in path now creates a `Golf_Session__c` + primary `Session_Participant__c` automatically (`ensureCheckedInSession`) — previously **no live flow created either at all**, only manual seed scripts did.
+
+### Objects (9, all custom)
 | Object | Purpose |
 |---|---|
 | `Golfer_Profile__c` | Golfer360 performance identity, 1:1 with a `Contact` (handicap, tendencies, rollup stats) |
-| `Simulator_Bay__c` | A physical bay: launch monitor type, software, status |
-| `Bay_Reservation__c` | The booked time block (commercial transaction) |
-| `Golf_Session__c` | An actual play/practice session within a reservation. `Session_Type__c` = Practice / Round / Game / League / Lesson / Fitting — drives which child result object applies |
+| `Simulator_Bay__c` | A physical bay: launch monitor type, software, status. Now has `Service_Resource__c` linking to the real `ServiceResource` |
+| `Bay_Reservation__c` | Originally "the booked time block" — **now dormant by design**; the real booking record is `ServiceAppointment` (see above) |
+| `Golf_Session__c` | An actual play/practice session, now created live by kiosk check-in. `Session_Type__c` = Practice / Round / Game / League / Lesson / Fitting — drives which child result object applies. Now has `Service_Appointment__c` linking to the real booking; `Reservation__c` (→ `Bay_Reservation__c`) is optional, not required |
 | `Session_Participant__c` | **The bridge object.** Maps a simulator's local player slot (1-4) to a `Golfer_Profile__c` (or leaves it blank for an anonymous guest). Has `Team__c` for team game formats (Wolf/Vegas/Stableford) |
 | `Golf_Shot__c` | Universal atomic shot fact — logged for every session type. Ball-flight fields (ball speed, carry, spin, etc.) are populated by nearly all launch monitors; club-delivery fields (club speed, attack angle, face angle, etc.) only by premium doppler/camera units — check `Data_Tier__c` (Ball Only / Ball + Club) before trusting club fields are populated. Has `Raw_Payload_JSON__c` to hold the full mock/vendor JSON per shot |
 | `Round_Hole_Result__c` | One record per participant per hole, only when `Session_Type__c` = Round. Deliberately score-only (Hole/Par/Strokes/Score-to-Par) — no putts/GIR/fairway yet since many sim setups can't reliably capture that |
 | `Game_Result__c` | One record per participant per game session, only when `Session_Type__c` = Game (Closest to Pin, Long Drive, Wolf, Vegas, etc.) |
 | `Practice_Insight__c` | AI/coach-generated observation + recommendation surfaced to a golfer |
 
-Relationship chain: `Contact` → `Golfer_Profile__c` → `Session_Participant__c` ← `Golf_Session__c` ← `Bay_Reservation__c` ← `Simulator_Bay__c`. `Golf_Shot__c`, `Round_Hole_Result__c`, and `Game_Result__c` all hang off `Golf_Session__c` + `Session_Participant__c`; only one of the latter two applies per session, based on `Session_Type__c`.
+Relationship chain today: `Contact` → Person Account → `Golfer_Profile__c` → `Session_Participant__c` ← `Golf_Session__c` → `ServiceAppointment` (real booking) ← `AssignedResource` ← `ServiceResource`/`Simulator_Bay__c`. `Golf_Shot__c`, `Round_Hole_Result__c`, and `Game_Result__c` all hang off `Golf_Session__c` + `Session_Participant__c`; only one of the latter two applies per session, based on `Session_Type__c`. `Bay_Reservation__c` sits off to the side, unused by any live flow.
 
-**Deferred to a later phase** (not built yet): `Membership__c`/Salesforce Subscription Management, `Golf_Club__c` (bag/club performance), `Coaching_Plan__c`, real-time middleware, Data Cloud ingestion, computer vision/RFID attribution.
+**Deferred to a later phase** (not built yet): `Golf_Club__c` (bag/club performance), `Coaching_Plan__c`, real-time launch-monitor middleware (see Device integration research below), Data Cloud ingestion, computer vision/RFID attribution. (`Membership__c` was in this list originally — it's since been built and is live, see above.)
 
 **Device integration research (2026-07-10):** See `Assets/DeviceConnection.md` for findings on
 getting live shot data out of launch monitors and into this model. Short version: FlightScope
@@ -229,8 +238,8 @@ real gaps (no SMS integration, no session/party join-code mechanism, the 4-slot
 - `Fairway_Ops` (`applications/Fairway_Ops.app-meta.xml`) — a separate Lightning app bundling tabs for all 9 objects, so this doesn't clutter the Sales app used for Lead management.
 - `Golf_Session__c` has a `Fairway_Active_Sessions` list view (filters `Status__c = In Progress`) for "who's on the bays right now."
 
-### Verification once deployed
-Create one record per object in dependency order (Bay → Reservation → Session → Participant → [Game_Result or Round_Hole_Result] → Shot), covering all three session shapes (one Practice session with plain shots, one Round session with `Round_Hole_Result__c` records and shots tagged `Hole_Number__c`, one Game session with `Game_Result__c` records and shots linked via `Game_Result__c` lookup). Confirm the three shapes stay distinct on `Golf_Shot__c` (a Practice shot has no `Hole_Number__c`/`Game_Result__c`; a Round shot has `Hole_Number__c` but no `Game_Result__c`; a Game shot has `Game_Result__c` but no `Hole_Number__c`).
+### Verifying the schema shapes
+To sanity-check the object model directly (independent of the live kiosk/Scheduler flow), create one record per object in dependency order (Bay → Reservation → Session → Participant → [Game_Result or Round_Hole_Result] → Shot), covering all three session shapes (one Practice session with plain shots, one Round session with `Round_Hole_Result__c` records and shots tagged `Hole_Number__c`, one Game session with `Game_Result__c` records and shots linked via `Game_Result__c` lookup). Confirm the three shapes stay distinct on `Golf_Shot__c` (a Practice shot has no `Hole_Number__c`/`Game_Result__c`; a Round shot has `Hole_Number__c` but no `Game_Result__c`; a Game shot has `Game_Result__c` but no `Hole_Number__c`). The live seeded example is Jim Richard's practice session — see `SESSION_SYNC.md`'s "Golfer360 seed data" note for the record Ids.
 
 ---
 
