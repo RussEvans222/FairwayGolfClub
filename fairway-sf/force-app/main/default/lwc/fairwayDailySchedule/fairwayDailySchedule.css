@@ -1,0 +1,128 @@
+:host {
+    --fwc-primary: #1a4332;
+    --fwc-on-primary: #ffffff;
+    --fwc-bg: #f8f9ff;
+    --fwc-surface: #ffffff;
+    --fwc-surface-alt: #eff4ff;
+    --fwc-border: #e2e8f0;
+    --fwc-text: #0b1c30;
+    --fwc-text-muted: #64748b;
+    --fwc-gold: #c5a059;
+    --fwc-success: #16a34a;
+    --fwc-warning: #d97706;
+    --fwc-danger: #ba1a1a;
+    --fwc-radius-card: 16px;
+    --fwc-radius-pill: 999px;
+    --fwc-shadow: 0 4px 20px rgba(11, 28, 48, 0.08);
+
+    display: block;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--fwc-bg);
+    color: var(--fwc-text);
+    min-height: 100vh;
+}
+
+.schedule { display: flex; flex-direction: column; gap: 16px; padding: 16px; width: 100%; box-sizing: border-box; }
+
+/* ── Header ── */
+.header {
+    background: var(--fwc-primary); border-radius: var(--fwc-radius-card);
+    padding: 0.85rem 1.5rem; box-shadow: var(--fwc-shadow);
+}
+.header-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.1rem; font-weight: 700; color: var(--fwc-on-primary); }
+.logo-mark { font-size: 1.3rem; }
+
+/* ── Date nav ── */
+.date-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--fwc-surface); border-radius: var(--fwc-radius-card);
+    box-shadow: var(--fwc-shadow); padding: 0.6rem 1rem;
+}
+.date-label-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.date-label { font-size: 1rem; font-weight: 700; color: var(--fwc-text); }
+.today-link { background: none; border: none; color: var(--fwc-primary); font-size: 0.75rem; cursor: pointer; padding: 0; text-decoration: underline; }
+
+/* ── Soon card ── */
+.soon-card {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff7ed; border: 1px solid rgba(217,119,6,0.3); border-radius: var(--fwc-radius-card);
+    padding: 0.9rem 1.25rem;
+}
+.soon-info { display: flex; flex-direction: column; gap: 2px; }
+.soon-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fwc-warning); font-weight: 700; }
+.soon-name { font-size: 0.95rem; font-weight: 700; color: var(--fwc-text); }
+.soon-time { font-size: 0.78rem; color: var(--fwc-text-muted); }
+.btn-checkin {
+    background: var(--fwc-warning); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 16px; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+}
+.btn-checkin:hover { opacity: 0.9; }
+
+/* ── Stat row ── */
+.stat-row { display: flex; gap: 12px; }
+.stat-card {
+    flex: 1; background: var(--fwc-surface); border-radius: var(--fwc-radius-card);
+    box-shadow: var(--fwc-shadow); padding: 1rem; display: flex; flex-direction: column;
+    align-items: center; gap: 0.25rem;
+}
+.stat-value { font-size: 1.5rem; font-weight: 700; color: var(--fwc-primary); font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fwc-text-muted); }
+
+/* ── Panel ── */
+.panel { background: var(--fwc-surface); border-radius: var(--fwc-radius-card); box-shadow: var(--fwc-shadow); overflow: hidden; }
+.panel-header {
+    padding: 0.85rem 1.25rem; font-size: 0.75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--fwc-primary);
+    border-bottom: 1px solid var(--fwc-border);
+}
+.loading-msg, .empty-msg { padding: 2rem; text-align: center; color: var(--fwc-text-muted); font-size: 0.85rem; }
+
+/* ── Calendar grid ── */
+.grid-scroll { overflow-x: auto; }
+.grid-body { display: flex; height: 900px; padding: 12px 12px 12px 0; }
+
+/* Time ruler */
+.time-ruler { width: 56px; flex-shrink: 0; display: flex; flex-direction: column; }
+.time-ruler-spacer { height: 36px; flex-shrink: 0; }
+.time-ruler-body { position: relative; flex: 1; }
+.hour-mark { position: absolute; left: 0; right: 0; transform: translateY(-50%); }
+.hour-label { font-size: 0.68rem; color: var(--fwc-text-muted); padding-right: 8px; float: right; }
+
+/* Bay columns */
+.bay-column {
+    flex: 1 1 200px; min-width: 180px; display: flex; flex-direction: column;
+    border-left: 1px solid var(--fwc-border);
+}
+.bay-column-header {
+    height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700; color: var(--fwc-text);
+    border-bottom: 1px solid var(--fwc-border);
+}
+.bay-column-body { position: relative; flex: 1; }
+
+.hour-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid var(--fwc-border); }
+
+.now-line {
+    position: absolute; left: 0; right: 0; height: 2px; background: var(--fwc-danger);
+    z-index: 3;
+}
+.now-line::before {
+    content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--fwc-danger);
+}
+
+/* Event blocks */
+.event-block {
+    position: absolute; left: 4px; right: 4px; border-radius: 8px; padding: 4px 8px;
+    display: flex; flex-direction: column; gap: 1px; overflow: hidden; z-index: 2;
+    box-shadow: var(--fwc-shadow); font-size: 0.7rem; border: 1px solid rgba(0,0,0,0.06);
+}
+.event-name   { font-weight: 700; color: var(--fwc-text); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event-time   { color: var(--fwc-text-muted); font-size: 0.65rem; font-variant-numeric: tabular-nums; }
+.event-status { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+
+/* ── Status colors (also used for flat badges elsewhere in this component) ── */
+.badge-scheduled  { background: #dbeafe; }
+.badge-checkedin  { background: #dcfce7; }
+.badge-active     { background: #dcfce7; }
+.badge-done       { background: var(--fwc-surface-alt); opacity: 0.7; }

@@ -1,0 +1,242 @@
+/* ── Fairway Command design tokens ──────────────────────────────────────── */
+:host {
+    --fwc-primary: #1a4332;
+    --fwc-on-primary: #ffffff;
+    --fwc-bg: #f8f9ff;
+    --fwc-surface: #ffffff;
+    --fwc-surface-alt: #eff4ff;
+    --fwc-border: #e2e8f0;
+    --fwc-text: #0b1c30;
+    --fwc-text-muted: #64748b;
+    --fwc-gold: #c5a059;
+    --fwc-success: #16a34a;
+    --fwc-danger: #ba1a1a;
+    --fwc-radius-card: 16px;
+    --fwc-radius-control: 8px;
+    --fwc-radius-pill: 999px;
+    --fwc-shadow: 0 4px 20px rgba(11, 28, 48, 0.08);
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.console {
+    background: var(--fwc-bg);
+    color: var(--fwc-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 16px;
+    min-height: 200px;
+    position: relative;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.console-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 0.85rem 1.25rem;
+    background: var(--fwc-primary);
+    border-radius: var(--fwc-radius-card);
+    box-shadow: var(--fwc-shadow);
+}
+.console-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--fwc-on-primary);
+}
+.console-title .logo { font-size: 18px; }
+.console-title .subtitle {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--fwc-gold);
+    font-weight: 600;
+}
+
+/* ── State messages ─────────────────────────────────────────────────────── */
+.loading-msg, .empty-msg {
+    padding: 40px 0;
+    text-align: center;
+    color: var(--fwc-text-muted);
+}
+.empty-sub { font-size: 13px; color: var(--fwc-text-muted); margin-top: 6px; }
+
+/* ── Card grid ──────────────────────────────────────────────────────────── */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+/* ── Session card ───────────────────────────────────────────────────────── */
+.session-card {
+    background: var(--fwc-surface);
+    border: 1px solid var(--fwc-border);
+    border-radius: var(--fwc-radius-card);
+    box-shadow: var(--fwc-shadow);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+}
+.session-card.card-overtime {
+    border-color: rgba(186, 26, 26, 0.4);
+}
+
+/* ── Card header ─────────────────────────────────────────────────────────── */
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.bay-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.bay-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--fwc-text);
+}
+
+/* ── Timer ───────────────────────────────────────────────────────────────── */
+.timer {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--fwc-primary);
+    font-variant-numeric: tabular-nums;
+}
+.timer.timer-over { color: var(--fwc-danger); }
+
+/* ── Golfer row ─────────────────────────────────────────────────────────── */
+.card-golfer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.golfer-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(26, 67, 50, 0.1);
+    border: 1px solid rgba(26, 67, 50, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--fwc-primary);
+    flex-shrink: 0;
+}
+.golfer-name { font-size: 15px; font-weight: 600; color: var(--fwc-text); margin: 0; }
+.golfer-time { font-size: 12px; color: var(--fwc-text-muted); margin: 2px 0 0; }
+
+/* ── Progress bar ───────────────────────────────────────────────────────── */
+.progress-track {
+    height: 4px;
+    background: var(--fwc-surface-alt);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--fwc-primary);
+    border-radius: 4px;
+    transition: width 1s linear;
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+.badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: var(--fwc-radius-pill);
+}
+.badge-scheduled  { background: #dbeafe; color: #2563eb; }
+.badge-checkedin  { background: rgba(197,160,89,0.18);  color: #8a6a2f; }
+.badge-active     { background: #dcfce7;  color: var(--fwc-success); }
+.badge-done       { background: var(--fwc-surface-alt); color: var(--fwc-text-muted); }
+
+/* ── Action buttons ─────────────────────────────────────────────────────── */
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.btn {
+    border: none;
+    border-radius: var(--fwc-radius-control);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+}
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn:not(:disabled):hover { opacity: 0.85; }
+.btn:not(:disabled):active { transform: scale(0.97); }
+
+.btn-end     { background: #fee2e2; color: var(--fwc-danger); }
+.btn-restart { background: rgba(197,160,89,0.15); color: #8a6a2f; }
+.btn-extend  { background: rgba(26,67,50,0.1); color: var(--fwc-primary); }
+
+/* ── Status picker ──────────────────────────────────────────────────────── */
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.status-label-text { font-size: 12px; color: var(--fwc-text-muted); flex-shrink: 0; }
+.status-select {
+    flex: 1;
+    background: var(--fwc-surface);
+    border: 1px solid var(--fwc-border);
+    border-radius: var(--fwc-radius-control);
+    color: var(--fwc-text);
+    font-size: 12px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+.status-select:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Busy overlay ────────────────────────────────────────────────────────── */
+.busy-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(248, 249, 255, 0.75);
+    border-radius: var(--fwc-radius-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid rgba(26,67,50,0.15);
+    border-top-color: var(--fwc-primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    animation: fadeIn 0.2s ease;
+}
+.toast-success { background: #dcfce7; color: var(--fwc-success); border: 1px solid rgba(22,163,74,0.3); }
+.toast-error   { background: #fee2e2; color: var(--fwc-danger); border: 1px solid rgba(186,26,26,0.3); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

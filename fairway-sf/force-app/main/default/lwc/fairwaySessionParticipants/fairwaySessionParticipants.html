@@ -1,0 +1,55 @@
+<template>
+    <div class="session-participants">
+
+        <div class="header-row">
+            <span class="header-title">Checked-In Golfers</span>
+            <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh"
+                title="Refresh" onclick={handleRefresh}>
+            </lightning-button-icon>
+        </div>
+
+        <template if:true={bayName}>
+            <div class="bay-banner">
+                <span class="bay-banner-icon">📍</span>
+                <span class="bay-banner-label">Bay</span>
+                <span class="bay-banner-name">{bayName}</span>
+            </div>
+        </template>
+
+        <template if:true={loading}>
+            <div class="loading-msg">Loading participants…</div>
+        </template>
+
+        <template if:false={loading}>
+
+            <template if:true={noParticipants}>
+                <div class="empty-card">
+                    <p class="empty-title">No golfers checked in yet</p>
+                    <p class="empty-sub">Nobody has checked into this session via the kiosk.</p>
+                </div>
+            </template>
+
+            <template if:true={hasParticipants}>
+                <div class="participant-list">
+                    <template for:each={participants} for:item="p">
+                        <div key={p.participantId} class="participant-row">
+                            <div class="participant-main">
+                                <span class="participant-name">{p.displayName}</span>
+                                <span class="participant-slot">{p.slotLabel}</span>
+                            </div>
+                            <div class="badges">
+                                <template if:true={p.isPrimaryBooker}>
+                                    <span class="badge badge-primary">Primary</span>
+                                </template>
+                                <template if:true={p.isGuest}>
+                                    <span class="badge badge-guest">Guest</span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+        </template>
+    </div>
+</template>

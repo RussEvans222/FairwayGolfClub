@@ -1,0 +1,113 @@
+export interface SalesforceConfig {
+  instanceUrl: string
+  accessToken: string
+  refreshToken: string
+  clientId: string
+}
+
+export interface GolferProfile {
+  Id: string
+  Name: string
+  Handicap__c: number | null
+  Skill_Segment__c: string
+  AI_Coaching_Enabled__c: boolean
+  Current_Focus__c: string | null
+  Average_7_Iron_Carry__c: number | null
+  Average_Driver_Carry__c: number | null
+}
+
+export interface Contact {
+  Id: string
+  FirstName: string
+  LastName: string
+  Email: string
+  Phone: string | null
+}
+
+export interface SimulatorBay {
+  Id: string
+  Name: string
+  Bay_Number__c: string
+  Status__c: string
+  Launch_Monitor_Type__c: string
+}
+
+export interface PlayerSlot {
+  slot: number
+  contact: Contact | null
+  profile: GolferProfile | null
+  displayName: string
+  isGuest: boolean
+}
+
+export interface ScheduledPlayer {
+  profileId: string | null
+  contactId: string | null
+  displayName: string | null
+  isGuest: boolean
+  checkedIn: boolean
+  pin?: string | null
+}
+
+export interface ScheduledSession {
+  reservationId: string
+  sessionId: string | null
+  bayId: string
+  bayName: string
+  bayLabel: string
+  startTime: string
+  endTime: string
+  status: string
+  players: ScheduledPlayer[]
+}
+
+export type Screen =
+  | 'welcome'
+  | 'check-in'
+  | 'scheduled-sessions'
+  | 'pin-entry'
+  | 'pin-setup'
+  | 'bay-direction'
+  | 'join-party'
+  | 'member-walkin'
+  | 'member-walkin-pin'
+  | 'guest-registration'
+  | 'guest-payment'
+  | 'bay-queue'
+  | 'session-active'
+  | 'session-summary'
+
+export interface QueueEntry {
+  id: string
+  displayName: string
+  contactId: string
+  profileId: string | null
+  skill: SkillLevel
+  isMember: boolean
+  joinedAt: number
+}
+
+export type SessionType = 'Practice' | 'Round' | 'Game'
+export type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Competitive'
+
+// An in-progress Golf_Session__c a late arrival can join — deliberately not
+// a variant of ScheduledSession, since that type is shaped around
+// ServiceAppointment/single-player semantics that don't apply here.
+export interface LiveSession {
+  appointmentId: string
+  sessionId: string       // Golf_Session__c Id
+  resourceId: string | null
+  bayName: string         // Bay__r.Name
+  startTime: string       // Session_Start__c
+  endTime: string         // Session_End__c
+  participantCount: number
+  bestCarry: number | null
+}
+
+export interface JoinPartyResult {
+  success: boolean
+  message: string
+  participantId?: string
+  slotAssigned?: number
+  bayName?: string
+}

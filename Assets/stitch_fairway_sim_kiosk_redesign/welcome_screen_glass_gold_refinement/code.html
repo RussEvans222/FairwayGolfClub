@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Welcome | Fairway Golf Club</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#D4AF37", // Classic Gold
+                        "forest": "#0B2B26",
+                        "cognac": "#8B4513",
+                        "background-light": "#FDFCFB",
+                        "background-dark": "#050708",
+                    },
+                    fontFamily: {
+                        display: ["Playfair Display", "serif"],
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        .leather-texture {
+            background-color: #8B4513;
+            background-image: url("https://www.transparenttextures.com/patterns/leather.png");
+        }
+        .vignette {
+            background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
+        }
+        .glass-panel {
+            background: rgba(11, 43, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        .gold-shimmer {
+            background: linear-gradient(135deg, #D4AF37 0%, #F9E29C 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-gold-button {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(212, 175, 55, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-sans text-gray-900 dark:text-gray-100 min-h-screen overflow-hidden">
+<div class="fixed inset-0 z-0">
+<img alt="Professional interior photography of a luxury golf club lounge" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBe_y9Un4Xk3zWHcQ0wzvpt0qi5Zql23IRsg4kTF4eIP329W5b0jQRRD430wWNjlBo9XriiOclUNANTAHRRgjs2yIFjbTivxmpC4oHNNzGuM15sXZnAtgPAPTWTxFMNWaR4fe23AT5gEzLag7LALlbc6ijRWZ46qoasHGwMeqnWg0UE2zaXdWhnYI97qfhqxFTduav2AxD4x5i5-lLqG6uEw5svuf5NEPpLkmCf7vHxIjAXjYW2wBQ"/>
+<div class="absolute inset-0 bg-black/60 dark:bg-black/70"></div>
+<div class="absolute inset-0 vignette"></div>
+</div>
+<main class="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center">
+<div class="mb-12 animate-fade-in">
+<div class="w-24 h-24 rounded-full border-2 border-primary flex items-center justify-center mb-6 mx-auto bg-black/40 backdrop-blur-sm">
+<span class="text-primary font-display text-4xl font-bold">F</span>
+</div>
+<p class="uppercase tracking-[0.3em] text-primary text-sm font-semibold mb-2">Fairway Golf Club</p>
+</div>
+<div class="max-w-3xl mb-16 space-y-4">
+<h1 class="text-5xl md:text-7xl font-display font-bold text-white leading-tight">
+            Welcome to <br/>
+<span class="gold-shimmer">Fairway Golf Club</span>
+</h1>
+<p class="text-xl md:text-2xl text-gray-300 font-light tracking-wide max-w-xl mx-auto">
+            Your elite indoor golf experience starts here.
+        </p>
+</div>
+<div class="flex flex-col items-center gap-8 w-full max-w-md">
+<div class="flex items-center gap-4 mb-4">
+<div class="glass-panel px-4 py-2 rounded-full flex items-center gap-2">
+<span class="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+<span class="text-xs font-medium text-white tracking-wider uppercase">Bays Available Now</span>
+</div>
+</div>
+<button class="group relative w-full h-24 glass-gold-button rounded-xl shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-95 hover:bg-black/60 hover:border-primary/60 overflow-hidden" onclick="document.getElementById('screen-2').classList.remove('hidden')">
+<div class="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent"></div>
+<div class="relative flex items-center gap-4">
+<span class="text-primary text-3xl font-display font-semibold tracking-widest uppercase">Tap to Start</span>
+<span class="material-icons text-primary animate-bounce-x">touch_app</span>
+</div>
+</button>
+<p class="text-gray-400 text-xs tracking-[0.2em] uppercase">Touch screen anywhere to begin your session</p>
+</div>
+<div class="absolute bottom-10 left-0 right-0 px-10 flex justify-between items-end">
+<div class="text-left">
+<p class="text-primary/70 text-[10px] uppercase tracking-widest mb-1">Current Temperature</p>
+<p class="text-white font-medium">72°F • Perfect Play Conditions</p>
+</div>
+<div class="text-right">
+<p class="text-primary/70 text-[10px] uppercase tracking-widest mb-1">Kiosk ID</p>
+<p class="text-white font-medium">Bay Entrance A</p>
+</div>
+</div>
+</main>
+<div class="fixed inset-0 z-50 glass-panel flex items-center justify-center p-6 hidden animate-in fade-in duration-500" id="screen-2">
+<div class="w-full max-w-xl">
+<div class="text-center mb-12">
+<h2 class="text-4xl font-display font-bold text-white mb-2">Who's playing?</h2>
+<p class="text-gray-400">Choose how you'd like to get started.</p>
+</div>
+<div class="space-y-4">
+<button class="w-full bg-black/40 hover:bg-black/60 border border-white/10 p-6 rounded-2xl flex items-center transition-all group">
+<div class="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center text-3xl mr-6 group-hover:scale-110 transition-transform">
+                    📅
+                </div>
+<div class="text-left flex-1">
+<h3 class="text-lg font-semibold text-white">I Have a Reservation</h3>
+<p class="text-gray-400 text-sm">Find your scheduled tee time.</p>
+</div>
+<span class="material-icons text-gray-600 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+<button class="w-full bg-black/40 hover:bg-black/60 border border-white/10 p-6 rounded-2xl flex items-center transition-all group">
+<div class="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center text-3xl mr-6 group-hover:scale-110 transition-transform">
+                    ⛳
+                </div>
+<div class="text-left flex-1">
+<h3 class="text-lg font-semibold text-white">Member Walk-In</h3>
+<p class="text-gray-400 text-sm">No reservation — find my account.</p>
+</div>
+<span class="material-icons text-gray-600 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+<button class="w-full bg-black/40 hover:bg-black/60 border border-white/10 p-6 rounded-2xl flex items-center transition-all group">
+<div class="w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center text-3xl mr-6 group-hover:scale-110 transition-transform">
+                    🆕
+                </div>
+<div class="text-left flex-1">
+<h3 class="text-lg font-semibold text-white">New Guest</h3>
+<p class="text-gray-400 text-sm">First time? Let's get you set up.</p>
+</div>
+<span class="material-icons text-gray-600 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+</div>
+<button class="mt-12 text-gray-400 hover:text-white transition-colors flex items-center justify-center mx-auto gap-2" onclick="document.getElementById('screen-2').classList.add('hidden')">
+<span class="material-icons text-sm">arrow_back</span>
+<span class="uppercase tracking-widest text-xs font-semibold">Go Back</span>
+</button>
+</div>
+</div>
+<style>
+    @keyframes bounce-x {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(5px); }
+    }
+    .animate-bounce-x {
+        animation: bounce-x 1s infinite;
+    }
+    .animate-fade-in {
+        animation: fadeIn 1.2s ease-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+</body></html>

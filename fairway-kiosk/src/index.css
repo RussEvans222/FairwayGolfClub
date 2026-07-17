@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8C96A;
+  --bg: #0A0A0A;
+  --surface: #111111;
+  --surface-2: #1A1A1A;
+  --text: #FFFFFF;
+  --text-muted: #888888;
+  --border: #2A2A2A;
+
+  /* Heritage Green — "Modern Speakeasy" design system tokens */
+  --hg-forest: #16241D;
+  --hg-forest-container: #2D4236;
+  --hg-sage: #B4CCBC;
+  --hg-cognac: #8B4513;
+  --hg-cognac-dark: #4B270A;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Work Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Heritage Green shared treatments, used by the Welcome and check-in screens */
+.hg-vignette {
+  background: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.75) 100%);
+}
+
+.hg-gold-shimmer {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hg-glass-panel {
+  background: rgba(22, 36, 29, 0.72);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+}
+
+.hg-glass-button {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(201, 168, 76, 0.05);
+}
+
+/* Forces the Fairway Golf Club wordmark (dark green/gold on transparent) to solid white */
+.hg-logo-white {
+  filter: brightness(0) invert(1);
+}

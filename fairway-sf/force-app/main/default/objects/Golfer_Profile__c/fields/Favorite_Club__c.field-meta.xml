@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Favorite_Club__c</fullName>
+    <label>Favorite Club</label>
+    <description>Most-used club by shot count across all sessions.</description>
+    <type>Text</type>
+    <length>40</length>
+    <required>false</required>
+</CustomField>
+

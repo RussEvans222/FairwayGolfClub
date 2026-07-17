@@ -1,0 +1,132 @@
+<template>
+    <div class="console">
+
+        <!-- Header -->
+        <div class="console-header">
+            <div class="console-title">
+                <span class="logo">⛳</span>
+                <span>Session Console</span>
+                <span class="subtitle">Staff Controls</span>
+            </div>
+            <lightning-button-icon
+                icon-name="utility:refresh"
+                alternative-text="Refresh"
+                title="Refresh"
+                onclick={handleRefresh}
+                variant="border-inverse">
+            </lightning-button-icon>
+        </div>
+
+        <!-- Loading -->
+        <template if:true={loading}>
+            <div class="loading-msg">Loading sessions…</div>
+        </template>
+
+        <!-- Empty -->
+        <template if:false={loading}>
+            <template if:true={noSessions}>
+                <div class="empty-msg">
+                    <p>No active sessions right now.</p>
+                    <p class="empty-sub">All bays are available.</p>
+                </div>
+            </template>
+
+            <!-- Session cards -->
+            <div class="card-grid">
+                <template for:each={sessions} for:item="s">
+                    <div key={s.appointmentId} class={s.cardClass}>
+
+                        <!-- Bay + status row -->
+                        <div class="card-header">
+                            <div class="bay-info">
+                                <span class="bay-name">{s.bayName}</span>
+                                <span class={s.badgeClass}>{s.statusLabel}</span>
+                            </div>
+                            <div class={s.timerClass}>
+                                <template if:true={s.isOvertime}>
+                                    ⚠ Overtime
+                                </template>
+                                <template if:false={s.isOvertime}>
+                                    {s.timerLabel}
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Golfer -->
+                        <div class="card-golfer">
+                            <div class="golfer-avatar">{s.initial}</div>
+                            <div>
+                                <p class="golfer-name">{s.contactName}</p>
+                                <p class="golfer-time">{s.schedStart} – {s.schedEnd}</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress bar -->
+                        <div class="progress-track">
+                            <div class="progress-fill" style={s.progressStyle}></div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="card-actions">
+                            <button class="btn btn-end"
+                                data-id={s.appointmentId}
+                                onclick={handleEnd}
+                                disabled={s.busy}>
+                                End Session
+                            </button>
+                            <button class="btn btn-restart"
+                                data-id={s.appointmentId}
+                                onclick={handleRestart}
+                                disabled={s.busy}>
+                                Restart
+                            </button>
+                            <button class="btn btn-extend"
+                                data-id={s.appointmentId}
+                                data-mins="15"
+                                onclick={handleExtend}
+                                disabled={s.busy}>
+                                +15 min
+                            </button>
+                            <button class="btn btn-extend"
+                                data-id={s.appointmentId}
+                                data-mins="30"
+                                onclick={handleExtend}
+                                disabled={s.busy}>
+                                +30 min
+                            </button>
+                        </div>
+
+                        <!-- Status picker -->
+                        <div class="status-row">
+                            <span class="status-label-text">Set status:</span>
+                            <select class="status-select"
+                                data-id={s.appointmentId}
+                                onchange={handleStatusChange}
+                                disabled={s.busy}>
+                                <option value="">— choose —</option>
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Dispatched">Checked In</option>
+                                <option value="In Progress">Active</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+
+                        <!-- Busy overlay -->
+                        <template if:true={s.busy}>
+                            <div class="busy-overlay">
+                                <div class="spinner"></div>
+                            </div>
+                        </template>
+
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Toast -->
+        <template if:true={toast.visible}>
+            <div class={toast.cssClass}>{toast.message}</div>
+        </template>
+
+    </div>
+</template>

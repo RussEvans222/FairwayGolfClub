@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <flexiPage>Fairway_Daily_Schedule</flexiPage>
+    <label>Daily Schedule</label>
+    <motif>Custom4: Calendar</motif>
+</CustomTab>

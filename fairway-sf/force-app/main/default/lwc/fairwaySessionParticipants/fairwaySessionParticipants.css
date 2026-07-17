@@ -1,0 +1,61 @@
+:host {
+    --fwc-primary: #1a4332;
+    --fwc-on-primary: #ffffff;
+    --fwc-bg: #f8f9ff;
+    --fwc-surface: #ffffff;
+    --fwc-surface-alt: #eff4ff;
+    --fwc-border: #e2e8f0;
+    --fwc-text: #0b1c30;
+    --fwc-text-muted: #64748b;
+    --fwc-gold: #c5a059;
+    --fwc-success: #16a34a;
+    --fwc-danger: #ba1a1a;
+    --fwc-radius-card: 16px;
+    --fwc-radius-control: 8px;
+    --fwc-radius-pill: 999px;
+    --fwc-shadow: 0 4px 20px rgba(11, 28, 48, 0.08);
+
+    display: block;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--fwc-bg);
+    color: var(--fwc-text);
+}
+
+.session-participants {
+    background: var(--fwc-surface); border-radius: var(--fwc-radius-card);
+    box-shadow: var(--fwc-shadow); padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
+
+.header-row { display: flex; align-items: center; justify-content: space-between; }
+.header-title { font-size: 1rem; font-weight: 700; color: var(--fwc-text); }
+
+.bay-banner {
+    display: flex; align-items: baseline; gap: 8px;
+    background: var(--fwc-primary); color: var(--fwc-on-primary);
+    border-radius: var(--fwc-radius-control); padding: 10px 14px;
+}
+.bay-banner-icon { font-size: 1rem; }
+.bay-banner-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.75; }
+.bay-banner-name { font-size: 1.1rem; font-weight: 700; }
+
+.loading-msg, .empty-sub { color: var(--fwc-text-muted); font-size: 0.85rem; }
+
+.empty-card { text-align: center; padding: 1.5rem 1rem; }
+.empty-title { font-size: 0.95rem; font-weight: 700; color: var(--fwc-text); margin: 0 0 0.35rem; }
+
+.participant-list { display: flex; flex-direction: column; gap: 8px; }
+.participant-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--fwc-surface-alt); border-radius: 10px; padding: 10px 14px;
+}
+.participant-main { display: flex; flex-direction: column; gap: 2px; }
+.participant-name { font-size: 0.9rem; font-weight: 600; color: var(--fwc-text); }
+.participant-slot { font-size: 0.7rem; color: var(--fwc-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.badges { display: flex; gap: 6px; }
+.badge {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 0.2rem 0.6rem; border-radius: var(--fwc-radius-pill);
+}
+.badge-primary { background: rgba(197,160,89,0.18); color: #8a6a2f; }
+.badge-guest   { background: #dbeafe; color: #2563eb; }

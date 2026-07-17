@@ -72,6 +72,19 @@ Both forms POST directly to Salesforce Web-to-Lead. **Do not add `e.preventDefau
 ### Deployment
 Push to `main` → Cloudflare Pages auto-deploys. No build command needed — it's a pure static site. **Do not set a deploy command** in Cloudflare (it's a Pages project, not a Worker).
 
+### Homepage Survey Widget ("Does this sound cool?")
+A Yes/No pulse-check survey lives on the homepage between the Features and Showcase sections, backed by two Cloudflare Pages Functions in `fairway-website/functions/api/`:
+
+- **`vote.js`** — `GET` returns current `{ yes, no }` counts; `POST { vote: "yes"|"no" }` increments the count and logs a geo-tagged event (city/region/country pulled from Cloudflare's `request.cf`, no client-side geolocation prompt). Requires a KV namespace bound as **`VOTES_KV`** in the Pages project settings.
+- **`votes-log.js`** — internal viewer at `/api/votes-log?key=YOUR_ADMIN_KEY`, gated by an **`ADMIN_KEY`** environment variable (set your own value in Pages project settings — not committed to the repo). Lists recent votes with location, newest first.
+
+**⚠️ NOT YET WORKING as of 2026-07-07** — the code is committed but the Cloudflare Pages project has no `VOTES_KV` KV namespace or `ADMIN_KEY` variable configured yet (I don't have Cloudflare dashboard/API access from this environment). Until this is done, the vote buttons will fail silently (chart stays at 0, buttons re-enable) and `/api/votes-log` will 500. **To activate:**
+1. In the Cloudflare dashboard: Workers & Pages → your Pages project → Settings → Functions → KV namespace bindings → create/bind a namespace as `VOTES_KV`
+2. Settings → Environment variables → add `ADMIN_KEY` (any private string of your choosing) to both Production and Preview
+3. Redeploy (a new push to `main`, or "Retry deployment" in the dashboard, picks up the new bindings)
+
+Voting itself needs no reCAPTCHA (it just hits `VOTES_KV`), but the optional follow-up (email for a Yes vote, feedback text for a No vote) reuses the existing Web-to-Lead + reCAPTCHA pattern and lands in Salesforce as a Lead with `lead_source = "Website - Survey Vote"` — same picklist values as the other forms, so it won't affect the `Fairway_Investor_Leads` list view.
+
 ---
 
 ## Salesforce Project (`fairway-sf/`)
@@ -192,6 +205,25 @@ Relationship chain: `Contact` → `Golfer_Profile__c` → `Session_Participant__
 
 **Deferred to a later phase** (not built yet): `Membership__c`/Salesforce Subscription Management, `Golf_Club__c` (bag/club performance), `Coaching_Plan__c`, real-time middleware, Data Cloud ingestion, computer vision/RFID attribution.
 
+**Device integration research (2026-07-10):** See `Assets/DeviceConnection.md` for findings on
+getting live shot data out of launch monitors and into this model. Short version: FlightScope
+(X3C/Mevo+) has no public API — the only real open integration point in the vendor landscape is
+**GSPro's Open Connect v1** (local JSON-over-TCP socket, `127.0.0.1:0921`, documented at
+gsprogolf.com), which a relay could sit on as a second client to mirror shot data to Salesforce.
+This only works if bays run GSPro specifically; Awesome Golf Simulator has no equivalent open
+socket. Community reverse-engineering of FlightScope's binary protocol (`ironsight`, TCP port
+5100) exists but is unofficial/unconfirmed for X3C — experimental only. Until Phase 1 (native
+API) middleware exists, this reinforces sticking with Phase 2 (session export) or mock data.
+
+**Booking & check-in process spec (2026-07-10):** See `BOOKING_CHECKIN_PROCESS.md` for the
+full intended design covering all three ways a golfer gets to a bay — pre-arranged scheduled
+visits booked through Experience Cloud (with party check-in, SMS confirmations, and a
+trickle-in join mechanism), single walk-ins with a live approve/deny join request, and
+phone-in/staff-booked reservations. It's a requirements spec, not yet built — cross-references
+exactly what already exists (`ServiceAppointment`, the QR identity check-in system, etc.) against
+real gaps (no SMS integration, no session/party join-code mechanism, the 4-slot
+`Simulator_Player_Slot__c` ceiling vs. a proposed 6-player party max).
+
 ### Supporting metadata
 - `Fairway_Admin` permission set was extended with object + field permissions for all 9 objects, plus visibility into the new `Fairway_Ops` Lightning app.
 - `Fairway_Ops` (`applications/Fairway_Ops.app-meta.xml`) — a separate Lightning app bundling tabs for all 9 objects, so this doesn't clutter the Sales app used for Lead management.
@@ -260,6 +292,7 @@ Meeting prep is tracked in `DEI_Storck_Meeting_Prep.md`. The 1-page `Fairway_Gol
 - [ ] **Recalculate downstream financials** — Year 1–5 revenue/net income projections and the Risk Mitigation worst-case figure in the business plan were calibrated to the old $150K/Month-3 baseline and have not been recalculated against the new $70K/6-month baseline.
 - [ ] **Reconcile the site concept** — `PRODUCT_REQUIREMENTS.md`'s leaner 2,000 sq ft Proof-of-Concept (lobby/bag storage/restrooms) supersedes the earlier "Suite" concept on the private `fairway-website/space-plan/` page (shared social lounge, wash-and-change rooms with showers) — that page needs a refresh before being shared again.
 - [ ] **Formalize the Bunnyman Brewing partnership** — co-branded seasonal beer (e.g. "Fairway Golden Ale") and stay-and-play cross-promotion are concepts, not yet a confirmed arrangement.
+- [ ] **Activate the homepage survey widget** — `VOTES_KV` KV namespace binding + `ADMIN_KEY` environment variable need to be set up in the Cloudflare Pages dashboard before the "Does this sound cool?" Yes/No survey will work. See "Homepage Survey Widget" section above.
 
 ---
 

@@ -1,0 +1,81 @@
+<template>
+    <div class="greeting-root">
+        <template if:true={isLoading}>
+            <div class="loader-wrap">
+                <div class="spinner"></div>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            <template if:true={hasData}>
+                <!-- Top bar -->
+                <div class="top-bar">
+                    <img class="logo-img" src={logoUrl} alt="Fairway Golf Club" />
+                    <span class="bay-label">{data.bayName}</span>
+                </div>
+
+                <!-- Welcome headline -->
+                <div class="welcome-block">
+                    <div class="avatar">{initial}</div>
+                    <h1 class="welcome-name">Welcome back,<br/>
+                        <span class="gold">{data.firstName}.</span>
+                    </h1>
+                </div>
+
+                <!-- AI greeting message -->
+                <div class="ai-greeting">
+                    <span class="ai-icon">🤖</span>
+                    <p>{data.aiGreeting}</p>
+                </div>
+
+                <!-- Stats row -->
+                <div class="stats-row">
+                    <template if:true={data.avgCarry}>
+                        <div class="stat-chip">
+                            <span class="chip-val">{data.avgCarry} yds</span>
+                            <span class="chip-lbl">Driver Carry Avg</span>
+                        </div>
+                    </template>
+                    <template if:true={data.lifetimeSessions}>
+                        <div class="stat-chip">
+                            <span class="chip-val">{data.lifetimeSessions}</span>
+                            <span class="chip-lbl">Sessions at Fairway</span>
+                        </div>
+                    </template>
+                    <template if:true={data.skillSegment}>
+                        <div class="stat-chip">
+                            <span class="chip-val">{data.skillSegment}</span>
+                            <span class="chip-lbl">Skill Level</span>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Latest insight card -->
+                <template if:true={hasInsight}>
+                    <div class="insight-card">
+                        <div class="insight-header">
+                            <span class="insight-icon">💡</span>
+                            <span>Today's Focus</span>
+                            <template if:true={data.insightClub}>
+                                <span class="insight-club">{data.insightClub}</span>
+                            </template>
+                        </div>
+                        <p class="insight-obs">{data.insightObservation}</p>
+                        <p class="insight-rec">{data.insightRecommendation}</p>
+                    </div>
+                </template>
+
+                <!-- Footer countdown -->
+                <div class="footer-note">
+                    Session starts in <span class="gold">{data.bayName}</span>. Hit range balls when ready.
+                </div>
+            </template>
+
+            <template if:false={hasData}>
+                <div class="empty-state">
+                    <p>⛳ Ready for your session.</p>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>

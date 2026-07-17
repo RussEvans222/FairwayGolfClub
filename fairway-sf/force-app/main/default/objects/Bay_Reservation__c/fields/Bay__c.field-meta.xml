@@ -6,6 +6,6 @@
     <referenceTo>Simulator_Bay__c</referenceTo>
     <relationshipName>Bay_Reservations</relationshipName>
     <relationshipLabel>Bay Reservations</relationshipLabel>
-    <deleteConstraint>SetNull</deleteConstraint>
+    <deleteConstraint>Restrict</deleteConstraint>
     <required>true</required>
 </CustomField>

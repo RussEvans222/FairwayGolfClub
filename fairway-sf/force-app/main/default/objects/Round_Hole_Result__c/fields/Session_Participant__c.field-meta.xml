@@ -6,6 +6,6 @@
     <referenceTo>Session_Participant__c</referenceTo>
     <relationshipName>Round_Hole_Results</relationshipName>
     <relationshipLabel>Round Hole Results</relationshipLabel>
-    <deleteConstraint>SetNull</deleteConstraint>
+    <deleteConstraint>Restrict</deleteConstraint>
     <required>true</required>
 </CustomField>

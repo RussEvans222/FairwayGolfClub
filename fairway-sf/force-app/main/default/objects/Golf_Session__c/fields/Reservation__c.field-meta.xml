@@ -6,6 +6,6 @@
     <referenceTo>Bay_Reservation__c</referenceTo>
     <relationshipName>Golf_Sessions</relationshipName>
     <relationshipLabel>Golf Sessions</relationshipLabel>
-    <deleteConstraint>SetNull</deleteConstraint>
-    <required>true</required>
+    <deleteConstraint>Restrict</deleteConstraint>
+    <required>false</required>
 </CustomField>
