@@ -14,7 +14,8 @@ Two-frontend architecture:
 
 ## The Site & Location Strategy
 
-- Flagship target: a **2,000 sq ft historic building**, with a **4,000 sq ft expansion path**, at the **county-owned "back buildings"** on the historic **Workhouse Arts Center / Lorton Reformatory campus** — currently undergoing fast-tracked commercial leasing assessments.
+- Flagship target: a **2,000 sq ft historic building**, with a **4,000 sq ft expansion path**, at the **county-owned "back buildings"** on the historic **Workhouse Arts Center / Lorton Reformatory campus** — real address **9518 Workhouse Way, Lorton, Virginia 22079** — currently undergoing fast-tracked commercial leasing assessments.
+- **Fort Belvoir military/DoD segment** (from `Fairway_Golf_Club_Market_Analysis.docx`): 51,000+ employees ~5 min away, $97,290 median HHI, 51.5% bachelor's+. A large, metrics-oriented population well-suited to the Golfer360 data pitch; MWR partnership is a named, unpursued opportunity.
 - **Site concept ("Proof-of-Concept" prototype):** 2 premium overhead simulator bays, a warm walk-in arrival lobby, bag storage, and Men's/Ladies' restrooms with a vintage country-club locker-room aesthetic (wood panels, brass fixtures, luxury amenities). Full detail in `PRODUCT_REQUIREMENTS.md`.
 - This is adaptive reuse of a historic county property, which aligns with the Workhouse's existing arts/history mission — not a generic commercial build-out pitch. Construction is deliberately modular (freestanding pods, no anchoring into the historic envelope) specifically to avoid triggering a full historic-preservation review — see `OPERATIONAL_PLAN.md`.
 - **Founder is hyper-local:** Russell Evans is a **Crosspointe resident**, living less than **1 mile** from the campus, and is personally coding the entire tech backend in-house as a Salesforce Application Developer — eliminating an estimated $40,000+ in consulting/dev fees.
@@ -62,7 +63,8 @@ Seven revenue streams (see `Fairway_Golf_Club_Business_Plan.docx` for full detai
 - Salesforce: Lead management fields deployed and working. Golfer360 data model (9 objects) built and committed, **not yet deployed**.
 - Local strategy: site target, founder-locality angle, market data, and Bunnyman partnership now finalized (this doc + `CLAUDE.md` + `MARKETING_ROADMAP.md`).
 - Product/ops: leaner 2,000 sq ft Proof-of-Concept site plan, 4-phase Golfer360 journey, and the modular/regulatory build strategy are now finalized (`PRODUCT_REQUIREMENTS.md`, `OPERATIONAL_PLAN.md`) — **this supersedes the earlier, larger "Suite" concept on the private `fairway-website/space-plan/` page**, which hasn't been updated to match yet.
-- Business plan: founder bio, site concept, and CapEx/breakeven figures updated in `Fairway_Golf_Club_Business_Plan.docx` to match. Downstream Year 1–5 projections and the Risk Mitigation worst-case figure are still calibrated to the old $150K/Month-3 baseline and haven't been recalculated.
+- Business plan: founder bio, site concept, and Pricing Structure (now live per-visit rates, not hourly) updated in `Fairway_Golf_Club_Business_Plan.docx` to match.
+- **Financial models are NOT yet reconciled.** There are at least 4 internally-consistent but mutually-inconsistent CapEx/pricing/revenue models across this repo (`Fairway_Income_Projection.xlsx`, `Fairway_Golf_Club_Phase1_Budget_200K.xlsx`, `Fairway_Golf_Club_Startup_Costs.xlsx` + `Pitch_Deck.pptx`, and this session's newer $70K/6-month figures). See `CLAUDE.md`'s "Open Financial Reconciliation" table before quoting any single number as final.
 - Next: Fairfax DEI / Supervisor Storck meeting — prep materials in `Fairway_Golf_Club_Executive_Summary.docx` and `DEI_Storck_Meeting_Prep.md`.
 
 ## Key Documents
@@ -74,6 +76,9 @@ Seven revenue streams (see `Fairway_Golf_Club_Business_Plan.docx` for full detai
 | `OPERATIONAL_PLAN.md` | Modular/regulatory build strategy, CapEx & breakeven |
 | `MARKETING_ROADMAP.md` | GTM strategy and action tracker |
 | `Fairway_Golf_Club_Business_Plan.docx` | Full business plan — market research, financials |
+| `Fairway_Golf_Club_Market_Analysis.docx` | Deep local market research incl. real address, Fort Belvoir segment, competitor pricing |
+| `Fairway_Income_Projection.xlsx` | Family-income-safety-net financial model (hourly/utilization-based) |
+| `Fairway_Golf_Club_Phase1_Budget_200K.xlsx` / `Fairway_Golf_Club_Startup_Costs.xlsx` | Detailed line-item build budgets (two different scoping levels) |
 | `Fairway_Golf_Club_Executive_Summary.docx` | 1-page pitch sheet for the DEI/Storck meeting |
 | `DEI_Storck_Meeting_Prep.md` | Meeting prep — goals, talking points, anticipated Q&A |
-| `Fairway_Golf_Club_Pitch_Deck.pptx` / `.pdf` | Investor pitch deck |
+| `Fairway_Golf_Club_Pitch_Deck.pptx` / `Fairway_Golf_Club_Investor_Deck.pptx` | Two investor decks, different scope/ask — see `CLAUDE.md` reconciliation note |

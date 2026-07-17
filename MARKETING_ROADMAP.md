@@ -83,7 +83,7 @@ This reframes "Fairway Mobile" from a standalone revenue line (as it's described
 | Fairway Mobile events (corporate/community, 3+/month target) | Not started | Portable inflatable simulator unit not yet built/acquired; this is Phase 1 of the Golfer360 journey / marketing flywheel (see above) — free 15-min swing checks + QR scan-to-play at Workhouse community events |
 | Bunnyman Brewing cross-promotion | In progress | See partnership section above — now includes a co-branded seasonal beer concept ("Fairway Golden Ale") |
 | Workhouse Arts Center campus events presence | Not started | Depends on securing the site / building campus relationships |
-| Local corporate partnerships (Fort Belvoir MWR, defense contractors, local firms) | Not started | Outbound, founder-led through Phase 1 |
+| Local corporate partnerships (Fort Belvoir MWR, defense contractors, local firms) | Not started | Outbound, founder-led through Phase 1. Fort Belvoir specifically: 51,000+ employees ~5 min away, $97,290 median HHI — see `Fairway_Golf_Club_Market_Analysis.docx` Section 5 for the full segment analysis |
 | Referral / retention flywheel (AI progress notifications, member-get-member) | Not started | Depends on Golfer360 data model being deployed and Experience Cloud member portal existing |
 | Automated Salesforce email journeys (welcome, session recaps, milestones) | Not started | Depends on Golfer360 data model deployment |
 | Social content (Instagram/TikTok — swing clips, before/after data) | Not started | Needs at least a mock/demo Golfer360 session to generate sample content |

@@ -18,8 +18,16 @@ Fairway Golf Club is a premium AI-powered indoor golf improvement club concept b
 | `Fairway_Golf_Club_Business_Plan.docx` | Full business plan (market research, financials, revenue model) | No — private |
 | `Fairway_Golf_Club_Executive_Summary.docx` | 1-page pitch sheet for local/government meetings (site, market, tech, ask) | No — private, meeting handout |
 | `DEI_Storck_Meeting_Prep.md` | Prep outline for the Fairfax DEI / Supervisor Storck meeting | No — private |
-| `Fairway_Golf_Club_Pitch_Deck.pptx` / `.pdf` | Investor pitch deck | No — private, shared with founding investors only |
+| `Fairway_Golf_Club_Market_Analysis.docx` | Deep local market research: demographics, competitor pricing (firsthand-verified), Fort Belvoir military segment, unit economics, SWOT. Has the real street address. | No — private, CONFIDENTIAL/investor-use |
+| `Fairway_Income_Projection.xlsx` | Family-income-safety-net financial model: hourly-rate/utilization-ramp based, 5-year household income projection, "The Pitch" summary for family buy-in | No — private |
+| `Fairway_Golf_Club_Phase1_Budget_200K.xlsx` | Value-engineered line-item build budget (real vendor pricing incl. Uneekor EYE XO2, ProTee auto-tee) | No — private |
+| `Fairway_Golf_Club_Startup_Costs.xlsx` | Exhaustive line-item startup costs incl. often-overlooked pre-opening costs (ADA, overruns, deposits) | No — private |
+| `Fairway_Golf_Club_Pitch_Deck.pptx` / `.pdf` | Design-forward investor deck — has `[INSERT: render]` placeholders for facility renderings | No — private, shared with founding investors only |
+| `Fairway_Golf_Club_Investor_Deck.pptx` / `.pdf` | More comprehensive 24-slide investor deck w/ full appendix (demographics, utilization, 5-yr detail, Fort Belvoir) | No — private |
+| `Fairway_Golf_Club_Presentation.html` | Narrative/experiential walkthrough deck ("Hey Russ" storyline) | No — private |
 | `fairway-website/` | The only public-facing surface | **Yes** — see "What NOT to Do" below |
+
+**⚠️ Multiple financial models coexist and are not fully reconciled** — see "Open Financial Reconciliation" near the end of this file before treating any single CapEx/pricing/breakeven figure as final.
 
 ---
 
@@ -252,7 +260,7 @@ To sanity-check the object model directly (independent of the live kiosk/Schedul
 - Russ's professional title is **Salesforce Application Developer** (more specific than the business plan's earlier "Salesforce professional" phrasing). He is **personally designing and coding the entire customized tech backend in-house** — the Golfer360 platform, booking/check-in flows, AI coaching integration — which eliminates an estimated **$40,000+ in software consulting/development fees**. This is a material input to the budget in `OPERATIONAL_PLAN.md`, not just a resume line.
 
 ### Target Site & Product Concept
-- Flagship target: a **2,000 sq ft historic building**, with a **4,000 sq ft expansion path**, at the **county-owned "back buildings"** on the historic **Workhouse Arts Center / Lorton Reformatory campus**, which is currently undergoing **fast-tracked commercial leasing assessments**.
+- Flagship target: a **2,000 sq ft historic building**, with a **4,000 sq ft expansion path**, at the **county-owned "back buildings"** on the historic **Workhouse Arts Center / Lorton Reformatory campus** — real street address **9518 Workhouse Way, Lorton, Virginia 22079** (per `Fairway_Golf_Club_Market_Analysis.docx`) — which is currently undergoing **fast-tracked commercial leasing assessments**.
 - Current site concept is a lean **"Proof-of-Concept" prototype**: 2 premium overhead simulator bays, a warm walk-in arrival lobby, bag storage, and Men's/Ladies' restrooms designed with a vintage country-club locker-room aesthetic (wood panels, brass fixtures, luxury amenities). Full layout, room list, and the phased Golfer360 tech experience are in `PRODUCT_REQUIREMENTS.md`.
 - **This supersedes the earlier, larger "Suite" concept** built into the private `fairway-website/space-plan/` page (2 bays + shared social lounge + wash-and-change rooms with showers, ~1,320–1,500 sq ft). The two haven't been reconciled — `PRODUCT_REQUIREMENTS.md` is the current source of truth; the `space-plan` page needs a refresh before it's shared again.
 - Adaptive reuse of a historic county property — the pitch to the county leans on this fitting the Workhouse's existing arts/history/adaptive-reuse mission, not a generic commercial build-out. The construction approach specifically avoids triggering a full historic-preservation review (freestanding modular pods, macerating plumbing instead of slab cutting) — see `OPERATIONAL_PLAN.md`.
@@ -260,7 +268,8 @@ To sanity-check the object model directly (independent of the live kiosk/Schedul
 ### Local Market & Competitive Edge
 - **5 traditional golf courses within 15 minutes of Lorton** (Laurel Hill, Pohick Bay, Burke Lake, Lake Ridge, Old Hickory — see business plan for detail) prove demand, but **zero local indoor simulator options** exist.
 - Golfers currently **drive 30+ minutes** to non-premium, transactional, uninviting regional commercial simulators (see business plan's Competition Analysis: CAFDExGO, Uni Indoor Golf, GOLFTEC, Five Iron, ParCiti — all 20–40 min away).
-- **Target demographics:** Lorton median household income **~$138K**; **89% white-collar workforce**, seeking upscale local "third places," evening leagues, and corporate event venues — a high-value local market that's currently underserved. (Note: the business plan docx cites broader corridor figures — $130K+ regionally, $180K+ for Fairfax Station specifically. The $138K/89% figures are Lorton-specific and newer — now being folded into the business plan doc directly, see below.)
+- **Target demographics:** Lorton median household income **~$138K**; **89% white-collar workforce**, seeking upscale local "third places," evening leagues, and corporate event venues — a high-value local market that's currently underserved. (Note: the business plan docx cites broader corridor figures — $130K+ regionally, $180K+ for Fairfax Station specifically. `Fairway_Golf_Club_Market_Analysis.docx` gives a range of $120K–$150K for Lorton/Fairfax Station specifically, explicitly flagged as an ACS estimate needing Census verification — the $138K figure sits inside that range but its exact source hasn't been traced.)
+- **Fort Belvoir military/DoD segment** (from `Fairway_Golf_Club_Market_Analysis.docx`, not previously captured anywhere else in this repo): 51,000+ employees, ~5 min drive, $97,290 median HHI, 51.5% bachelor's+. A large, disciplined, metrics-oriented population — good fit for Golfer360's data-driven pitch. MWR (Morale, Welfare and Recreation) partnership is a named opportunity, not yet pursued.
 
 ### Local Strategic Partnership: Bunnyman Brewing
 - Primary local partner: **Bunnyman Brewing**, specifically their on-campus location, **Bunnyman Brewing Cafe at the Workhouse**. Framed as a **highly collaborative neighbor strategy** — not isolated commercial retail — actively building relationships with an on-campus neighbor rather than just co-existing.
@@ -297,11 +306,34 @@ Meeting prep is tracked in `DEI_Storck_Meeting_Prep.md`. The 1-page `Fairway_Gol
 - [x] **Business plan financials/bio updated** — `Fairway_Golf_Club_Business_Plan.docx` founder bio, site concept, CapEx, and breakeven updated to match the finalized roadmap (see that file's own internal notes for what's still open).
 - [ ] **Hold the Fairfax DEI / Supervisor Storck meeting** — use the executive summary + prep doc above; update `MARKETING_ROADMAP.md` and this file with the outcome afterward.
 - [ ] **Reconcile local market stats** — business plan docx historically cited Fairfax Station-specific ($180K+ HHI) and broader-corridor (>$130K) figures; the newer Lorton-specific figures (~$138K HHI, 89% white-collar) have now been folded into the business plan doc directly (see above) — double check both figures still coexist sensibly (regional vs. Lorton-specific) rather than reading as contradictory.
-- [ ] **Finalize CapEx funding structure** — the new ~$70,000 CapEx figure hasn't been split into equity/loan (or confirmed as fully founder-funded); see `OPERATIONAL_PLAN.md` open questions.
-- [ ] **Recalculate downstream financials** — Year 1–5 revenue/net income projections and the Risk Mitigation worst-case figure in the business plan were calibrated to the old $150K/Month-3 baseline and have not been recalculated against the new $70K/6-month baseline.
+- [ ] **Resolve which financial model governs** — see "Open Financial Reconciliation" below. Do not treat the $70K CapEx / $35-45 per-visit figures as final until this is resolved with Russell.
 - [ ] **Reconcile the site concept** — `PRODUCT_REQUIREMENTS.md`'s leaner 2,000 sq ft Proof-of-Concept (lobby/bag storage/restrooms) supersedes the earlier "Suite" concept on the private `fairway-website/space-plan/` page (shared social lounge, wash-and-change rooms with showers) — that page needs a refresh before being shared again.
 - [ ] **Formalize the Bunnyman Brewing partnership** — co-branded seasonal beer (e.g. "Fairway Golden Ale") and stay-and-play cross-promotion are concepts, not yet a confirmed arrangement.
 - [ ] **Activate the homepage survey widget** — `VOTES_KV` KV namespace binding + `ADMIN_KEY` environment variable need to be set up in the Cloudflare Pages dashboard before the "Does this sound cool?" Yes/No survey will work. See "Homepage Survey Widget" section above.
+- [x] **Pitch deck renderings wired in** — `Fairway_Golf_Club_Pitch_Deck.pptx` slides 5–8 (Arrival/Reception/Lounge/Bays) now have real photos from `Assets/PitchDeckRenderings/` in place of the `[INSERT: render]` placeholders.
+- [ ] **Pitch deck — 2 renderings still unplaced** — `05_ai-checkin.png` (kiosk welcome-back mockup) and `09_bar-lounge.png` (bar/taps close-up) are good fits for slide 10 (Technology Edge) and slide 13 (Beverage Partnership) respectively, but those slides don't have a pre-built image placeholder the way slides 5-8 did, and this environment has no LibreOffice to visually verify a freehand placement — left for manual placement in PowerPoint, or a follow-up pass once visual QA is possible.
+- [ ] **Pitch deck — slide 9 unfilled** — "Auto-tee detail" and "Branded merchandise wall" placeholders have no matching close-up renders yet.
+
+---
+
+## Open Financial Reconciliation (read before quoting any single number)
+
+As of 2026-07-16, this repo contains **at least four internally-consistent but mutually-inconsistent financial models**, none of which fully supersedes the others yet. Reviewed in full on 2026-07-16 (see git history) — this section exists so nobody re-derives this the hard way again.
+
+| Model | Where it lives | Phase 1 ask | Pricing basis | Breakeven framing |
+|---|---|---|---|---|
+| **Family safety-net model** | `Fairway_Income_Projection.xlsx` | $150,000 ($75K equity + $75K SBA/bank loan @ 8%, 5yr) | Hourly, $55 blended ($65 walk-in / $40 member / $45 off-peak), utilization ramp 20%→52% Year 1 | Turns cash-flow positive ~Month 3 (Year 1 Monthly sheet); Year 1 net **$44,451** |
+| **Value-engineered build budget** | `Fairway_Golf_Club_Phase1_Budget_200K.xlsx` | $135,630 (value-engineered) / $266,860 (full premium) — line-item, real vendor pricing | N/A (capex only) | N/A |
+| **All-in realistic budget** | `Fairway_Golf_Club_Startup_Costs.xlsx`, `Fairway_Golf_Club_Pitch_Deck.pptx`, CLAUDE.md's Angel Investor tier note | **$217K–$354K** — includes ADA, construction overrun buffer, utility deposits, grand opening, etc. that the other models don't | Hourly, $55–70/hr (Pitch Deck) | Not stated as a single month |
+| **This session's newer figures** | `Fairway_Golf_Club_Business_Plan.docx` (as currently edited), `OPERATIONAL_PLAN.md`, `PROJECT_BRIEF.md` | ~$70,000 (in-house dev + modular construction claimed to eliminate ~$40K+ consulting/software fees + avoid invasive construction) | Flat per-visit, live in the org: $35 member / $45 walk-in per Bay Session (see `SESSION_SYNC.md`) | 6 months from physical lounge launch |
+
+**Known, not-yet-resolved tensions:**
+- The $70K figure doesn't arithmetically reconcile against either the $135,630 value-engineered build (hardware alone — 2× Uneekor EYE XO2, 2× ProTee auto-tee, bay construction — already totals well over $70K) or the $217–354K all-in figure. "$40K+ in software consulting fees eliminated" doesn't bridge a gap that large on its own.
+- The **live production pricing** ($35/$45 flat per-visit, confirmed in `SESSION_SYNC.md`) is real and already running in the org — but it's not the basis for *any* of the other three models, all of which use hourly rates. Reconciling the business plan's Pricing Structure to match live reality (done 2026-07-16) was the safe, unambiguous part; reconciling the *revenue projections and CapEx* built on the hourly models is not — nobody has re-run the ramp/utilization math against per-visit pricing.
+- `Fairway_Golf_Club_Investor_Deck.pptx` (24 slides, comprehensive) uses the $150K/family-safety-net model; `Fairway_Golf_Club_Pitch_Deck.pptx` (18 slides, design-forward, has the `[INSERT: render]` placeholders) uses the $217–354K all-in model. These may be **intentionally different pitches for different audiences** (lean friends-and-family ask vs. full-buildout professional-investor ask) rather than a conflict to resolve — worth confirming with Russell rather than assuming one is stale.
+- Location naming is also inconsistent across decks: `Pitch_Deck.pptx` says "Fairfax Station, Virginia"; `Investor_Deck.pptx` and `Market_Analysis.docx` say "Lorton, Virginia 22079" (the real address, see above).
+
+**Do not silently pick a winner.** If asked to update financial figures anywhere in this repo, flag which model is being used and surface this table rather than assuming the most recently-edited number is authoritative.
 
 ---
 
