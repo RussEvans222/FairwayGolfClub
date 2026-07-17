@@ -7,6 +7,20 @@ Fairway Golf Club is a premium AI-powered indoor golf improvement club concept b
 1. **`fairway-website/`** — Static HTML/CSS site hosted on Cloudflare Pages, connected to GitHub (auto-deploys on push to `main`)
 2. **`fairway-sf/`** — Salesforce DX project targeting a STORM demo org, used for Experience Cloud, LWC components, and CRM configuration
 
+### Key Documents
+| File | Purpose | Public-facing? |
+|---|---|---|
+| `CLAUDE.md` (this file) | Technical dev notes — site/org structure, deploy commands, data model | No — private |
+| `PROJECT_BRIEF.md` | Portable one-stop project summary (product, market, tech, business model) | No — private |
+| `PRODUCT_REQUIREMENTS.md` | Site concept (2,000 sq ft Proof-of-Concept) + Golfer360 4-phase customer journey | No — private |
+| `OPERATIONAL_PLAN.md` | Modular/regulatory build strategy, CapEx & breakeven targets | No — private |
+| `MARKETING_ROADMAP.md` | GTM strategy, local partnership plan, campaign/action tracker | No — private |
+| `Fairway_Golf_Club_Business_Plan.docx` | Full business plan (market research, financials, revenue model) | No — private |
+| `Fairway_Golf_Club_Executive_Summary.docx` | 1-page pitch sheet for local/government meetings (site, market, tech, ask) | No — private, meeting handout |
+| `DEI_Storck_Meeting_Prep.md` | Prep outline for the Fairfax DEI / Supervisor Storck meeting | No — private |
+| `Fairway_Golf_Club_Pitch_Deck.pptx` / `.pdf` | Investor pitch deck | No — private, shared with founding investors only |
+| `fairway-website/` | The only public-facing surface | **Yes** — see "What NOT to Do" below |
+
 ---
 
 ## Key Credentials & IDs
@@ -188,6 +202,40 @@ Create one record per object in dependency order (Bay → Reservation → Sessio
 
 ---
 
+## Location & Local Market Strategy (Private — do not publish)
+
+**This entire section names the target venue explicitly. That is intentional and fine for private/internal docs (this file, `PROJECT_BRIEF.md`, `MARKETING_ROADMAP.md`, the executive summary, meeting prep) — it is only barred from `fairway-website/` itself, per "What NOT to Do" below.**
+
+### Founder Profile
+- Russell Evans is a **Crosspointe resident**, living **less than 1 mile** from the campus. Use this specifically (neighborhood name, not just "1 mile away") when talking to county/local stakeholders — it's a stronger local-roots story than the generic version in the business plan.
+- Russ's professional title is **Salesforce Application Developer** (more specific than the business plan's earlier "Salesforce professional" phrasing). He is **personally designing and coding the entire customized tech backend in-house** — the Golfer360 platform, booking/check-in flows, AI coaching integration — which eliminates an estimated **$40,000+ in software consulting/development fees**. This is a material input to the budget in `OPERATIONAL_PLAN.md`, not just a resume line.
+
+### Target Site & Product Concept
+- Flagship target: a **2,000 sq ft historic building**, with a **4,000 sq ft expansion path**, at the **county-owned "back buildings"** on the historic **Workhouse Arts Center / Lorton Reformatory campus**, which is currently undergoing **fast-tracked commercial leasing assessments**.
+- Current site concept is a lean **"Proof-of-Concept" prototype**: 2 premium overhead simulator bays, a warm walk-in arrival lobby, bag storage, and Men's/Ladies' restrooms designed with a vintage country-club locker-room aesthetic (wood panels, brass fixtures, luxury amenities). Full layout, room list, and the phased Golfer360 tech experience are in `PRODUCT_REQUIREMENTS.md`.
+- **This supersedes the earlier, larger "Suite" concept** built into the private `fairway-website/space-plan/` page (2 bays + shared social lounge + wash-and-change rooms with showers, ~1,320–1,500 sq ft). The two haven't been reconciled — `PRODUCT_REQUIREMENTS.md` is the current source of truth; the `space-plan` page needs a refresh before it's shared again.
+- Adaptive reuse of a historic county property — the pitch to the county leans on this fitting the Workhouse's existing arts/history/adaptive-reuse mission, not a generic commercial build-out. The construction approach specifically avoids triggering a full historic-preservation review (freestanding modular pods, macerating plumbing instead of slab cutting) — see `OPERATIONAL_PLAN.md`.
+
+### Local Market & Competitive Edge
+- **5 traditional golf courses within 15 minutes of Lorton** (Laurel Hill, Pohick Bay, Burke Lake, Lake Ridge, Old Hickory — see business plan for detail) prove demand, but **zero local indoor simulator options** exist.
+- Golfers currently **drive 30+ minutes** to non-premium, transactional, uninviting regional commercial simulators (see business plan's Competition Analysis: CAFDExGO, Uni Indoor Golf, GOLFTEC, Five Iron, ParCiti — all 20–40 min away).
+- **Target demographics:** Lorton median household income **~$138K**; **89% white-collar workforce**, seeking upscale local "third places," evening leagues, and corporate event venues — a high-value local market that's currently underserved. (Note: the business plan docx cites broader corridor figures — $130K+ regionally, $180K+ for Fairfax Station specifically. The $138K/89% figures are Lorton-specific and newer — now being folded into the business plan doc directly, see below.)
+
+### Local Strategic Partnership: Bunnyman Brewing
+- Primary local partner: **Bunnyman Brewing**, specifically their on-campus location, **Bunnyman Brewing Cafe at the Workhouse**. Framed as a **highly collaborative neighbor strategy** — not isolated commercial retail — actively building relationships with an on-campus neighbor rather than just co-existing.
+- Collaborative concepts being explored: **Bunnyman craft beer on tap**, **exclusive co-branded seasonal releases** (e.g., a "Fairway Golden Ale"), and structured **"stay-and-play" cross-promotional programs**.
+- Also functions as part of the Golfer360 Phase 2 kiosk experience: if both bays are full, the touchless check-in kiosk directs walk-ins to grab a Bunnyman drink while it texts them when a bay opens up (see `PRODUCT_REQUIREMENTS.md`).
+- This is the same synergy the business plan's Company Advantages section gestures at ("Workhouse Arts Center location provides built-in foot traffic, brewery co-tenancy") — now a named, specific partnership rather than a general advantage.
+
+### Budget & Regulatory Defense (new)
+- **CapEx capped at ~$70,000** (down from the original $150,000 Phase 1 estimate), driven by in-house Salesforce development (above) and a modular hardware build-out. **Target: 6-month breakeven** from physical lounge launch (previously Month 3 — see `OPERATIONAL_PLAN.md` for why, and the note below on reconciling this into the business plan doc).
+- Regulatory strategy: freestanding wood-and-metal frame pods (not anchored to the historic envelope) and macerating plumbing (Saniflo) instead of slab-cutting, specifically to avoid triggering a full historic-preservation review. Full detail in `OPERATIONAL_PLAN.md`.
+
+### Upcoming: Fairfax DEI / Supervisor Storck Meeting
+Meeting prep is tracked in `DEI_Storck_Meeting_Prep.md`. The 1-page `Fairway_Golf_Club_Executive_Summary.docx` is built specifically for this meeting — it combines the local site/market/partnership story above with the Golfer360 Salesforce tech stack, since a government economic-development audience needs both "why here" and "why this is a serious, differentiated business." The regulatory-defense strategy above is likely the county's first practical question, so it's front-loaded in the meeting prep.
+
+---
+
 ## Architecture Decision: Two Separate Frontends
 
 - **`fairwaygolfclub.co`** (Cloudflare Pages) — public marketing site, lead capture, investor portal. This is the permanent public frontend. No plans to replace it with Experience Cloud.
@@ -202,6 +250,16 @@ Create one record per object in dependency order (Bay → Reservation → Sessio
 - [ ] **Web-to-Lead on homepage** — Consider adding first/last name fields so leads don't come in as "Unknown"
 - [ ] **Experience Cloud member portal** — Design and build the member-facing portal (bookings, coaching data, session history) — separate from the marketing site
 - [ ] **Deploy the Golfer360 data model** — 9 new custom objects + permission set updates + `Fairway_Ops` app are committed to `fairway-sf/` but not yet deployed to the org (built on a machine without the Salesforce CLI). See "Golfer360 Data Model" section above for the deploy commands and verification steps.
+- [x] **1-page Executive Summary / Pitch Sheet** — `Fairway_Golf_Club_Executive_Summary.docx`, built for the DEI/Storck meeting: local site + market + Bunnyman partnership story combined with the Golfer360 tech stack.
+- [x] **DEI / Supervisor Storck meeting prep** — `DEI_Storck_Meeting_Prep.md`, covering goals, talking points, anticipated questions, and materials list.
+- [x] **Product requirements + operational plan** — `PRODUCT_REQUIREMENTS.md` (site concept, Golfer360 4-phase journey) and `OPERATIONAL_PLAN.md` (modular/regulatory build strategy, CapEx/breakeven) drafted.
+- [x] **Business plan financials/bio updated** — `Fairway_Golf_Club_Business_Plan.docx` founder bio, site concept, CapEx, and breakeven updated to match the finalized roadmap (see that file's own internal notes for what's still open).
+- [ ] **Hold the Fairfax DEI / Supervisor Storck meeting** — use the executive summary + prep doc above; update `MARKETING_ROADMAP.md` and this file with the outcome afterward.
+- [ ] **Reconcile local market stats** — business plan docx historically cited Fairfax Station-specific ($180K+ HHI) and broader-corridor (>$130K) figures; the newer Lorton-specific figures (~$138K HHI, 89% white-collar) have now been folded into the business plan doc directly (see above) — double check both figures still coexist sensibly (regional vs. Lorton-specific) rather than reading as contradictory.
+- [ ] **Finalize CapEx funding structure** — the new ~$70,000 CapEx figure hasn't been split into equity/loan (or confirmed as fully founder-funded); see `OPERATIONAL_PLAN.md` open questions.
+- [ ] **Recalculate downstream financials** — Year 1–5 revenue/net income projections and the Risk Mitigation worst-case figure in the business plan were calibrated to the old $150K/Month-3 baseline and have not been recalculated against the new $70K/6-month baseline.
+- [ ] **Reconcile the site concept** — `PRODUCT_REQUIREMENTS.md`'s leaner 2,000 sq ft Proof-of-Concept (lobby/bag storage/restrooms) supersedes the earlier "Suite" concept on the private `fairway-website/space-plan/` page (shared social lounge, wash-and-change rooms with showers) — that page needs a refresh before being shared again.
+- [ ] **Formalize the Bunnyman Brewing partnership** — co-branded seasonal beer (e.g. "Fairway Golden Ale") and stay-and-play cross-promotion are concepts, not yet a confirmed arrangement.
 
 ---
 
@@ -211,5 +269,5 @@ Create one record per object in dependency order (Bay → Reservation → Sessio
 - Do not put reCAPTCHA widget outside the `<form>` tag — Salesforce silently rejects the submission
 - Do not deploy the full-size PNGs from `fairway-website/images/` to Salesforce — they are 83MB uncompressed and will hit the 52MB API limit
 - Do not set a deploy command in Cloudflare — this is a Pages project, not a Worker
-- Do not reference Workhouse Arts Center or Lorton as the location anywhere public-facing — location is not yet announced
+- Do not reference Workhouse Arts Center or Lorton as the location anywhere on `fairwaygolfclub.co` (the public static site) — location is not yet publicly announced there. This rule is scoped to that one public surface: private/internal docs (this file, `PROJECT_BRIEF.md`, `MARKETING_ROADMAP.md`, the business plan, the executive summary, meeting prep docs) are expected to name Workhouse/Lorton explicitly, since that's the actual target and county/government meetings require naming it.
 - Do not reference Russell keeping his day job anywhere public-facing
