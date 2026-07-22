@@ -16,5 +16,5 @@
   // Survey KV — create a KV namespace in the Cloudflare dashboard (Storage & Databases → KV),
   // then uncomment with its real id and push. Bindings live in this file, not the dashboard,
   // because Workers Builds treats wrangler.jsonc as the source of truth.
-  // ,"kv_namespaces": [{ "binding": "VOTES_KV", "id": "PASTE_NAMESPACE_ID_HERE" }]
+ ,"kv_namespaces": [{ "binding": "VOTES_KV", "id": "ddae9f4559ce4bb0a7825dbb91281e8e" }]
 }
