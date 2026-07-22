@@ -47,7 +47,7 @@
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --gold: #C9A84C;
@@ -131,7 +131,7 @@ body {
   font-size: clamp(1rem, 2.5vw, 1.2rem);
   color: rgba(255,255,255,0.85);
   font-style: italic;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Instrument Serif', Georgia, serif;
   margin-bottom: 0.5rem;
 }
 .location {
@@ -141,6 +141,35 @@ body {
   text-transform: uppercase;
   margin-bottom: 3rem;
 }
+.hero-cta {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+.btn-gold, .btn-ghost {
+  display: inline-block;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+}
+.btn-gold {
+  background: var(--gold);
+  color: var(--dark);
+}
+.btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btn-ghost {
+  color: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(8px);
+}
+.btn-ghost:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
 .signup-form {
   display: flex;
   flex-direction: column;
@@ -266,9 +295,11 @@ body {
   margin-bottom: 0.75rem;
 }
 .section-title {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  line-height: 1.2;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2.1rem, 4.5vw, 3.1rem);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
   margin-bottom: 1rem;
 }
 .section-sub {
@@ -296,8 +327,24 @@ body {
   transform: translateY(-3px);
 }
 .feature-icon {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.18);
+  margin-bottom: 1.1rem;
+}
+.feature-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: var(--gold);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .feature-card h3 {
   font-size: 1rem;
@@ -472,9 +519,11 @@ body {
   margin-bottom: 1rem;
 }
 .showcase-text h2 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  line-height: 1.25;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
   margin-bottom: 1rem;
 }
 .showcase-text p {
@@ -514,6 +563,15 @@ body {
   transition: filter 0.3s, transform 0.5s;
 }
 .gallery-item:hover img { filter: brightness(1); transform: scale(1.05); }
+
+/* ── SIGNUP SECTION ── */
+.signup-section {
+  padding: 6rem 2rem;
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+.signup-section .section-sub { margin-bottom: 2.25rem; }
 
 /* ── RENDERING NOTICE ── */
 .rendering-notice {
@@ -585,7 +643,7 @@ footer {
   border-top: 1px solid rgba(255,255,255,0.05);
 }
 .footer-brand {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Instrument Serif', Georgia, serif;
   font-size: 0.9rem;
   color: var(--gold);
   letter-spacing: 4px;
@@ -659,31 +717,10 @@ footer {
     <h1 class="tagline">The First AI-Powered Golf Simulator Club</h1>
     <p class="location">Northern Virginia — Arlington, Fairfax, Tysons &amp; Loudoun</p>
 
-    <form class="signup-form" id="signupForm" action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00Dak000011rATC" method="POST">
-      <input type="hidden" name="captcha_settings" value='{"keyname":"ReCaptcha","fallback":"true","orgId":"00Dak000011rATC","ts":""}'>
-      <input type="hidden" name="oid" value="00Dak000011rATC">
-      <input type="hidden" name="retURL" value="https://fairwaygolfclub.co/thanks/">
-      <input type="hidden" name="lead_source" value="Website - Coming Soon">
-      <input type="hidden" name="last_name" value="Unknown">
-      <input type="hidden" name="company" value="Individual">
-      <input type="hidden" name="00Nak00004DAbhV" value="General Interest">
-      <div class="signup-row">
-        <input type="email" name="email" placeholder="Your email — be first to know" required id="emailInput">
-        <button type="submit">Notify Me</button>
-      </div>
-      <div class="recaptcha-wrap">
-        <div class="g-recaptcha" data-sitekey="6LeXE0YtAAAAABNLw7oPp_gT8umYKYmEuxSKHMC3"></div>
-      </div>
-    </form>
-    <p class="note">No spam. Just the opening date when it's set.</p>
-    <p class="success-msg" id="successMsg" style="display:none">You're on the list. We'll be in touch.</p>
-    <script>
-      if(window.location.search.includes('thanks=1')){
-        document.getElementById('signupForm').style.display='none';
-        document.querySelector('.note').style.display='none';
-        document.getElementById('successMsg').style.display='block';
-      }
-    </script>
+    <div class="hero-cta">
+      <a href="#signup" class="btn-gold">Get Opening Updates</a>
+      <a href="#survey" class="btn-ghost">Tell Us What You Think</a>
+    </div>
   </div>
   <div class="scroll-hint">Scroll</div>
 </section>
@@ -706,32 +743,32 @@ footer {
 
   <div class="features-grid">
     <div class="feature-card">
-      <div class="feature-icon">🤖</div>
+      <div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4l1.7 4.6L17.3 10l-4.6 1.7L11 16.3l-1.7-4.6L4.7 10l4.6-1.7L11 4z"/><path d="M18.5 14.5l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9.9-2.4z"/></svg></div>
       <h3>AI Coaching Between Visits</h3>
       <p>Your swing data follows you. The system remembers your tendencies, flags regressions, and queues your next focus area automatically.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">⛳</div>
+      <div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21V4"/><path d="M9 4.5l7.5 2.6L9 9.7"/><path d="M4.5 21c0-1.4 2-2.5 4.5-2.5s4.5 1.1 4.5 2.5"/></svg></div>
       <h3>Premium Golf Simulator Bays</h3>
       <p>World-class golf simulators with real course data. Play Pebble Beach or dial in your 7-iron — in a space that feels like a club, not a warehouse.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">🍺</div>
+      <div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10l-1.1 15.2a2 2 0 0 1-2 1.8H10.1a2 2 0 0 1-2-1.8L7 3z"/><path d="M7.6 11h8.8"/></svg></div>
       <h3>A Real Lounge</h3>
       <p>Cold draft, leather chairs, a scorecard on the table. Bring your group. Stay after. This is the 19th hole you actually want.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">📱</div>
+      <div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
       <h3>Mobile Pop-Ups</h3>
       <p>Fairway comes to you. Corporate events, golf outings, charity tournaments — we bring the simulator experience anywhere in Northern Virginia.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">🏆</div>
+      <div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 5H5a3 3 0 0 0 3.2 4"/><path d="M16 5h3a3 3 0 0 1-3.2 4"/><path d="M12 13v4"/><path d="M9 21h6"/><path d="M10 17h4v4h-4z"/></svg></div>
       <h3>Member Competitions</h3>
       <p>Weekly challenges, seasonal tournaments, and a live leaderboard. Bragging rights are included in every membership tier.</p>
     </div>
     <div class="feature-card">
-      <div class="feature-icon">📈</div>
+      <div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M5 16l4-4 3 3 6-7"/><path d="M14.5 8H18v3.5"/></svg></div>
       <h3>Track Your Progress</h3>
       <p>Shot-by-shot history, handicap trends, and performance insights — all saved automatically so you can see how far you've come.</p>
     </div>
@@ -952,6 +989,29 @@ footer {
   <div class="gallery-item"><img src="images/bar.png" alt="The bar"></div>
   <div class="gallery-item"><img src="images/exterior.png" alt="Club exterior"></div>
 </div>
+
+<!-- SIGNUP -->
+<section class="signup-section" id="signup">
+  <p class="section-eyebrow">Stay in the Loop</p>
+  <h2 class="section-title">Be first on the tee sheet.</h2>
+  <p class="section-sub">Drop your email and we'll send the opening date when it's set. No spam — that's the whole list.</p>
+  <form class="signup-form" id="signupForm" action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00Dak000011rATC" method="POST">
+    <input type="hidden" name="captcha_settings" value='{"keyname":"ReCaptcha","fallback":"true","orgId":"00Dak000011rATC","ts":""}'>
+    <input type="hidden" name="oid" value="00Dak000011rATC">
+    <input type="hidden" name="retURL" value="https://fairwaygolfclub.co/thanks/">
+    <input type="hidden" name="lead_source" value="Website - Coming Soon">
+    <input type="hidden" name="last_name" value="Unknown">
+    <input type="hidden" name="company" value="Individual">
+    <input type="hidden" name="00Nak00004DAbhV" value="General Interest">
+    <div class="signup-row">
+      <input type="email" name="email" placeholder="Your email — be first to know" required id="emailInput">
+      <button type="submit">Notify Me</button>
+    </div>
+    <div class="recaptcha-wrap">
+      <div class="g-recaptcha" data-sitekey="6LeXE0YtAAAAABNLw7oPp_gT8umYKYmEuxSKHMC3"></div>
+    </div>
+  </form>
+</section>
 
 <!-- FOOTER -->
 <footer>
