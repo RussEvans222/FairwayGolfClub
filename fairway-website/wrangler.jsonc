@@ -2,13 +2,19 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "proud-wind-2578",
   "compatibility_date": "2026-07-07",
+  "main": "_worker/index.js",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": "."
+    "directory": ".",
+    "binding": "ASSETS"
   },
   "compatibility_flags": [
     "nodejs_compat"
   ]
+  // Survey KV — create a KV namespace in the Cloudflare dashboard (Storage & Databases → KV),
+  // then uncomment with its real id and push. Bindings live in this file, not the dashboard,
+  // because Workers Builds treats wrangler.jsonc as the source of truth.
+  // ,"kv_namespaces": [{ "binding": "VOTES_KV", "id": "PASTE_NAMESPACE_ID_HERE" }]
 }
